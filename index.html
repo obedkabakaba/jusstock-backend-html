@@ -2,7 +2,13 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<meta name="theme-color" content="#0F2A2E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JusStock">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23F5821F%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D66C10%22/%3E%0A%3C/linearGradient%3E%3C/defs%3E%0A%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Cpath%20d%3D%22M9.3%203.2h5.4l.7%203.6a3.9%203.9%200%200%201-1%203.3L13.3%2011v6.4a.9.9%200%200%201-.9.9h-.8a.9.9%200%200%201-.9-.9V11L9.6%2010.1a3.9%203.9%200%200%201-1-3.3l.7-3.6Z%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%221.3%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M9.7%207.4h4.6%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22/%3E%0A%3C/svg%3E">
 <title>JusStock — Tableau de bord</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,7 +44,7 @@
     --shadow:0 1px 2px rgba(15,42,46,0.06), 0 4px 16px rgba(15,42,46,0.05);
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  html,body{margin:0;padding:0;overflow-x:hidden;max-width:100%;}
   body{
     font-family:var(--font-body);
     background:var(--paper);
@@ -283,6 +289,7 @@
   }
   textarea{resize:vertical;min-height:70px;}
   input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:var(--surface);}
+  input:disabled,select:disabled,textarea:disabled{background:var(--border);color:var(--text-muted);cursor:not-allowed;opacity:0.7;}
 
   /* ---------- NOTIFICATIONS (toasts) ---------- */
   .toast-container{position:fixed;bottom:22px;right:22px;z-index:200;display:flex;flex-direction:column;gap:8px;}
@@ -379,6 +386,12 @@
   }
   body.role-consultant .consultant-banner{display:flex;}
 
+  /* ---------- FOND D'OVERLAY DU TIROIR MOBILE ---------- */
+  .sidebar-backdrop{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:39;
+  }
+  .sidebar-backdrop.open{display:block;}
+
   /* ---------- RESPONSIVE ---------- */
   @media (max-width: 980px){
     .panel-grid,.lower-grid{grid-template-columns:1fr;}
@@ -386,12 +399,56 @@
   @media (max-width: 700px){
     .form-grid{grid-template-columns:1fr;}
   }
+
+  /* Tablette / grand mobile : le tiroir de navigation remplace la sidebar fixe */
   @media (max-width: 860px){
-    .sidebar{transform:translateX(-100%);}
-    .sidebar.open{transform:translateX(0);box-shadow:8px 0 24px rgba(0,0,0,0.15);}
+    .sidebar{
+      transform:translateX(-100%);
+      padding-top:env(safe-area-inset-top);
+      width:80%;max-width:280px;
+    }
+    .sidebar.open{transform:translateX(0);box-shadow:8px 0 24px rgba(0,0,0,0.25);}
     .main{margin-left:0;}
     .menu-toggle{display:flex;}
-    .content{padding:18px 16px 40px 16px;}
+    .content{padding:16px 14px 40px 14px;}
+  }
+
+  /* Mobile : on resserre tout pour que ça tienne sur une seule ligne, comme
+     une vraie app — pas une page web compressée. */
+  @media (max-width: 640px){
+    body{padding-top:env(safe-area-inset-top);}
+    .topbar{
+      padding:10px 12px;
+      padding-top:calc(10px + env(safe-area-inset-top));
+      gap:8px;
+    }
+    .topbar h1{font-size:15.5px;}
+    #viewSubtitle{display:none;}
+    #lastUpdated{display:none;}
+    .user-chip .u-role{display:none;}
+    .user-chip .u-nom{font-size:11px;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .topbar-right{gap:6px;}
+    #refreshBtn .btn-label{display:none;}
+    #refreshBtn{padding:8px;}
+    .btn{padding:7px 10px;font-size:12px;}
+    .content{padding:12px 10px 32px 10px;}
+
+    .toolbar{gap:8px;}
+    .toolbar .btn{flex:1;justify-content:center;}
+    .search-wrap{max-width:none;flex-basis:100%;order:2;}
+
+    .kpi-grid{grid-template-columns:1fr 1fr;gap:10px;}
+    .kpi-card{padding:13px 13px 12px 13px;}
+    .kpi-card .kpi-value{font-size:20px;}
+
+    .modal-panel{padding:18px 16px;max-height:92vh;}
+    .modal-panel{padding-bottom:calc(18px + env(safe-area-inset-bottom));}
+
+    .line-item-row{grid-template-columns:1fr 1fr;}
+    .line-item-row .btn-remove-line{grid-column:span 2;justify-self:end;}
+
+    .filtre-row{gap:8px;}
+    .filtre-row .form-group{min-width:120px;flex:1;}
   }
 </style>
 </head>
@@ -413,6 +470,8 @@
   <!-- ============================================================
        SIDEBAR — navigation fixe des 12 menus
        ============================================================ -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="document.getElementById('sidebar').classList.remove('open'); this.classList.remove('open');"></div>
+
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <div class="mark">
@@ -448,7 +507,7 @@
         <span class="subtitle" id="lastUpdated"></span>
         <button class="btn" id="refreshBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
-          Actualiser
+          <span class="btn-label">Actualiser</span>
         </button>
         <button class="btn" onclick="deconnecter()" title="Déconnexion">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
@@ -870,6 +929,7 @@ function afficherVue(id){
 
   // Ferme le menu mobile après un choix
   document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarBackdrop').classList.remove('open');
 
   // Charge les données de la vue sélectionnée
   if (id === 'dashboard') chargerDashboard();
@@ -888,6 +948,7 @@ function afficherVue(id){
 
 document.getElementById('menuToggle').addEventListener('click', () => {
   document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarBackdrop').classList.toggle('open');
 });
 
 // ---------- Formatage ----------
@@ -1146,7 +1207,7 @@ document.getElementById('rechercheProduits')?.addEventListener('input', (e) => {
 function dessinerTableProduits(produits){
   const corps = document.getElementById('corpsTableProduits');
   if (!produits || produits.length === 0) {
-    corps.innerHTML = '<tr><td colspan="6" class="empty-state">Aucun produit. Clique sur "Nouveau produit" pour commencer.</td></tr>';
+    corps.innerHTML = `<tr><td colspan="6" class="empty-state">Aucun produit.${peutEcrire() ? ' Clique sur "Nouveau produit" pour commencer.' : ''}</td></tr>`;
     return;
   }
 
@@ -1259,6 +1320,7 @@ function ouvrirModalProduit(id){
         <div class="form-group">
           <label>Stock minimum (bouteilles)</label>
           <input type="number" min="0" name="stock_min_bouteilles" value="${v('stock_min_bouteilles', 24)}">
+          <div class="hint">En dessous de ce seuil, ce produit apparaît dans les alertes de stock faible (module Stock et Tableau de bord) — un signal pour te dire "il faut racheter".</div>
         </div>
         <div class="form-group">
           <label>Code produit</label>
@@ -1500,7 +1562,7 @@ async function chargerAchats(){
 function dessinerTableAchats(achats){
   const corps = document.getElementById('corpsTableAchats');
   if (!achats || achats.length === 0) {
-    corps.innerHTML = '<tr><td colspan="7" class="empty-state">Aucun achat. Clique sur "Nouvel achat" pour commencer.</td></tr>';
+    corps.innerHTML = `<tr><td colspan="7" class="empty-state">Aucun achat.${peutEcrire() ? ' Clique sur "Nouvel achat" pour commencer.' : ''}</td></tr>`;
     return;
   }
   corps.innerHTML = achats.map(a => {
@@ -1589,7 +1651,10 @@ function ligneAchatHtml(){
       <div class="form-group"><label>Produit *</label><select name="ligne_produit_id" required><option value="">—</option>${optionsProduitsHtml()}</select></div>
       <div class="form-group"><label>Paquets</label><input type="number" name="ligne_paquets" min="0" value="0"></div>
       <div class="form-group"><label>Bout. isolées</label><input type="number" name="ligne_bouteilles_isolees" min="0" value="0"></div>
-      <div class="form-group"><label>Montant payé (ligne) *</label><input type="number" name="ligne_montant_paye" min="0" step="0.01" required></div>
+      <div class="form-group">
+        <label>Coût de cette ligne (FC) *</label>
+        <input type="number" name="ligne_montant_paye" min="0" step="0.01" required placeholder="Ex : 100000">
+      </div>
       <button type="button" class="btn-remove-line" onclick="supprimerLigne(this)" title="Retirer la ligne">${svgIcon('close')}</button>
     </div>`;
 }
@@ -1610,7 +1675,7 @@ function construireFormAchat(preselectionFournisseurId){
 
   ouvrirModal(`
     <div class="modal-head">
-      <div><h2>Nouvel achat</h2><div class="modal-sub">Le coût par paquet/bouteille et le CMP du produit sont recalculés automatiquement.</div></div>
+      <div><h2>Nouvel achat</h2><div class="modal-sub">Le coût par paquet/bouteille et le CMP du produit sont recalculés automatiquement à partir du "Coût de cette ligne".</div></div>
       <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
     </div>
     <form id="formAchat" onsubmit="soumettreAchat(event)">
@@ -1637,14 +1702,15 @@ function construireFormAchat(preselectionFournisseurId){
           <label>Autres frais (FC)</label>
           <input type="number" name="autres_frais" min="0" step="0.01" value="0">
         </div>
-        <div class="form-group">
-          <label>Montant payé au fournisseur (FC)</label>
+        <div class="form-group full">
+          <label>Montant réellement remis au fournisseur maintenant (FC)</label>
           <input type="number" name="montant_paye" min="0" step="0.01" value="0">
-          <div class="hint">Peut être inférieur au coût total (le reste devient une dette fournisseur).</div>
+          <div class="hint">L'argent (espèces/mobile money) que tu donnes VRAIMENT aujourd'hui. Mets 0 si tout est à crédit, ou le total si tu payes cash. Si c'est inférieur à la somme des coûts de lignes + transport + autres frais, la différence devient automatiquement une dette envers ce fournisseur (visible dans Fournisseurs).</div>
         </div>
       </div>
 
-      <h3 style="font-size:13px;margin:18px 0 8px 0;">Lignes d'achat</h3>
+      <h3 style="font-size:13px;margin:18px 0 4px 0;">Lignes d'achat</h3>
+      <div class="hint" style="margin-bottom:10px;">Pour chaque produit acheté : combien de paquets/bouteilles, et le "Coût de cette ligne" = ce que TE COÛTE ce lot (utilisé pour calculer ton coût par bouteille) — pas forcément ce que tu as payé cash (ça, c'est le champ au-dessus).</div>
       <div class="lines-container" id="lignesAchatContainer">${ligneAchatHtml()}</div>
       <button type="button" class="btn btn-add-line" onclick="ajouterLigneAchat()">${svgIcon('plus')} Ajouter une ligne</button>
 
@@ -1756,7 +1822,7 @@ const LIBELLES_PAIEMENT = { especes: 'Espèces', mobile_money: 'Mobile Money', c
 function dessinerTableVentes(ventes){
   const corps = document.getElementById('corpsTableVentes');
   if (!ventes || ventes.length === 0) {
-    corps.innerHTML = '<tr><td colspan="7" class="empty-state">Aucune vente. Clique sur "Nouvelle vente" pour commencer.</td></tr>';
+    corps.innerHTML = `<tr><td colspan="7" class="empty-state">Aucune vente.${peutEcrire() ? ' Clique sur "Nouvelle vente" pour commencer.' : ''}</td></tr>`;
     return;
   }
   corps.innerHTML = ventes.map(v => `
@@ -1921,6 +1987,7 @@ function construireFormVente(preselectionClientId){
         <div class="form-group">
           <label>Remise (FC)</label>
           <input type="number" name="remise" min="0" step="0.01" value="0">
+          <div class="hint">Manuelle uniquement — une réduction en argent sur le total de la vente. Indépendante du bonus ci-dessous.</div>
         </div>
         <div class="form-group">
           <label>TVA (FC)</label>
@@ -1928,7 +1995,8 @@ function construireFormVente(preselectionClientId){
         </div>
       </div>
 
-      <h3 style="font-size:13px;margin:18px 0 8px 0;">Lignes de vente</h3>
+      <h3 style="font-size:13px;margin:18px 0 4px 0;">Lignes de vente</h3>
+      <div class="hint" style="margin-bottom:10px;">Le "Bonus offert" se calcule tout seul en gros si le produit a une règle configurée (ex : 10 paquets → 2 offerts), et se recalcule par palier (20 → 4). Il n'a aucun lien avec la "Remise" ci-dessus — ce sont deux réductions différentes et cumulables. Tu peux toujours corriger le chiffre du bonus à la main.</div>
       <div class="lines-container" id="lignesVenteContainer">${ligneVenteHtml()}</div>
       <button type="button" class="btn btn-add-line" onclick="ajouterLigneVente()">${svgIcon('plus')} Ajouter une ligne</button>
 
@@ -2787,6 +2855,13 @@ async function chargerParametres(){
     document.getElementById('pStockMinBout').value = p.stock_min_bouteille_defaut ?? '';
     document.getElementById('pStockMinPaq').value = p.stock_min_paquet_defaut ?? '';
     document.getElementById('pPrefixeFacture').value = p.numerotation_facture_prefixe || '';
+
+    // Seul l'administrateur peut modifier les paramètres généraux (le bouton
+    // Enregistrer est déjà masqué pour les autres via .action-ecriture, mais
+    // on désactive aussi les champs pour que ce soit visuellement évident
+    // qu'ils ne sont pas éditables, plutôt que de laisser une fausse impression.
+    const modifiable = utilisateurConnecte.role === 'administrateur';
+    document.querySelectorAll('#formParametres input').forEach((el) => { el.disabled = !modifiable; });
   } catch (err) {
     afficherToast(err.message, 'error');
   }
@@ -2825,9 +2900,15 @@ let authToken = null;
 let utilisateurConnecte = null;
 
 const LIBELLES_ROLES = {
-  administrateur: 'Administrateur', manager: 'Manager', comptable: 'Comptable',
-  caissier: 'Caissier', vendeur: 'Vendeur', magasinier: 'Magasinier', consultant: 'Consultant',
+  administrateur: 'Administrateur', gerante: 'Gérante', consultant: 'Consultant',
 };
+
+// Vrai pour tous les rôles sauf consultant (lecture seule). Utilisé pour
+// adapter les textes d'état vide ("Clique sur..." n'a pas de sens si le
+// bouton correspondant est masqué pour ce rôle).
+function peutEcrire(){
+  return !!utilisateurConnecte && utilisateurConnecte.role !== 'consultant';
+}
 
 async function initialiserAuthentification(){
   const jetonSauvegarde = localStorage.getItem(CLE_STOCKAGE_JETON);
@@ -2974,7 +3055,7 @@ function appliquerPermissionsUI(){
     const id = btn.dataset.view;
     let visible = true;
     if (id === 'utilisateurs') visible = role === 'administrateur';
-    else if (id === 'comptabilite') visible = ['administrateur', 'manager', 'comptable', 'consultant'].includes(role);
+    else if (id === 'comptabilite') visible = ['administrateur', 'gerante', 'consultant'].includes(role);
     btn.style.display = visible ? '' : 'none';
   });
 }
