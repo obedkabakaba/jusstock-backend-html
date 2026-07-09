@@ -538,10 +538,70 @@
           </div>
         </div>
       </section>
-      <section class="view" id="view-clients"></section>
-      <section class="view" id="view-fournisseurs"></section>
+      <section class="view" id="view-clients">
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="rechercheClients" placeholder="Rechercher un client...">
+          </div>
+          <button class="btn btn-accent" onclick="ouvrirModalClientPage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Nouveau client
+          </button>
+        </div>
+        <div class="table-panel">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>Client</th><th>Visites</th><th>Montant dépensé</th><th>Dette</th><th></th></tr></thead>
+              <tbody id="corpsTableClients"><tr><td colspan="5" class="empty-state">Chargement…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px;">
+          <h3>Meilleurs clients</h3>
+          <ul class="row-list" id="listeTopClients"></ul>
+        </div>
+      </section>
+
+      <section class="view" id="view-fournisseurs">
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="rechercheFournisseurs" placeholder="Rechercher un fournisseur...">
+          </div>
+          <button class="btn btn-accent" onclick="ouvrirModalFournisseurPage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Nouveau fournisseur
+          </button>
+        </div>
+        <div class="table-panel">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>Fournisseur</th><th>Achats</th><th>Montant total acheté</th><th>Dette</th><th></th></tr></thead>
+              <tbody id="corpsTableFournisseurs"><tr><td colspan="5" class="empty-state">Chargement…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-charges">
+        <div class="toolbar">
+          <div><span class="subtitle" id="resumeCharges"></span></div>
+          <button class="btn btn-accent" onclick="ouvrirModalCharge()">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Nouvelle charge
+          </button>
+        </div>
+        <div class="table-panel">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>Date</th><th>Catégorie</th><th>Description</th><th>Montant</th><th>Paiement</th><th></th></tr></thead>
+              <tbody id="corpsTableCharges"><tr><td colspan="6" class="empty-state">Chargement…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
       <section class="view" id="view-comptabilite"></section>
-      <section class="view" id="view-charges"></section>
       <section class="view" id="view-rapports"></section>
       <section class="view" id="view-utilisateurs"></section>
       <section class="view" id="view-parametres"></section>
@@ -581,10 +641,10 @@ const NAV_ITEMS = [
   { id: 'achats',        label: 'Achats',          ready: true,  icon: 'download',  subtitle: 'Enregistrement des achats et calcul du coût réel' },
   { id: 'ventes',        label: 'Ventes',          ready: true,  icon: 'upload',    subtitle: 'Ventes au détail et en gros, bonus et remises' },
   { id: 'stock',         label: 'Stock',           ready: true,  icon: 'layers',    subtitle: 'Niveaux de stock, mouvements et alertes' },
-  { id: 'clients',       label: 'Clients',         ready: false, icon: 'user',      subtitle: 'Clients enregistrés, historique et dettes' },
-  { id: 'fournisseurs',  label: 'Fournisseurs',    ready: false, icon: 'truck',     subtitle: 'Fournisseurs, historique et paiements' },
+  { id: 'clients',       label: 'Clients',         ready: true,  icon: 'user',      subtitle: 'Clients enregistrés, historique et dettes' },
+  { id: 'fournisseurs',  label: 'Fournisseurs',    ready: true,  icon: 'truck',     subtitle: 'Fournisseurs, historique et paiements' },
   { id: 'comptabilite',  label: 'Comptabilité',    ready: false, icon: 'book',      subtitle: 'Journal, grand livre, balance, bilan' },
-  { id: 'charges',       label: 'Charges',         ready: false, icon: 'receipt',   subtitle: 'Dépenses de l\'entreprise' },
+  { id: 'charges',       label: 'Charges',         ready: true,  icon: 'receipt',   subtitle: 'Dépenses de l\'entreprise' },
   { id: 'rapports',      label: 'Rapports',        ready: false, icon: 'bar-chart', subtitle: 'Rapports détaillés par période' },
   { id: 'utilisateurs',  label: 'Utilisateurs',    ready: false, icon: 'users',     subtitle: 'Rôles, permissions et journal d\'audit' },
   { id: 'parametres',    label: 'Paramètres',      ready: false, icon: 'settings',  subtitle: "Configuration générale de l'entreprise" },
@@ -662,6 +722,9 @@ function afficherVue(id){
   if (id === 'stock') chargerStock();
   if (id === 'achats') chargerAchats();
   if (id === 'ventes') chargerVentes();
+  if (id === 'clients') chargerClients();
+  if (id === 'fournisseurs') chargerFournisseurs();
+  if (id === 'charges') chargerCharges();
 }
 
 document.getElementById('menuToggle').addEventListener('click', () => {
@@ -1734,16 +1797,495 @@ async function soumettreClientRapide(event){
   }
 }
 
+// ============================================================
+// MODULE : CLIENTS (page dédiée)
+// ============================================================
+let clientsCache = [];
+let minuteurRechercheClients = null;
 
+async function chargerClients(recherche){
+  const corps = document.getElementById('corpsTableClients');
+  const terme = recherche !== undefined ? recherche : document.getElementById('rechercheClients').value;
+  try {
+    const chemin = '/clients' + (terme ? `?recherche=${encodeURIComponent(terme)}` : '');
+    clientsCache = await appelApi(chemin);
+    dessinerTableClients(clientsCache);
+    chargerTopClients();
+  } catch (err) {
+    corps.innerHTML = `<tr><td colspan="5" class="empty-state">Impossible de charger les clients (${err.message}).</td></tr>`;
+  }
+}
+
+document.getElementById('rechercheClients')?.addEventListener('input', (e) => {
+  clearTimeout(minuteurRechercheClients);
+  const valeur = e.target.value;
+  minuteurRechercheClients = setTimeout(() => chargerClients(valeur), 300);
+});
+
+function dessinerTableClients(clients){
+  const corps = document.getElementById('corpsTableClients');
+  if (!clients || clients.length === 0) {
+    corps.innerHTML = '<tr><td colspan="5" class="empty-state">Aucun client enregistré.</td></tr>';
+    return;
+  }
+  corps.innerHTML = clients.map(c => `
+    <tr>
+      <td><strong>${c.nom}</strong><div class="cell-sub">${c.telephone || '—'}</div></td>
+      <td class="mono">${formatNombre(c.nombre_visites)}</td>
+      <td class="mono">${formatMontant(c.montant_total_depense)}</td>
+      <td class="mono" style="${Number(c.dette_actuelle) > 0 ? 'color:var(--danger)' : ''}">${formatMontant(c.dette_actuelle)}</td>
+      <td class="cell-actions">
+        <button class="icon-btn" title="Voir le détail" onclick="voirDetailClientPage('${c.id}')">${svgIcon('eye')}</button>
+        <button class="icon-btn" title="Modifier" onclick="ouvrirModalClientPage('${c.id}')">${svgIcon('edit')}</button>
+        <button class="icon-btn danger" title="Supprimer" onclick="supprimerClientPage('${c.id}')">${svgIcon('trash')}</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function chargerTopClients(){
+  const el = document.getElementById('listeTopClients');
+  try {
+    const top = await appelApi('/clients/classement?limite=5');
+    if (top.length === 0) { el.innerHTML = '<div class="empty-row">Pas encore assez de ventes pour établir un classement.</div>'; return; }
+    el.innerHTML = top.map((c, i) => `
+      <li><span class="rank">${i + 1}</span><span class="name">${c.nom}</span><span class="value">${formatMontant(c.montant_total_depense)}</span></li>
+    `).join('');
+  } catch (err) {
+    el.innerHTML = `<div class="empty-row">Erreur : ${err.message}</div>`;
+  }
+}
+
+function ouvrirModalClientPage(id){
+  const client = id ? clientsCache.find(c => c.id === id) : null;
+  const v = (champ) => client && client[champ] ? client[champ] : '';
+
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>${client ? 'Modifier le client' : 'Nouveau client'}</h2><div class="modal-sub">${client ? client.nom : ''}</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form onsubmit="soumettreClientPage(event, ${client ? `'${client.id}'` : 'null'})">
+      <div class="form-grid">
+        <div class="form-group full"><label>Nom *</label><input type="text" name="nom" required value="${v('nom')}"></div>
+        <div class="form-group"><label>Téléphone</label><input type="text" name="telephone" value="${v('telephone')}"></div>
+        <div class="form-group"><label>Adresse</label><input type="text" name="adresse" value="${v('adresse')}"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">${client ? 'Enregistrer' : 'Créer le client'}</button>
+      </div>
+    </form>
+  `);
+}
+
+async function soumettreClientPage(event, id){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  const payload = Object.fromEntries(donnees.entries());
+  if (!id) payload.type = 'enregistre';
+
+  const boutonSubmit = event.target.querySelector('button[type="submit"]');
+  boutonSubmit.disabled = true;
+  try {
+    if (id) await appelApiEcriture(`/clients/${id}`, 'PUT', payload);
+    else await appelApiEcriture('/clients', 'POST', payload);
+    afficherToast('Client enregistré.', 'success');
+    fermerModal();
+    chargerClients();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    boutonSubmit.disabled = false;
+  }
+}
+
+async function supprimerClientPage(id){
+  if (!confirm('Supprimer ce client ? Il ne sera plus proposé dans les ventes.')) return;
+  try {
+    await appelApiEcriture(`/clients/${id}`, 'DELETE');
+    afficherToast('Client supprimé.', 'success');
+    chargerClients();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+async function voirDetailClientPage(id){
+  try {
+    const client = await appelApi(`/clients/${id}`);
+    ouvrirModal(`
+      <div class="modal-head">
+        <div><h2>${client.nom}</h2><div class="modal-sub">${client.telephone || 'Téléphone non renseigné'} — ${client.adresse || 'Adresse non renseignée'}</div></div>
+        <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+      </div>
+      <div class="detail-grid">
+        <div><div class="dg-label">Visites</div><div class="dg-value">${formatNombre(client.nombre_visites)}</div></div>
+        <div><div class="dg-label">Montant dépensé</div><div class="dg-value">${formatMontant(client.montant_total_depense)}</div></div>
+        <div><div class="dg-label">Dette actuelle</div><div class="dg-value" style="${Number(client.dette_actuelle) > 0 ? 'color:var(--danger)' : ''}">${formatMontant(client.dette_actuelle)}</div></div>
+      </div>
+      ${Number(client.dette_actuelle) > 0 ? `<button class="btn btn-accent" style="margin-bottom:18px;" onclick="ouvrirModalPaiementClient('${client.id}', ${client.dette_actuelle})">Régler la dette</button>` : ''}
+      <h3 style="font-size:13px;">Historique des ventes</h3>
+      <div class="table-scroll" style="margin-bottom:16px;">
+        <table class="data-table">
+          <thead><tr><th>Référence</th><th>Date</th><th>Paiement</th><th>Total</th></tr></thead>
+          <tbody>
+            ${client.historique_ventes.length === 0 ? '<tr><td colspan="4" class="empty-state">Aucune vente.</td></tr>' :
+              client.historique_ventes.map(v => `<tr><td class="mono">${v.reference}</td><td class="mono">${new Date(v.date_vente).toLocaleDateString('fr-FR')}</td><td>${LIBELLES_PAIEMENT[v.mode_paiement] || v.mode_paiement}</td><td class="mono">${formatMontant(v.total)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <h3 style="font-size:13px;">Historique des paiements de dette</h3>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th>Date</th><th>Montant</th><th>Mode</th></tr></thead>
+          <tbody>
+            ${client.historique_paiements.length === 0 ? '<tr><td colspan="3" class="empty-state">Aucun règlement.</td></tr>' :
+              client.historique_paiements.map(p => `<tr><td class="mono">${new Date(p.date_paiement).toLocaleDateString('fr-FR')}</td><td class="mono">${formatMontant(p.montant)}</td><td>${LIBELLES_PAIEMENT[p.mode_paiement] || p.mode_paiement}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    `);
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+function ouvrirModalPaiementClient(clientId, detteActuelle){
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>Régler une dette client</h2><div class="modal-sub">Dette actuelle : ${formatMontant(detteActuelle)}</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form onsubmit="soumettrePaiementClient(event, '${clientId}')">
+      <div class="form-grid">
+        <div class="form-group full"><label>Montant *</label><input type="number" name="montant" min="0.01" step="0.01" max="${detteActuelle}" required></div>
+        <div class="form-group"><label>Mode de paiement *</label>
+          <select name="mode_paiement" required>
+            <option value="especes">Espèces</option>
+            <option value="mobile_money">Mobile Money</option>
+            <option value="carte">Carte</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Notes</label><textarea name="notes"></textarea></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">Enregistrer le paiement</button>
+      </div>
+    </form>
+  `);
+}
+
+async function soumettrePaiementClient(event, clientId){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  const payload = { montant: Number(donnees.get('montant')), mode_paiement: donnees.get('mode_paiement'), notes: donnees.get('notes') || null };
+  const boutonSubmit = event.target.querySelector('button[type="submit"]');
+  boutonSubmit.disabled = true;
+  try {
+    await appelApiEcriture(`/clients/${clientId}/paiement`, 'POST', payload);
+    afficherToast('Paiement enregistré.', 'success');
+    fermerModal();
+    chargerClients();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    boutonSubmit.disabled = false;
+  }
+}
+
+// ============================================================
+// MODULE : FOURNISSEURS (page dédiée)
+// ============================================================
+let fournisseursListCache = [];
+let minuteurRechercheFournisseurs = null;
+
+async function chargerFournisseurs(recherche){
+  const corps = document.getElementById('corpsTableFournisseurs');
+  const terme = recherche !== undefined ? recherche : document.getElementById('rechercheFournisseurs').value;
+  try {
+    const chemin = '/fournisseurs' + (terme ? `?recherche=${encodeURIComponent(terme)}` : '');
+    fournisseursListCache = await appelApi(chemin);
+    dessinerTableFournisseurs(fournisseursListCache);
+  } catch (err) {
+    corps.innerHTML = `<tr><td colspan="5" class="empty-state">Impossible de charger les fournisseurs (${err.message}).</td></tr>`;
+  }
+}
+
+document.getElementById('rechercheFournisseurs')?.addEventListener('input', (e) => {
+  clearTimeout(minuteurRechercheFournisseurs);
+  const valeur = e.target.value;
+  minuteurRechercheFournisseurs = setTimeout(() => chargerFournisseurs(valeur), 300);
+});
+
+function dessinerTableFournisseurs(fournisseurs){
+  const corps = document.getElementById('corpsTableFournisseurs');
+  if (!fournisseurs || fournisseurs.length === 0) {
+    corps.innerHTML = '<tr><td colspan="5" class="empty-state">Aucun fournisseur enregistré.</td></tr>';
+    return;
+  }
+  corps.innerHTML = fournisseurs.map(f => `
+    <tr>
+      <td><strong>${f.nom}</strong><div class="cell-sub">${f.telephone || '—'}</div></td>
+      <td class="mono">${formatNombre(f.nombre_achats)}</td>
+      <td class="mono">${formatMontant(f.montant_total_achete)}</td>
+      <td class="mono" style="${Number(f.dette_actuelle) > 0 ? 'color:var(--danger)' : ''}">${formatMontant(f.dette_actuelle)}</td>
+      <td class="cell-actions">
+        <button class="icon-btn" title="Voir le détail" onclick="voirDetailFournisseurPage('${f.id}')">${svgIcon('eye')}</button>
+        <button class="icon-btn" title="Modifier" onclick="ouvrirModalFournisseurPage('${f.id}')">${svgIcon('edit')}</button>
+        <button class="icon-btn danger" title="Supprimer" onclick="supprimerFournisseurPage('${f.id}')">${svgIcon('trash')}</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function ouvrirModalFournisseurPage(id){
+  const fournisseur = id ? fournisseursListCache.find(f => f.id === id) : null;
+  const v = (champ) => fournisseur && fournisseur[champ] ? fournisseur[champ] : '';
+
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>${fournisseur ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}</h2><div class="modal-sub">${fournisseur ? fournisseur.nom : ''}</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form onsubmit="soumettreFournisseurPage(event, ${fournisseur ? `'${fournisseur.id}'` : 'null'})">
+      <div class="form-grid">
+        <div class="form-group full"><label>Nom *</label><input type="text" name="nom" required value="${v('nom')}"></div>
+        <div class="form-group"><label>Téléphone</label><input type="text" name="telephone" value="${v('telephone')}"></div>
+        <div class="form-group"><label>Adresse</label><input type="text" name="adresse" value="${v('adresse')}"></div>
+        <div class="form-group full"><label>Observations</label><textarea name="observations">${v('observations')}</textarea></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">${fournisseur ? 'Enregistrer' : 'Créer le fournisseur'}</button>
+      </div>
+    </form>
+  `);
+}
+
+async function soumettreFournisseurPage(event, id){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  const payload = Object.fromEntries(donnees.entries());
+  const boutonSubmit = event.target.querySelector('button[type="submit"]');
+  boutonSubmit.disabled = true;
+  try {
+    if (id) await appelApiEcriture(`/fournisseurs/${id}`, 'PUT', payload);
+    else await appelApiEcriture('/fournisseurs', 'POST', payload);
+    afficherToast('Fournisseur enregistré.', 'success');
+    fermerModal();
+    chargerFournisseurs();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    boutonSubmit.disabled = false;
+  }
+}
+
+async function supprimerFournisseurPage(id){
+  if (!confirm('Supprimer ce fournisseur ?')) return;
+  try {
+    await appelApiEcriture(`/fournisseurs/${id}`, 'DELETE');
+    afficherToast('Fournisseur supprimé.', 'success');
+    chargerFournisseurs();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+async function voirDetailFournisseurPage(id){
+  try {
+    const fournisseur = await appelApi(`/fournisseurs/${id}`);
+    ouvrirModal(`
+      <div class="modal-head">
+        <div><h2>${fournisseur.nom}</h2><div class="modal-sub">${fournisseur.telephone || 'Téléphone non renseigné'}</div></div>
+        <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+      </div>
+      <div class="detail-grid">
+        <div><div class="dg-label">Montant total acheté</div><div class="dg-value">${formatMontant(fournisseur.montant_total_achete || 0)}</div></div>
+        <div><div class="dg-label">Dette actuelle</div><div class="dg-value" style="${Number(fournisseur.dette_actuelle) > 0 ? 'color:var(--danger)' : ''}">${formatMontant(fournisseur.dette_actuelle)}</div></div>
+      </div>
+      ${Number(fournisseur.dette_actuelle) > 0 ? `<button class="btn btn-accent" style="margin-bottom:18px;" onclick="ouvrirModalPaiementFournisseur('${fournisseur.id}', ${fournisseur.dette_actuelle})">Régler la dette</button>` : ''}
+      <h3 style="font-size:13px;">Historique des achats</h3>
+      <div class="table-scroll" style="margin-bottom:16px;">
+        <table class="data-table">
+          <thead><tr><th>Référence</th><th>Date</th><th>Coût total</th><th>Payé</th></tr></thead>
+          <tbody>
+            ${fournisseur.historique_achats.length === 0 ? '<tr><td colspan="4" class="empty-state">Aucun achat.</td></tr>' :
+              fournisseur.historique_achats.map(a => `<tr><td class="mono">${a.reference}</td><td class="mono">${new Date(a.date_achat).toLocaleDateString('fr-FR')}</td><td class="mono">${formatMontant(a.cout_total)}</td><td class="mono">${formatMontant(a.montant_paye)}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <h3 style="font-size:13px;">Historique des paiements</h3>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th>Date</th><th>Montant</th><th>Mode</th></tr></thead>
+          <tbody>
+            ${fournisseur.historique_paiements.length === 0 ? '<tr><td colspan="3" class="empty-state">Aucun règlement.</td></tr>' :
+              fournisseur.historique_paiements.map(p => `<tr><td class="mono">${new Date(p.date_paiement).toLocaleDateString('fr-FR')}</td><td class="mono">${formatMontant(p.montant)}</td><td>${LIBELLES_PAIEMENT[p.mode_paiement] || p.mode_paiement}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    `);
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+function ouvrirModalPaiementFournisseur(fournisseurId, detteActuelle){
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>Régler une dette fournisseur</h2><div class="modal-sub">Dette actuelle : ${formatMontant(detteActuelle)}</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form onsubmit="soumettrePaiementFournisseur(event, '${fournisseurId}')">
+      <div class="form-grid">
+        <div class="form-group full"><label>Montant *</label><input type="number" name="montant" min="0.01" step="0.01" max="${detteActuelle}" required></div>
+        <div class="form-group"><label>Mode de paiement *</label>
+          <select name="mode_paiement" required>
+            <option value="especes">Espèces</option>
+            <option value="mobile_money">Mobile Money</option>
+            <option value="carte">Carte</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Notes</label><textarea name="notes"></textarea></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">Enregistrer le paiement</button>
+      </div>
+    </form>
+  `);
+}
+
+async function soumettrePaiementFournisseur(event, fournisseurId){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  const payload = { montant: Number(donnees.get('montant')), mode_paiement: donnees.get('mode_paiement'), notes: donnees.get('notes') || null };
+  const boutonSubmit = event.target.querySelector('button[type="submit"]');
+  boutonSubmit.disabled = true;
+  try {
+    await appelApiEcriture(`/fournisseurs/${fournisseurId}/paiement`, 'POST', payload);
+    afficherToast('Paiement enregistré.', 'success');
+    fermerModal();
+    chargerFournisseurs();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    boutonSubmit.disabled = false;
+  }
+}
+
+// ============================================================
+// MODULE : CHARGES
+// ============================================================
+const CATEGORIES_CHARGES_SUGGESTIONS = ['Transport','Carburant','Salaire','Prime','Loyer','Électricité','Internet','Eau','Téléphone','Entretien','Réparation','Marketing','Taxes','Impôts','Divers'];
+
+async function chargerCharges(){
+  const corps = document.getElementById('corpsTableCharges');
+  try {
+    const charges = await appelApi('/charges');
+    const total = charges.reduce((acc, c) => acc + Number(c.montant), 0);
+    document.getElementById('resumeCharges').textContent = `${charges.length} charge(s) — total ${formatMontant(total)}`;
+    dessinerTableCharges(charges);
+  } catch (err) {
+    corps.innerHTML = `<tr><td colspan="6" class="empty-state">Impossible de charger les charges (${err.message}).</td></tr>`;
+  }
+}
+
+function dessinerTableCharges(charges){
+  const corps = document.getElementById('corpsTableCharges');
+  if (!charges || charges.length === 0) {
+    corps.innerHTML = '<tr><td colspan="6" class="empty-state">Aucune charge enregistrée.</td></tr>';
+    return;
+  }
+  corps.innerHTML = charges.map(c => `
+    <tr>
+      <td class="mono">${new Date(c.date_charge).toLocaleDateString('fr-FR')}</td>
+      <td>${c.categorie}</td>
+      <td class="cell-sub">${c.description || '—'}</td>
+      <td class="mono">${formatMontant(c.montant)}</td>
+      <td><span class="badge neutral">${LIBELLES_PAIEMENT[c.mode_paiement] || c.mode_paiement}</span></td>
+      <td class="cell-actions"><button class="icon-btn danger" title="Supprimer" onclick="supprimerCharge('${c.id}')">${svgIcon('trash')}</button></td>
+    </tr>
+  `).join('');
+}
+
+function ouvrirModalCharge(){
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>Nouvelle charge</h2><div class="modal-sub">Comptabilisée automatiquement selon la catégorie et le mode de paiement.</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form onsubmit="soumettreCharge(event)">
+      <div class="form-grid">
+        <div class="form-group"><label>Date</label><input type="date" name="date_charge" value="${new Date().toISOString().slice(0,10)}"></div>
+        <div class="form-group">
+          <label>Catégorie *</label>
+          <input type="text" name="categorie" list="listeCategoriesCharges" required placeholder="Ex : Transport">
+          <datalist id="listeCategoriesCharges">${CATEGORIES_CHARGES_SUGGESTIONS.map(c => `<option value="${c}">`).join('')}</datalist>
+        </div>
+        <div class="form-group"><label>Montant (FC) *</label><input type="number" name="montant" min="0.01" step="0.01" required></div>
+        <div class="form-group">
+          <label>Mode de paiement *</label>
+          <select name="mode_paiement" required>
+            <option value="especes">Espèces</option>
+            <option value="mobile_money">Mobile Money</option>
+            <option value="carte">Carte</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Description</label><input type="text" name="description"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">Enregistrer la charge</button>
+      </div>
+    </form>
+  `);
+}
+
+async function soumettreCharge(event){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  const payload = Object.fromEntries(donnees.entries());
+  payload.montant = Number(payload.montant);
+  const boutonSubmit = event.target.querySelector('button[type="submit"]');
+  boutonSubmit.disabled = true;
+  try {
+    await appelApiEcriture('/charges', 'POST', payload);
+    afficherToast('Charge enregistrée.', 'success');
+    fermerModal();
+    chargerCharges();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    boutonSubmit.disabled = false;
+  }
+}
+
+async function supprimerCharge(id){
+  if (!confirm('Supprimer cette charge et son écriture comptable ?')) return;
+  try {
+    await appelApiEcriture(`/charges/${id}`, 'DELETE');
+    afficherToast('Charge supprimée.', 'success');
+    chargerCharges();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+// ============================================================
+// INITIALISATION
+// ============================================================
 document.getElementById('refreshBtn').addEventListener('click', () => {
   const idActif = document.querySelector('.nav-item.active')?.dataset.view || 'dashboard';
   if (idActif === 'produits') chargerProduits();
   else if (idActif === 'stock') chargerStock();
   else if (idActif === 'achats') chargerAchats();
   else if (idActif === 'ventes') chargerVentes();
+  else if (idActif === 'clients') chargerClients();
+  else if (idActif === 'fournisseurs') chargerFournisseurs();
+  else if (idActif === 'charges') chargerCharges();
   else chargerDashboard();
 });
 chargerDashboard();
+
 
 </script>
 </body>
