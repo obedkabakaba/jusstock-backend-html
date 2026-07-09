@@ -510,13 +510,14 @@
                 <tr>
                   <th>Produit</th>
                   <th>Stock</th>
-                  <th>Prix vente conseillé</th>
+                  <th>Prix détail (bout.)</th>
+                  <th>Prix gros (paquet)</th>
                   <th>Statut</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody id="corpsTableProduits">
-                <tr><td colspan="5" class="empty-state">Chargement…</td></tr>
+                <tr><td colspan="6" class="empty-state">Chargement…</td></tr>
               </tbody>
             </table>
           </div>
@@ -1115,7 +1116,7 @@ async function chargerProduits(recherche){
     produitsCache = await appelApi(chemin);
     dessinerTableProduits(produitsCache);
   } catch (err) {
-    corps.innerHTML = `<tr><td colspan="5" class="empty-state">Impossible de charger les produits (${err.message}).</td></tr>`;
+    corps.innerHTML = `<tr><td colspan="6" class="empty-state">Impossible de charger les produits (${err.message}).</td></tr>`;
   }
 }
 
@@ -1128,7 +1129,7 @@ document.getElementById('rechercheProduits')?.addEventListener('input', (e) => {
 function dessinerTableProduits(produits){
   const corps = document.getElementById('corpsTableProduits');
   if (!produits || produits.length === 0) {
-    corps.innerHTML = '<tr><td colspan="5" class="empty-state">Aucun produit. Clique sur "Nouveau produit" pour commencer.</td></tr>';
+    corps.innerHTML = '<tr><td colspan="6" class="empty-state">Aucun produit. Clique sur "Nouveau produit" pour commencer.</td></tr>';
     return;
   }
 
@@ -1141,7 +1142,11 @@ function dessinerTableProduits(produits){
       <td>
         <span class="unit-chip">${svgIcon('bottle')}${formatNombre(p.stock_bouteilles)} bout.<span class="sep">·</span>${formatNombre(p.stock_paquets_complets)} paq.</span>
       </td>
-      <td>${p.prix_vente_conseille ? formatMontant(p.prix_vente_conseille) : '—'}</td>
+      <td>${p.prix_detail_conseille ? formatMontant(p.prix_detail_conseille) : '—'}</td>
+      <td>
+        ${p.prix_gros_conseille ? formatMontant(p.prix_gros_conseille) : '—'}
+        ${p.bonus_seuil_paquets && p.bonus_offert_paquets ? `<div class="cell-sub">Bonus : ${p.bonus_seuil_paquets} → +${p.bonus_offert_paquets} offert(s)</div>` : ''}
+      </td>
       <td>${p.en_alerte_stock ? '<span class="badge alerte">Stock faible</span>' : '<span class="badge ok">OK</span>'}</td>
       <td class="cell-actions">
         <button class="icon-btn" title="Modifier" onclick="ouvrirModalProduit('${p.id}')">${svgIcon('edit')}</button>
@@ -1186,21 +1191,57 @@ function ouvrirModalProduit(id){
           <label>Bouteilles par paquet *</label>
           <input type="number" name="bouteilles_par_paquet" min="1" required value="${v('bouteilles_par_paquet', 12)}">
         </div>
-        <div class="form-group">
-          <label>Prix de vente conseillé (FC)</label>
-          <input type="number" step="0.01" name="prix_vente_conseille" value="${v('prix_vente_conseille')}">
+
+        <div class="form-group full" style="margin-top:4px;margin-bottom:-4px;">
+          <label style="font-size:12.5px;color:var(--text);">Prix au détail — à la bouteille</label>
+          <div class="hint">Ex : 500 FC la bouteille. C'est le prix libre que le vendeur pourra ajuster à chaque vente.</div>
         </div>
         <div class="form-group">
-          <label>Stock minimum (bouteilles)</label>
-          <input type="number" min="0" name="stock_min_bouteilles" value="${v('stock_min_bouteilles', 24)}">
+          <label>Prix conseillé (FC/bouteille)</label>
+          <input type="number" step="0.01" name="prix_detail_conseille" value="${v('prix_detail_conseille')}">
         </div>
         <div class="form-group">
           <label>Prix minimum (FC)</label>
-          <input type="number" step="0.01" name="prix_min" value="${v('prix_min')}">
+          <input type="number" step="0.01" name="prix_detail_min" value="${v('prix_detail_min')}">
         </div>
         <div class="form-group">
           <label>Prix maximum (FC)</label>
-          <input type="number" step="0.01" name="prix_max" value="${v('prix_max')}">
+          <input type="number" step="0.01" name="prix_detail_max" value="${v('prix_detail_max')}">
+        </div>
+
+        <div class="form-group full" style="margin-top:4px;margin-bottom:-4px;">
+          <label style="font-size:12.5px;color:var(--text);">Prix en gros — au paquet</label>
+          <div class="hint">Ex : 5000 FC le paquet de ${v('bouteilles_par_paquet', 12)} bouteilles (normalement moins cher que ${v('bouteilles_par_paquet', 12)} × le prix détail — c'est la remise de gros).</div>
+        </div>
+        <div class="form-group">
+          <label>Prix conseillé (FC/paquet)</label>
+          <input type="number" step="0.01" name="prix_gros_conseille" value="${v('prix_gros_conseille')}">
+        </div>
+        <div class="form-group">
+          <label>Prix minimum (FC)</label>
+          <input type="number" step="0.01" name="prix_gros_min" value="${v('prix_gros_min')}">
+        </div>
+        <div class="form-group">
+          <label>Prix maximum (FC)</label>
+          <input type="number" step="0.01" name="prix_gros_max" value="${v('prix_gros_max')}">
+        </div>
+
+        <div class="form-group full" style="margin-top:4px;margin-bottom:-4px;">
+          <label style="font-size:12.5px;color:var(--text);">Règle de bonus en gros (optionnelle)</label>
+          <div class="hint">Ex : achète 10 paquets → 2 offerts. Laisse vide si ce produit n'a pas de promotion. La règle se répète par palier (20 paquets → 4 offerts, etc.).</div>
+        </div>
+        <div class="form-group">
+          <label>Seuil (paquets achetés)</label>
+          <input type="number" min="1" name="bonus_seuil_paquets" value="${v('bonus_seuil_paquets')}" placeholder="Ex : 10">
+        </div>
+        <div class="form-group">
+          <label>Paquets offerts</label>
+          <input type="number" min="1" name="bonus_offert_paquets" value="${v('bonus_offert_paquets')}" placeholder="Ex : 2">
+        </div>
+
+        <div class="form-group">
+          <label>Stock minimum (bouteilles)</label>
+          <input type="number" min="0" name="stock_min_bouteilles" value="${v('stock_min_bouteilles', 24)}">
         </div>
         <div class="form-group">
           <label>Code produit</label>
@@ -1230,7 +1271,7 @@ async function soumettreProduit(event, id){
   const payload = {};
   for (const [cle, valeur] of donnees.entries()) {
     if (valeur === '') continue; // on n'envoie pas les champs vides (laisse la valeur existante ou null en base)
-    const champsNumeriques = ['bouteilles_par_paquet', 'prix_vente_conseille', 'prix_min', 'prix_max', 'stock_min_bouteilles'];
+    const champsNumeriques = ['bouteilles_par_paquet', 'prix_detail_conseille', 'prix_detail_min', 'prix_detail_max', 'prix_gros_conseille', 'prix_gros_min', 'prix_gros_max', 'bonus_seuil_paquets', 'bonus_offert_paquets', 'stock_min_bouteilles'];
     payload[cle] = champsNumeriques.includes(cle) ? Number(valeur) : valeur;
   }
 
@@ -1516,7 +1557,13 @@ async function ouvrirModalAchat(preselectionFournisseurId){
 }
 
 function optionsProduitsHtml(){
-  return produitsPourFormulaire.map(p => `<option value="${p.id}">${p.nom}</option>`).join('');
+  return produitsPourFormulaire.map(p =>
+    `<option value="${p.id}"
+       data-prix-detail="${p.prix_detail_conseille || ''}"
+       data-prix-gros="${p.prix_gros_conseille || ''}"
+       data-bonus-seuil="${p.bonus_seuil_paquets || ''}"
+       data-bonus-offert="${p.bonus_offert_paquets || ''}">${p.nom}</option>`
+  ).join('');
 }
 
 function ligneAchatHtml(){
@@ -1765,17 +1812,61 @@ async function ouvrirModalVente(preselectionClientId){
 function ligneVenteHtml(){
   return `
     <div class="line-item-row">
-      <div class="form-group"><label>Produit *</label><select name="ligne_produit_id" required>${optionsProduitsHtml()}</select></div>
-      <div class="form-group"><label>Type *</label><select name="ligne_type_vente"><option value="detail">Détail (bouteille)</option><option value="gros">Gros (paquet)</option></select></div>
-      <div class="form-group"><label>Quantité *</label><input type="number" name="ligne_quantite" min="1" value="1" required></div>
-      <div class="form-group"><label>Prix unitaire *</label><input type="number" name="ligne_prix_unitaire" min="0" step="0.01" required></div>
-      <div class="form-group"><label>Bonus offert</label><input type="number" name="ligne_bonus_quantite" min="0" value="0"></div>
+      <div class="form-group"><label>Produit *</label><select name="ligne_produit_id" required onchange="suggererPrixVente(this); suggererBonusVente(this)">${optionsProduitsHtml()}</select></div>
+      <div class="form-group"><label>Type *</label><select name="ligne_type_vente" onchange="suggererPrixVente(this); suggererBonusVente(this)"><option value="detail">Détail (bouteille)</option><option value="gros">Gros (paquet)</option></select></div>
+      <div class="form-group"><label>Quantité *</label><input type="number" name="ligne_quantite" min="1" value="1" required oninput="suggererBonusVente(this)"></div>
+      <div class="form-group"><label>Prix unitaire *</label><input type="number" name="ligne_prix_unitaire" min="0" step="0.01" required oninput="this.dataset.modifieManuel='true'"></div>
+      <div class="form-group"><label>Bonus offert</label><input type="number" name="ligne_bonus_quantite" min="0" value="0" oninput="this.dataset.modifieManuel='true'"></div>
       <button type="button" class="btn-remove-line" onclick="supprimerLigne(this)" title="Retirer la ligne">${svgIcon('close')}</button>
     </div>`;
 }
 
+// Pré-remplit le prix unitaire avec le prix conseillé du produit (détail ou
+// gros selon le type choisi) — sans jamais écraser une saisie manuelle.
+function suggererPrixVente(element){
+  const ligne = element.closest('.line-item-row');
+  const selectProduit = ligne.querySelector('[name="ligne_produit_id"]');
+  const selectType = ligne.querySelector('[name="ligne_type_vente"]');
+  const inputPrix = ligne.querySelector('[name="ligne_prix_unitaire"]');
+  if (!selectProduit || !selectType || !inputPrix) return;
+  if (inputPrix.dataset.modifieManuel === 'true') return;
+
+  const optionChoisie = selectProduit.options[selectProduit.selectedIndex];
+  const suggestion = selectType.value === 'gros' ? optionChoisie?.dataset.prixGros : optionChoisie?.dataset.prixDetail;
+  if (suggestion) inputPrix.value = suggestion;
+}
+
+// Calcule automatiquement le bonus offert selon la règle propre au produit
+// (ex : seuil 10 paquets -> 2 offerts). La règle se répète par palier :
+// 20 paquets avec un seuil de 10 -> 4 offerts (2 x le bonus). Ne s'applique
+// qu'à la vente en gros, et n'écrase jamais une valeur saisie manuellement.
+function suggererBonusVente(element){
+  const ligne = element.closest('.line-item-row');
+  const selectProduit = ligne.querySelector('[name="ligne_produit_id"]');
+  const selectType = ligne.querySelector('[name="ligne_type_vente"]');
+  const inputQuantite = ligne.querySelector('[name="ligne_quantite"]');
+  const inputBonus = ligne.querySelector('[name="ligne_bonus_quantite"]');
+  if (!selectProduit || !selectType || !inputQuantite || !inputBonus) return;
+  if (inputBonus.dataset.modifieManuel === 'true') return;
+
+  if (selectType.value !== 'gros') { inputBonus.value = 0; return; }
+
+  const optionChoisie = selectProduit.options[selectProduit.selectedIndex];
+  const seuil = Number(optionChoisie?.dataset.bonusSeuil || 0);
+  const offert = Number(optionChoisie?.dataset.bonusOffert || 0);
+  const quantite = Number(inputQuantite.value || 0);
+
+  inputBonus.value = (seuil > 0 && offert > 0 && quantite >= seuil)
+    ? Math.floor(quantite / seuil) * offert
+    : 0;
+}
+
 function ajouterLigneVente(){
   document.getElementById('lignesVenteContainer').insertAdjacentHTML('beforeend', ligneVenteHtml());
+  const nouvelleLigne = document.getElementById('lignesVenteContainer').lastElementChild;
+  const selectProduitNouveau = nouvelleLigne.querySelector('[name="ligne_produit_id"]');
+  suggererPrixVente(selectProduitNouveau);
+  suggererBonusVente(selectProduitNouveau);
   recalculerApercuVente();
 }
 
@@ -1842,6 +1933,7 @@ function construireFormVente(preselectionClientId){
   `);
 
   document.getElementById('formVente').addEventListener('input', recalculerApercuVente);
+  document.querySelectorAll('#lignesVenteContainer [name="ligne_produit_id"]').forEach((el) => { suggererPrixVente(el); suggererBonusVente(el); });
   recalculerApercuVente();
 }
 
