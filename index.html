@@ -327,6 +327,18 @@
   .detail-grid .dg-label{color:var(--text-muted);font-size:11.5px;}
   .detail-grid .dg-value{font-weight:600;}
 
+  /* ---------- ONGLETS (Comptabilité / Rapports) ---------- */
+  .tabs-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+  .tab-btn{
+    padding:8px 15px;border-radius:8px;border:1px solid var(--border);
+    background:var(--surface);font-size:12.5px;font-weight:600;cursor:pointer;
+    color:var(--text-muted);transition:all .15s ease;
+  }
+  .tab-btn.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .tab-btn:hover:not(.active){border-color:var(--accent);color:var(--accent-dark);}
+  .filtre-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:18px;}
+  .filtre-row .form-group{min-width:150px;}
+
   /* ---------- RESPONSIVE ---------- */
   @media (max-width: 980px){
     .panel-grid,.lower-grid{grid-template-columns:1fr;}
@@ -601,10 +613,69 @@
           </div>
         </div>
       </section>
-      <section class="view" id="view-comptabilite"></section>
-      <section class="view" id="view-rapports"></section>
+      <section class="view" id="view-comptabilite">
+        <div class="filtre-row">
+          <div class="form-group"><label>Du</label><input type="date" id="compteDu"></div>
+          <div class="form-group"><label>Au</label><input type="date" id="compteAu"></div>
+          <button class="btn btn-accent" onclick="rafraichirCompta()">Filtrer</button>
+        </div>
+        <div class="tabs-row">
+          <button class="tab-btn active" data-tab="journal" onclick="changerOngletCompta('journal')">Journal</button>
+          <button class="tab-btn" data-tab="balance" onclick="changerOngletCompta('balance')">Balance</button>
+          <button class="tab-btn" data-tab="resultat" onclick="changerOngletCompta('resultat')">Compte de résultat</button>
+          <button class="tab-btn" data-tab="bilan" onclick="changerOngletCompta('bilan')">Bilan</button>
+          <button class="tab-btn" data-tab="tresorerie" onclick="changerOngletCompta('tresorerie')">Trésorerie</button>
+          <button class="tab-btn" data-tab="grandlivre" onclick="changerOngletCompta('grandlivre')">Grand livre</button>
+        </div>
+        <div id="contenuCompta"><div class="empty-state">Chargement…</div></div>
+      </section>
+
+      <section class="view" id="view-rapports">
+        <div class="filtre-row">
+          <div class="form-group">
+            <label>Période</label>
+            <select id="periodeRapports" onchange="onChangementPeriodeRapports()">
+              <option value="jour">Aujourd'hui</option>
+              <option value="semaine">Cette semaine</option>
+              <option value="mois" selected>Ce mois</option>
+              <option value="annee">Cette année</option>
+              <option value="personnalisee">Personnalisée</option>
+            </select>
+          </div>
+          <div class="form-group" id="rapportDuWrap" style="display:none;"><label>Du</label><input type="date" id="rapportDu"></div>
+          <div class="form-group" id="rapportAuWrap" style="display:none;"><label>Au</label><input type="date" id="rapportAu"></div>
+          <button class="btn btn-accent" onclick="rafraichirRapports()">Actualiser</button>
+        </div>
+        <div class="tabs-row">
+          <button class="tab-btn active" data-tab="ventes" onclick="changerOngletRapport('ventes')">Ventes</button>
+          <button class="tab-btn" data-tab="achats" onclick="changerOngletRapport('achats')">Achats</button>
+          <button class="tab-btn" data-tab="charges" onclick="changerOngletRapport('charges')">Charges</button>
+        </div>
+        <div id="contenuRapports"><div class="empty-state">Chargement…</div></div>
+      </section>
+
       <section class="view" id="view-utilisateurs"></section>
-      <section class="view" id="view-parametres"></section>
+
+      <section class="view" id="view-parametres">
+        <div class="panel" style="max-width:680px;">
+          <h3>Informations générales de l'entreprise</h3>
+          <form id="formParametres" onsubmit="soumettreParametres(event)">
+            <div class="form-grid">
+              <div class="form-group full"><label>Nom de l'entreprise</label><input type="text" name="nom_entreprise" id="pNomEntreprise"></div>
+              <div class="form-group"><label>Devise principale</label><input type="text" name="devise_principale" id="pDevisePrincipale"></div>
+              <div class="form-group"><label>Devise secondaire</label><input type="text" name="devise_secondaire" id="pDeviseSecondaire"></div>
+              <div class="form-group"><label>Taux de change (FC pour 1 unité de devise secondaire)</label><input type="number" step="0.01" name="taux_change" id="pTauxChange"></div>
+              <div class="form-group"><label>Taux de TVA (%)</label><input type="number" step="0.01" name="taux_tva" id="pTauxTva"></div>
+              <div class="form-group"><label>Stock minimum par défaut (bouteilles)</label><input type="number" name="stock_min_bouteille_defaut" id="pStockMinBout"></div>
+              <div class="form-group"><label>Stock minimum par défaut (paquets)</label><input type="number" name="stock_min_paquet_defaut" id="pStockMinPaq"></div>
+              <div class="form-group full"><label>Préfixe de numérotation des factures</label><input type="text" name="numerotation_facture_prefixe" id="pPrefixeFacture"></div>
+            </div>
+            <div class="modal-actions" style="justify-content:flex-start;">
+              <button type="submit" class="btn btn-accent">Enregistrer les paramètres</button>
+            </div>
+          </form>
+        </div>
+      </section>
 
     </main>
   </div>
@@ -643,11 +714,11 @@ const NAV_ITEMS = [
   { id: 'stock',         label: 'Stock',           ready: true,  icon: 'layers',    subtitle: 'Niveaux de stock, mouvements et alertes' },
   { id: 'clients',       label: 'Clients',         ready: true,  icon: 'user',      subtitle: 'Clients enregistrés, historique et dettes' },
   { id: 'fournisseurs',  label: 'Fournisseurs',    ready: true,  icon: 'truck',     subtitle: 'Fournisseurs, historique et paiements' },
-  { id: 'comptabilite',  label: 'Comptabilité',    ready: false, icon: 'book',      subtitle: 'Journal, grand livre, balance, bilan' },
+  { id: 'comptabilite',  label: 'Comptabilité',    ready: true,  icon: 'book',      subtitle: 'Journal, grand livre, balance, bilan' },
   { id: 'charges',       label: 'Charges',         ready: true,  icon: 'receipt',   subtitle: 'Dépenses de l\'entreprise' },
-  { id: 'rapports',      label: 'Rapports',        ready: false, icon: 'bar-chart', subtitle: 'Rapports détaillés par période' },
+  { id: 'rapports',      label: 'Rapports',        ready: true,  icon: 'bar-chart', subtitle: 'Rapports détaillés par période' },
   { id: 'utilisateurs',  label: 'Utilisateurs',    ready: false, icon: 'users',     subtitle: 'Rôles, permissions et journal d\'audit' },
-  { id: 'parametres',    label: 'Paramètres',      ready: false, icon: 'settings',  subtitle: "Configuration générale de l'entreprise" },
+  { id: 'parametres',    label: 'Paramètres',      ready: true,  icon: 'settings',  subtitle: "Configuration générale de l'entreprise" },
 ];
 
 const ICONS = {
@@ -725,6 +796,9 @@ function afficherVue(id){
   if (id === 'clients') chargerClients();
   if (id === 'fournisseurs') chargerFournisseurs();
   if (id === 'charges') chargerCharges();
+  if (id === 'comptabilite') chargerComptabilite();
+  if (id === 'rapports') chargerRapports();
+  if (id === 'parametres') chargerParametres();
 }
 
 document.getElementById('menuToggle').addEventListener('click', () => {
@@ -2271,6 +2345,288 @@ async function supprimerCharge(id){
 }
 
 // ============================================================
+// MODULE : COMPTABILITÉ
+// ============================================================
+let ongletComptaActif = 'journal';
+let compteGrandLivreSelectionne = '';
+
+function initDatesCompta(){
+  const aujourdHui = new Date();
+  const premierJourMois = new Date(aujourdHui.getFullYear(), aujourdHui.getMonth(), 1);
+  document.getElementById('compteDu').value = premierJourMois.toISOString().slice(0, 10);
+  document.getElementById('compteAu').value = aujourdHui.toISOString().slice(0, 10);
+}
+
+function chargerComptabilite(){
+  if (!document.getElementById('compteDu').value) initDatesCompta();
+  rafraichirCompta();
+}
+
+function changerOngletCompta(tab){
+  ongletComptaActif = tab;
+  document.querySelectorAll('#view-comptabilite .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  rafraichirCompta();
+}
+
+async function rafraichirCompta(){
+  const du = document.getElementById('compteDu').value;
+  const au = document.getElementById('compteAu').value;
+  const contenu = document.getElementById('contenuCompta');
+  contenu.innerHTML = '<div class="empty-state">Chargement…</div>';
+  try {
+    if (ongletComptaActif === 'journal') await afficherJournal(du, au, contenu);
+    else if (ongletComptaActif === 'balance') await afficherBalance(du, au, contenu);
+    else if (ongletComptaActif === 'resultat') await afficherResultat(du, au, contenu);
+    else if (ongletComptaActif === 'bilan') await afficherBilan(au, contenu);
+    else if (ongletComptaActif === 'tresorerie') await afficherTresorerie(du, au, contenu);
+    else if (ongletComptaActif === 'grandlivre') await afficherGrandLivre(du, au, contenu);
+  } catch (err) {
+    contenu.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+  }
+}
+
+async function afficherJournal(du, au, contenu){
+  const lignes = await appelApi(`/comptabilite/journal?du=${du}&au=${au}`);
+  if (lignes.length === 0) { contenu.innerHTML = '<div class="table-panel"><div class="empty-state">Aucune écriture sur cette période.</div></div>'; return; }
+  contenu.innerHTML = `<div class="table-panel"><div class="table-scroll"><table class="data-table">
+    <thead><tr><th>Date</th><th>Compte</th><th>Sens</th><th>Montant</th><th>Libellé</th></tr></thead>
+    <tbody>${lignes.map(l => `
+      <tr>
+        <td class="mono">${new Date(l.date_ecriture).toLocaleDateString('fr-FR')}</td>
+        <td>${l.compte_code} — ${l.compte_nom}</td>
+        <td>${l.sens === 'debit' ? 'Débit' : 'Crédit'}</td>
+        <td class="mono">${formatMontant(l.montant)}</td>
+        <td class="cell-sub">${l.libelle}</td>
+      </tr>`).join('')}</tbody>
+  </table></div></div>`;
+}
+
+async function afficherBalance(du, au, contenu){
+  const comptes = await appelApi(`/comptabilite/balance?du=${du}&au=${au}`);
+  contenu.innerHTML = `<div class="table-panel"><div class="table-scroll"><table class="data-table">
+    <thead><tr><th>Compte</th><th>Type</th><th>Total débit</th><th>Total crédit</th><th>Solde</th></tr></thead>
+    <tbody>${comptes.map(c => `
+      <tr>
+        <td>${c.code} — ${c.nom}</td>
+        <td class="cell-sub">${c.type}</td>
+        <td class="mono">${formatMontant(c.total_debit)}</td>
+        <td class="mono">${formatMontant(c.total_credit)}</td>
+        <td class="mono" style="font-weight:700;">${formatMontant(c.solde)}</td>
+      </tr>`).join('')}</tbody>
+  </table></div></div>`;
+}
+
+async function afficherResultat(du, au, contenu){
+  const r = await appelApi(`/comptabilite/compte-resultat?du=${du}&au=${au}`);
+  contenu.innerHTML = `
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">Total produits</div><div class="kpi-value">${formatMontant(r.total_produits)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total charges</div><div class="kpi-value">${formatMontant(r.total_charges)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Résultat net</div><div class="kpi-value" style="color:${r.resultat_net >= 0 ? 'var(--fresh)' : 'var(--danger)'}">${formatMontant(r.resultat_net)}</div></div>
+    </div>
+    <div class="panel-grid">
+      <div class="panel"><h3>Produits</h3><table class="data-table"><tbody>${r.produits.map(p => `<tr><td>${p.nom}</td><td class="mono">${formatMontant(p.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucun</td></tr>'}</tbody></table></div>
+      <div class="panel"><h3>Charges</h3><table class="data-table"><tbody>${r.charges.map(c => `<tr><td>${c.nom}</td><td class="mono">${formatMontant(c.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucune</td></tr>'}</tbody></table></div>
+    </div>`;
+}
+
+async function afficherBilan(au, contenu){
+  const b = await appelApi(`/comptabilite/bilan?a_la_date=${au}`);
+  contenu.innerHTML = `
+    <div class="banner" style="background:${b.equilibre ? 'var(--fresh-soft)' : 'var(--danger-soft)'};color:${b.equilibre ? '#3F6B26' : '#8A332A'};">
+      <span>${b.equilibre ? 'Le bilan est équilibré (Actif = Passif + Capitaux propres).' : "Le bilan n'est pas équilibré — vérifie les écritures comptables."}</span>
+    </div>
+    <div class="panel-grid">
+      <div class="panel">
+        <h3>Actif <span class="legend">${formatMontant(b.actif.total)}</span></h3>
+        <table class="data-table"><tbody>
+          ${b.actif.comptes.map(c => `<tr><td>${c.code} — ${c.nom}</td><td class="mono">${formatMontant(c.solde)}</td></tr>`).join('')}
+          <tr><td><strong>Valeur du stock (calculée)</strong></td><td class="mono">${formatMontant(b.actif.valeur_stock_marchandises)}</td></tr>
+        </tbody></table>
+      </div>
+      <div class="panel">
+        <h3>Passif &amp; Capitaux <span class="legend">${formatMontant(b.passif_capitaux.total)}</span></h3>
+        <table class="data-table"><tbody>
+          ${b.passif_capitaux.comptes.map(c => `<tr><td>${c.code} — ${c.nom}</td><td class="mono">${formatMontant(c.solde)}</td></tr>`).join('')}
+          <tr><td><strong>Résultat net cumulé</strong></td><td class="mono">${formatMontant(b.passif_capitaux.resultat_net_cumule)}</td></tr>
+        </tbody></table>
+      </div>
+    </div>`;
+}
+
+async function afficherTresorerie(du, au, contenu){
+  const t = await appelApi(`/comptabilite/flux-tresorerie?du=${du}&au=${au}`);
+  contenu.innerHTML = `
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">Encaissements</div><div class="kpi-value" style="color:var(--fresh)">${formatMontant(t.total_encaissements)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Décaissements</div><div class="kpi-value" style="color:var(--danger)">${formatMontant(t.total_decaissements)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Variation nette</div><div class="kpi-value">${formatMontant(t.tresorerie_disponible_variation)}</div></div>
+    </div>
+    <div class="table-panel"><table class="data-table">
+      <thead><tr><th>Compte</th><th>Encaissements</th><th>Décaissements</th><th>Variation nette</th></tr></thead>
+      <tbody>${t.detail_par_compte.map(c => `<tr><td>${c.code} — ${c.nom}</td><td class="mono">${formatMontant(c.encaissements)}</td><td class="mono">${formatMontant(c.decaissements)}</td><td class="mono">${formatMontant(c.variation_nette)}</td></tr>`).join('')}</tbody>
+    </table></div>`;
+}
+
+async function afficherGrandLivre(du, au, contenu){
+  const comptes = await appelApi(`/comptabilite/balance?du=${du}&au=${au}`);
+  const options = comptes.map(c => `<option value="${c.id}" ${String(c.id) === String(compteGrandLivreSelectionne) ? 'selected' : ''}>${c.code} — ${c.nom}</option>`).join('');
+  contenu.innerHTML = `
+    <div class="form-group" style="max-width:340px;margin-bottom:14px;">
+      <label>Compte</label>
+      <select id="selectCompteGrandLivre" onchange="compteGrandLivreSelectionne=this.value; afficherDetailGrandLivre()">
+        <option value="">— Choisir un compte —</option>
+        ${options}
+      </select>
+    </div>
+    <div id="detailGrandLivre"><div class="empty-state">Choisis un compte ci-dessus.</div></div>`;
+
+  if (compteGrandLivreSelectionne) afficherDetailGrandLivre();
+}
+
+async function afficherDetailGrandLivre(){
+  const compteId = document.getElementById('selectCompteGrandLivre').value;
+  const du = document.getElementById('compteDu').value;
+  const au = document.getElementById('compteAu').value;
+  const wrap = document.getElementById('detailGrandLivre');
+  if (!compteId) { wrap.innerHTML = '<div class="empty-state">Choisis un compte ci-dessus.</div>'; return; }
+  wrap.innerHTML = '<div class="empty-state">Chargement…</div>';
+  try {
+    const data = await appelApi(`/comptabilite/grand-livre/${compteId}?du=${du}&au=${au}`);
+    if (data.ecritures.length === 0) { wrap.innerHTML = '<div class="empty-state">Aucune écriture pour ce compte sur cette période.</div>'; return; }
+    wrap.innerHTML = `<div class="table-panel"><div class="table-scroll"><table class="data-table">
+        <thead><tr><th>Date</th><th>Sens</th><th>Montant</th><th>Libellé</th><th>Solde progressif</th></tr></thead>
+        <tbody>${data.ecritures.map(e => `<tr><td class="mono">${new Date(e.date_ecriture).toLocaleDateString('fr-FR')}</td><td>${e.sens === 'debit' ? 'Débit' : 'Crédit'}</td><td class="mono">${formatMontant(e.montant)}</td><td class="cell-sub">${e.libelle}</td><td class="mono" style="font-weight:700;">${formatMontant(e.solde_progressif)}</td></tr>`).join('')}</tbody>
+      </table></div></div>
+      <div class="form-summary"><div class="row total"><span>Solde final</span><span>${formatMontant(data.solde_final)}</span></div></div>`;
+  } catch (err) {
+    wrap.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+  }
+}
+
+// ============================================================
+// MODULE : RAPPORTS
+// ============================================================
+let ongletRapportActif = 'ventes';
+
+function onChangementPeriodeRapports(){
+  const perso = document.getElementById('periodeRapports').value === 'personnalisee';
+  document.getElementById('rapportDuWrap').style.display = perso ? 'flex' : 'none';
+  document.getElementById('rapportAuWrap').style.display = perso ? 'flex' : 'none';
+}
+
+function chargerRapports(){
+  rafraichirRapports();
+}
+
+function changerOngletRapport(tab){
+  ongletRapportActif = tab;
+  document.querySelectorAll('#view-rapports .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  rafraichirRapports();
+}
+
+function construireQueryPeriode(){
+  const periode = document.getElementById('periodeRapports').value;
+  let q = `periode=${periode}`;
+  if (periode === 'personnalisee') {
+    q += `&du=${document.getElementById('rapportDu').value}&au=${document.getElementById('rapportAu').value}`;
+  }
+  return q;
+}
+
+async function rafraichirRapports(){
+  const contenu = document.getElementById('contenuRapports');
+  contenu.innerHTML = '<div class="empty-state">Chargement…</div>';
+  try {
+    const q = construireQueryPeriode();
+    if (ongletRapportActif === 'ventes') await afficherRapportVentes(q, contenu);
+    else if (ongletRapportActif === 'achats') await afficherRapportAchats(q, contenu);
+    else await afficherRapportCharges(q, contenu);
+  } catch (err) {
+    contenu.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+  }
+}
+
+async function afficherRapportVentes(q, contenu){
+  const r = await appelApi(`/rapports/ventes?${q}`);
+  contenu.innerHTML = `
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">Chiffre d'affaires</div><div class="kpi-value">${formatMontant(r.chiffre_affaires)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Bénéfice</div><div class="kpi-value" style="color:var(--fresh)">${formatMontant(r.benefice_total)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Nombre de ventes</div><div class="kpi-value">${formatNombre(r.nombre_ventes)}</div></div>
+    </div>
+    <div class="panel-grid">
+      <div class="panel"><h3>Répartition détail / gros</h3><table class="data-table"><tbody>${r.repartition_detail_gros.map(x => `<tr><td>${x.type_vente === 'gros' ? 'Gros' : 'Détail'}</td><td class="mono">${formatMontant(x.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucune donnée</td></tr>'}</tbody></table></div>
+      <div class="panel"><h3>Produits les plus vendus</h3><ul class="row-list">${r.produits_plus_vendus.map((p, i) => `<li><span class="rank">${i + 1}</span><span class="name">${p.nom}</span><span class="value">${formatMontant(p.montant_total)}</span></li>`).join('') || '<div class="empty-row">Aucune donnée</div>'}</ul></div>
+    </div>`;
+}
+
+async function afficherRapportAchats(q, contenu){
+  const r = await appelApi(`/rapports/achats?${q}`);
+  contenu.innerHTML = `
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">Montant total</div><div class="kpi-value">${formatMontant(r.montant_total)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Nombre d'achats</div><div class="kpi-value">${formatNombre(r.nombre_achats)}</div></div>
+    </div>
+    <div class="panel"><h3>Par fournisseur</h3><table class="data-table">
+      <thead><tr><th>Fournisseur</th><th>Achats</th><th>Montant</th></tr></thead>
+      <tbody>${r.par_fournisseur.map(f => `<tr><td>${f.nom}</td><td class="mono">${formatNombre(f.nombre_achats)}</td><td class="mono">${formatMontant(f.montant_total)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty-state">Aucune donnée</td></tr>'}</tbody>
+    </table></div>`;
+}
+
+async function afficherRapportCharges(q, contenu){
+  const r = await appelApi(`/rapports/charges?${q}`);
+  contenu.innerHTML = `
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">Montant total</div><div class="kpi-value">${formatMontant(r.montant_total)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Nombre de charges</div><div class="kpi-value">${formatNombre(r.nombre_charges)}</div></div>
+    </div>
+    <div class="panel"><h3>Par catégorie</h3><table class="data-table">
+      <thead><tr><th>Catégorie</th><th>Nombre</th><th>Montant</th></tr></thead>
+      <tbody>${r.par_categorie.map(c => `<tr><td>${c.categorie}</td><td class="mono">${formatNombre(c.nombre)}</td><td class="mono">${formatMontant(c.montant_total)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty-state">Aucune donnée</td></tr>'}</tbody>
+    </table></div>`;
+}
+
+// ============================================================
+// MODULE : PARAMÈTRES
+// ============================================================
+async function chargerParametres(){
+  try {
+    const p = await appelApi('/parametres');
+    document.getElementById('pNomEntreprise').value = p.nom_entreprise || '';
+    document.getElementById('pDevisePrincipale').value = p.devise_principale || '';
+    document.getElementById('pDeviseSecondaire').value = p.devise_secondaire || '';
+    document.getElementById('pTauxChange').value = p.taux_change ?? '';
+    document.getElementById('pTauxTva').value = p.taux_tva ?? '';
+    document.getElementById('pStockMinBout').value = p.stock_min_bouteille_defaut ?? '';
+    document.getElementById('pStockMinPaq').value = p.stock_min_paquet_defaut ?? '';
+    document.getElementById('pPrefixeFacture').value = p.numerotation_facture_prefixe || '';
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+async function soumettreParametres(event){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  const champsNumeriques = ['taux_change', 'taux_tva', 'stock_min_bouteille_defaut', 'stock_min_paquet_defaut'];
+  const payload = {};
+  for (const [cle, valeur] of donnees.entries()) {
+    payload[cle] = champsNumeriques.includes(cle) ? Number(valeur) : valeur;
+  }
+
+  const bouton = event.target.querySelector('button[type="submit"]');
+  bouton.disabled = true;
+  try {
+    await appelApiEcriture('/parametres', 'PUT', payload);
+    afficherToast('Paramètres enregistrés.', 'success');
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+  bouton.disabled = false;
+}
+
+// ============================================================
 // INITIALISATION
 // ============================================================
 document.getElementById('refreshBtn').addEventListener('click', () => {
@@ -2282,6 +2638,9 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
   else if (idActif === 'clients') chargerClients();
   else if (idActif === 'fournisseurs') chargerFournisseurs();
   else if (idActif === 'charges') chargerCharges();
+  else if (idActif === 'comptabilite') rafraichirCompta();
+  else if (idActif === 'rapports') rafraichirRapports();
+  else if (idActif === 'parametres') chargerParametres();
   else chargerDashboard();
 });
 chargerDashboard();
