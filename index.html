@@ -339,6 +339,34 @@
   .filtre-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:18px;}
   .filtre-row .form-group{min-width:150px;}
 
+  /* ---------- ÉCRAN DE CONNEXION ---------- */
+  .login-screen{
+    position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg, var(--ink), var(--ink-lighter));padding:20px;
+  }
+  .login-card{
+    background:var(--surface);border-radius:16px;padding:36px 34px;max-width:420px;width:100%;
+    box-shadow:0 24px 70px rgba(0,0,0,0.35);
+  }
+  .login-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:22px;}
+  .login-brand .mark{
+    width:36px;height:36px;border-radius:10px;
+    background:linear-gradient(150deg, var(--accent), var(--accent-dark));
+    display:flex;align-items:center;justify-content:center;
+  }
+  .login-brand .mark svg{width:20px;height:20px;stroke:#fff;}
+  .login-brand .name{font-family:var(--font-display);font-weight:700;font-size:18px;}
+  .login-title{font-family:var(--font-display);font-size:19px;font-weight:700;text-align:center;margin-bottom:4px;}
+  .login-sub{font-size:12.5px;color:var(--text-muted);text-align:center;margin-bottom:22px;}
+  .login-error{background:var(--danger-soft);color:#8A332A;padding:10px 14px;border-radius:8px;font-size:12.5px;margin-bottom:16px;display:none;}
+  .login-error.show{display:block;}
+  .login-field{margin-bottom:14px;}
+
+  /* ---------- BADGE UTILISATEUR (topbar) ---------- */
+  .user-chip{display:flex;flex-direction:column;align-items:flex-end;line-height:1.3;margin-right:2px;}
+  .user-chip .u-nom{font-weight:700;font-size:12.5px;}
+  .user-chip .u-role{font-size:10.5px;color:var(--text-muted);text-transform:capitalize;}
+
   /* ---------- RESPONSIVE ---------- */
   @media (max-width: 980px){
     .panel-grid,.lower-grid{grid-template-columns:1fr;}
@@ -357,7 +385,18 @@
 </head>
 <body>
 
-<div class="app">
+<!-- ============================================================
+     ÉCRAN DE CONNEXION — affiché tant que l'utilisateur n'est pas
+     authentifié. Son contenu est généré par JS (login ou bootstrap
+     du premier compte administrateur selon l'état du backend).
+     ============================================================ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card" id="loginCard">
+    <div class="empty-state">Connexion en cours…</div>
+  </div>
+</div>
+
+<div class="app" id="appRoot" style="display:none;">
 
   <!-- ============================================================
        SIDEBAR — navigation fixe des 12 menus
@@ -390,10 +429,17 @@
         </div>
       </div>
       <div class="topbar-right">
+        <div class="user-chip">
+          <span class="u-nom" id="utilisateurNomTopbar"></span>
+          <span class="u-role" id="utilisateurRoleTopbar"></span>
+        </div>
         <span class="subtitle" id="lastUpdated"></span>
         <button class="btn" id="refreshBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
           Actualiser
+        </button>
+        <button class="btn" onclick="deconnecter()" title="Déconnexion">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
         </button>
       </div>
     </header>
@@ -654,7 +700,27 @@
         <div id="contenuRapports"><div class="empty-state">Chargement…</div></div>
       </section>
 
-      <section class="view" id="view-utilisateurs"></section>
+      <section class="view" id="view-utilisateurs">
+        <div class="toolbar">
+          <div><span class="subtitle" id="resumeUtilisateurs"></span></div>
+          <button class="btn btn-accent" onclick="ouvrirModalUtilisateur()">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Nouvel utilisateur
+          </button>
+        </div>
+        <div class="table-panel" style="margin-bottom:18px;">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th></th></tr></thead>
+              <tbody id="corpsTableUtilisateurs"><tr><td colspan="5" class="empty-state">Chargement…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Journal d'audit <span class="legend">200 dernières actions</span></h3>
+          <div id="tableAudit"><div class="empty-state">Chargement…</div></div>
+        </div>
+      </section>
 
       <section class="view" id="view-parametres">
         <div class="panel" style="max-width:680px;">
@@ -717,7 +783,7 @@ const NAV_ITEMS = [
   { id: 'comptabilite',  label: 'Comptabilité',    ready: true,  icon: 'book',      subtitle: 'Journal, grand livre, balance, bilan' },
   { id: 'charges',       label: 'Charges',         ready: true,  icon: 'receipt',   subtitle: 'Dépenses de l\'entreprise' },
   { id: 'rapports',      label: 'Rapports',        ready: true,  icon: 'bar-chart', subtitle: 'Rapports détaillés par période' },
-  { id: 'utilisateurs',  label: 'Utilisateurs',    ready: false, icon: 'users',     subtitle: 'Rôles, permissions et journal d\'audit' },
+  { id: 'utilisateurs',  label: 'Utilisateurs',    ready: true,  icon: 'users',     subtitle: 'Rôles, permissions et journal d\'audit' },
   { id: 'parametres',    label: 'Paramètres',      ready: true,  icon: 'settings',  subtitle: "Configuration générale de l'entreprise" },
 ];
 
@@ -799,6 +865,7 @@ function afficherVue(id){
   if (id === 'comptabilite') chargerComptabilite();
   if (id === 'rapports') chargerRapports();
   if (id === 'parametres') chargerParametres();
+  if (id === 'utilisateurs') chargerUtilisateurs();
 }
 
 document.getElementById('menuToggle').addEventListener('click', () => {
@@ -816,7 +883,10 @@ function formatNombre(valeur){
 
 // ---------- Appel API (lecture) ----------
 async function appelApi(chemin){
-  const reponse = await fetch(CONFIG.API_BASE_URL + chemin);
+  const reponse = await fetch(CONFIG.API_BASE_URL + chemin, {
+    headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {},
+  });
+  if (reponse.status === 401) { gererExpirationSession(); throw new Error('Session expirée.'); }
   if (!reponse.ok) {
     const corps = await reponse.json().catch(() => ({}));
     throw new Error(corps.erreur || `Erreur HTTP ${reponse.status}`);
@@ -826,10 +896,17 @@ async function appelApi(chemin){
 
 // ---------- Appel API (écriture : POST / PUT / PATCH / DELETE) ----------
 async function appelApiEcriture(chemin, methode, corpsRequete){
-  const options = { method: methode, headers: { 'Content-Type': 'application/json' } };
+  const options = {
+    method: methode,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
+    },
+  };
   if (corpsRequete !== undefined) options.body = JSON.stringify(corpsRequete);
 
   const reponse = await fetch(CONFIG.API_BASE_URL + chemin, options);
+  if (reponse.status === 401) { gererExpirationSession(); throw new Error('Session expirée.'); }
   const corps = await reponse.json().catch(() => ({}));
   if (!reponse.ok) {
     throw new Error(corps.erreur || `Erreur HTTP ${reponse.status}`);
@@ -2627,6 +2704,320 @@ async function soumettreParametres(event){
 }
 
 // ============================================================
+// MODULE : AUTHENTIFICATION
+// ============================================================
+// Le jeton est maintenant conservé dans localStorage : une fois le site
+// déployé pour de vrai (GitHub Pages), recharger la page ne déconnecte
+// plus l'utilisateur. Au chargement, on vérifie que le jeton sauvegardé
+// est toujours valide via /auth/moi avant de faire confiance à la session
+// (utile si le compte a été désactivé ou son rôle changé entre-temps).
+const CLE_STOCKAGE_JETON = 'jusstock_auth_token';
+let authToken = null;
+let utilisateurConnecte = null;
+
+const LIBELLES_ROLES = {
+  administrateur: 'Administrateur', manager: 'Manager', comptable: 'Comptable',
+  caissier: 'Caissier', vendeur: 'Vendeur', magasinier: 'Magasinier',
+};
+
+async function initialiserAuthentification(){
+  const jetonSauvegarde = localStorage.getItem(CLE_STOCKAGE_JETON);
+
+  if (jetonSauvegarde) {
+    authToken = jetonSauvegarde;
+    try {
+      const utilisateur = await appelApi('/auth/moi');
+      utilisateurConnecte = utilisateur;
+      afficherAppApresConnexion();
+      return;
+    } catch (err) {
+      // Jeton expiré, invalide, ou compte désactivé entre-temps
+      localStorage.removeItem(CLE_STOCKAGE_JETON);
+      authToken = null;
+    }
+  }
+
+  try {
+    const reponse = await fetch(CONFIG.API_BASE_URL + '/auth/bootstrap-status');
+    const corps = await reponse.json();
+    if (corps.a_besoin_de_bootstrap) afficherEcranBootstrap();
+    else afficherEcranLogin();
+  } catch (err) {
+    afficherEcranLogin("Impossible de contacter le serveur. Vérifie CONFIG.API_BASE_URL et que le backend est en ligne.");
+  }
+}
+
+function afficherEcranLogin(messageErreur){
+  document.getElementById('loginCard').innerHTML = `
+    <div class="login-brand">
+      <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8l1 5.2a6 6 0 0 1-1.5 5.1L14 14v5a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-5l-1.5-1.7A6 6 0 0 1 7 7.2L8 2Z"/><path d="M7.3 9h9.4"/></svg></div>
+      <div class="name">JusStock</div>
+    </div>
+    <div class="login-title">Connexion</div>
+    <div class="login-sub">Accède à ta plateforme de gestion</div>
+    <div class="login-error ${messageErreur ? 'show' : ''}">${messageErreur || ''}</div>
+    <form onsubmit="soumettreLogin(event)">
+      <div class="login-field"><label>Email</label><input type="email" name="email" required autofocus></div>
+      <div class="login-field"><label>Mot de passe</label><input type="password" name="mot_de_passe" required></div>
+      <button type="submit" class="btn btn-accent" style="width:100%;justify-content:center;margin-top:6px;">Se connecter</button>
+    </form>`;
+}
+
+function afficherEcranBootstrap(messageErreur){
+  document.getElementById('loginCard').innerHTML = `
+    <div class="login-brand">
+      <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8l1 5.2a6 6 0 0 1-1.5 5.1L14 14v5a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-5l-1.5-1.7A6 6 0 0 1 7 7.2L8 2Z"/><path d="M7.3 9h9.4"/></svg></div>
+      <div class="name">JusStock</div>
+    </div>
+    <div class="login-title">Bienvenue sur JusStock</div>
+    <div class="login-sub">Première utilisation — crée le compte administrateur</div>
+    <div class="login-error ${messageErreur ? 'show' : ''}">${messageErreur || ''}</div>
+    <form onsubmit="soumettreBootstrap(event)">
+      <div class="login-field"><label>Ton nom *</label><input type="text" name="nom" required autofocus></div>
+      <div class="login-field"><label>Email *</label><input type="email" name="email" required></div>
+      <div class="login-field"><label>Mot de passe * (8 caractères min.)</label><input type="password" name="mot_de_passe" minlength="8" required></div>
+      <button type="submit" class="btn btn-accent" style="width:100%;justify-content:center;margin-top:6px;">Créer le compte administrateur</button>
+    </form>`;
+}
+
+async function soumettreLogin(event){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  const bouton = event.target.querySelector('button[type="submit"]');
+  bouton.disabled = true;
+  try {
+    const reponse = await fetch(CONFIG.API_BASE_URL + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.fromEntries(donnees.entries())),
+    });
+    const corps = await reponse.json();
+    if (!reponse.ok) throw new Error(corps.erreur || 'Erreur de connexion.');
+    connecterUtilisateur(corps.token, corps.utilisateur);
+  } catch (err) {
+    afficherEcranLogin(err.message);
+  }
+}
+
+async function soumettreBootstrap(event){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  const bouton = event.target.querySelector('button[type="submit"]');
+  bouton.disabled = true;
+  try {
+    const reponse = await fetch(CONFIG.API_BASE_URL + '/auth/bootstrap-admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.fromEntries(donnees.entries())),
+    });
+    const corps = await reponse.json();
+    if (!reponse.ok) throw new Error(corps.erreur || 'Erreur.');
+    connecterUtilisateur(corps.token, corps.utilisateur);
+  } catch (err) {
+    afficherEcranBootstrap(err.message);
+  }
+}
+
+function connecterUtilisateur(token, utilisateur){
+  authToken = token;
+  utilisateurConnecte = utilisateur;
+  localStorage.setItem(CLE_STOCKAGE_JETON, token);
+  afficherAppApresConnexion();
+}
+
+// Affiche l'application (utilisé aussi bien après un login frais qu'après
+// une restauration de session depuis localStorage au chargement de la page).
+function afficherAppApresConnexion(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appRoot').style.display = 'flex';
+  document.getElementById('utilisateurNomTopbar').textContent = utilisateurConnecte.nom;
+  document.getElementById('utilisateurRoleTopbar').textContent = LIBELLES_ROLES[utilisateurConnecte.role] || utilisateurConnecte.role;
+  appliquerPermissionsUI();
+  afficherVue('dashboard');
+}
+
+function deconnecter(){
+  authToken = null;
+  utilisateurConnecte = null;
+  localStorage.removeItem(CLE_STOCKAGE_JETON);
+  document.getElementById('appRoot').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  initialiserAuthentification();
+}
+
+function gererExpirationSession(){
+  authToken = null;
+  utilisateurConnecte = null;
+  localStorage.removeItem(CLE_STOCKAGE_JETON);
+  document.getElementById('appRoot').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  afficherEcranLogin('Ta session a expiré. Merci de te reconnecter.');
+}
+
+// Masque les menus auxquels le rôle connecté n'a pas accès côté backend
+// (Comptabilité et Utilisateurs sont des modules entièrement bloqués pour
+// certains rôles — inutile de laisser un bouton qui mènera à une erreur 403).
+function appliquerPermissionsUI(){
+  const role = utilisateurConnecte.role;
+  document.querySelectorAll('.nav-item').forEach((btn) => {
+    const id = btn.dataset.view;
+    let visible = true;
+    if (id === 'utilisateurs') visible = role === 'administrateur';
+    else if (id === 'comptabilite') visible = ['administrateur', 'manager', 'comptable'].includes(role);
+    btn.style.display = visible ? '' : 'none';
+  });
+}
+
+// ============================================================
+// MODULE : UTILISATEURS (Menu 11, réservé à l'administrateur)
+// ============================================================
+let utilisateursCache = [];
+
+async function chargerUtilisateurs(){
+  const corps = document.getElementById('corpsTableUtilisateurs');
+  try {
+    utilisateursCache = await appelApi('/utilisateurs');
+    document.getElementById('resumeUtilisateurs').textContent = `${utilisateursCache.length} compte(s)`;
+    dessinerTableUtilisateurs(utilisateursCache);
+    chargerJournalAudit();
+  } catch (err) {
+    corps.innerHTML = `<tr><td colspan="5" class="empty-state">Impossible de charger les utilisateurs (${err.message}).</td></tr>`;
+  }
+}
+
+function dessinerTableUtilisateurs(utilisateurs){
+  const corps = document.getElementById('corpsTableUtilisateurs');
+  if (!utilisateurs || utilisateurs.length === 0) {
+    corps.innerHTML = '<tr><td colspan="5" class="empty-state">Aucun utilisateur.</td></tr>';
+    return;
+  }
+  corps.innerHTML = utilisateurs.map(u => `
+    <tr>
+      <td><strong>${u.nom}</strong>${u.id === utilisateurConnecte.id ? ' <span class="badge neutral">Toi</span>' : ''}</td>
+      <td class="cell-sub">${u.email}</td>
+      <td>${LIBELLES_ROLES[u.role] || u.role}</td>
+      <td>${u.actif ? '<span class="badge ok">Actif</span>' : '<span class="badge alerte">Désactivé</span>'}</td>
+      <td class="cell-actions">
+        <button class="icon-btn" title="Modifier" onclick="ouvrirModalUtilisateur('${u.id}')">${svgIcon('edit')}</button>
+        <button class="icon-btn" title="Réinitialiser le mot de passe" onclick="ouvrirModalMotDePasse('${u.id}')">${svgIcon('sliders')}</button>
+        ${u.id !== utilisateurConnecte.id ? `<button class="icon-btn danger" title="Désactiver" onclick="desactiverUtilisateur('${u.id}')">${svgIcon('trash')}</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function ouvrirModalUtilisateur(id){
+  const utilisateur = id ? utilisateursCache.find(u => u.id === id) : null;
+  const v = (champ) => utilisateur && utilisateur[champ] ? utilisateur[champ] : '';
+  const optionsRoles = Object.entries(LIBELLES_ROLES).map(([valeur, libelle]) =>
+    `<option value="${valeur}" ${utilisateur?.role === valeur ? 'selected' : ''}>${libelle}</option>`
+  ).join('');
+
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>${utilisateur ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur'}</h2><div class="modal-sub">${utilisateur ? utilisateur.nom : ''}</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form onsubmit="soumettreUtilisateur(event, ${utilisateur ? `'${utilisateur.id}'` : 'null'})">
+      <div class="form-grid">
+        <div class="form-group full"><label>Nom *</label><input type="text" name="nom" required value="${v('nom')}"></div>
+        <div class="form-group full"><label>Email *</label><input type="email" name="email" required value="${v('email')}"></div>
+        <div class="form-group"><label>Rôle *</label><select name="role" required>${optionsRoles}</select></div>
+        <div class="form-group"><label>Téléphone</label><input type="text" name="telephone" value="${v('telephone')}"></div>
+        ${!utilisateur ? '<div class="form-group full"><label>Mot de passe * (8 caractères min.)</label><input type="password" name="mot_de_passe" minlength="8" required></div>' : ''}
+        ${utilisateur ? `<div class="form-group full"><label>Statut</label><select name="actif"><option value="true" ${utilisateur.actif ? 'selected' : ''}>Actif</option><option value="false" ${!utilisateur.actif ? 'selected' : ''}>Désactivé</option></select></div>` : ''}
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">${utilisateur ? 'Enregistrer' : 'Créer le compte'}</button>
+      </div>
+    </form>
+  `);
+}
+
+async function soumettreUtilisateur(event, id){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  const payload = Object.fromEntries(donnees.entries());
+  if (payload.actif !== undefined) payload.actif = payload.actif === 'true';
+
+  const bouton = event.target.querySelector('button[type="submit"]');
+  bouton.disabled = true;
+  try {
+    if (id) await appelApiEcriture(`/utilisateurs/${id}`, 'PUT', payload);
+    else await appelApiEcriture('/utilisateurs', 'POST', payload);
+    afficherToast('Utilisateur enregistré.', 'success');
+    fermerModal();
+    chargerUtilisateurs();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    bouton.disabled = false;
+  }
+}
+
+function ouvrirModalMotDePasse(id){
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>Réinitialiser le mot de passe</h2></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form onsubmit="soumettreMotDePasse(event, '${id}')">
+      <div class="form-group full"><label>Nouveau mot de passe * (8 caractères min.)</label><input type="password" name="mot_de_passe" minlength="8" required></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">Réinitialiser</button>
+      </div>
+    </form>
+  `);
+}
+
+async function soumettreMotDePasse(event, id){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  const bouton = event.target.querySelector('button[type="submit"]');
+  bouton.disabled = true;
+  try {
+    await appelApiEcriture(`/utilisateurs/${id}/mot-de-passe`, 'POST', { mot_de_passe: donnees.get('mot_de_passe') });
+    afficherToast('Mot de passe réinitialisé.', 'success');
+    fermerModal();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    bouton.disabled = false;
+  }
+}
+
+async function desactiverUtilisateur(id){
+  if (!confirm('Désactiver ce compte ? Il ne pourra plus se connecter.')) return;
+  try {
+    await appelApiEcriture(`/utilisateurs/${id}`, 'DELETE');
+    afficherToast('Compte désactivé.', 'success');
+    chargerUtilisateurs();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+async function chargerJournalAudit(){
+  const wrap = document.getElementById('tableAudit');
+  try {
+    const actions = await appelApi('/utilisateurs/audit');
+    if (actions.length === 0) { wrap.innerHTML = '<div class="empty-state">Aucune action enregistrée.</div>'; return; }
+    wrap.innerHTML = `<div class="table-scroll"><table class="data-table">
+      <thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Route</th></tr></thead>
+      <tbody>${actions.map(a => `
+        <tr>
+          <td class="mono">${new Date(a.created_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</td>
+          <td>${a.utilisateur_nom || '—'}</td>
+          <td><span class="badge neutral">${a.action}</span></td>
+          <td class="cell-sub mono">${a.entite}</td>
+        </tr>`).join('')}</tbody>
+    </table></div>`;
+  } catch (err) {
+    wrap.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+  }
+}
+
+// ============================================================
 // INITIALISATION
 // ============================================================
 document.getElementById('refreshBtn').addEventListener('click', () => {
@@ -2641,9 +3032,14 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
   else if (idActif === 'comptabilite') rafraichirCompta();
   else if (idActif === 'rapports') rafraichirRapports();
   else if (idActif === 'parametres') chargerParametres();
+  else if (idActif === 'utilisateurs') chargerUtilisateurs();
   else chargerDashboard();
 });
-chargerDashboard();
+
+// Le point d'entrée n'est plus le dashboard directement : on vérifie d'abord
+// l'authentification (écran de connexion ou de création du premier compte).
+initialiserAuthentification();
+
 
 
 </script>
