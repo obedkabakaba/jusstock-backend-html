@@ -218,9 +218,90 @@
   .skeleton{background:linear-gradient(90deg,var(--border) 25%,#EDEFEA 37%,var(--border) 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite;border-radius:6px;}
   @keyframes shimmer{0%{background-position:100% 50%}100%{background-position:0 50%}}
 
+  /* ---------- TOOLBAR (recherche + actions au-dessus des tableaux) ---------- */
+  .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+  .search-wrap{position:relative;flex:1;min-width:220px;max-width:340px;}
+  .search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--text-muted);}
+  .search-wrap input{width:100%;padding:9px 12px 9px 34px;}
+
+  /* ---------- TABLEAUX DE DONNÉES ---------- */
+  .table-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+  .table-scroll{overflow-x:auto;}
+  table.data-table{width:100%;border-collapse:collapse;min-width:600px;}
+  .data-table thead th{
+    text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;
+    color:var(--text-muted);padding:11px 16px;background:var(--paper);
+    border-bottom:1px solid var(--border);white-space:nowrap;font-weight:600;
+  }
+  .data-table tbody td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
+  .data-table tbody tr:last-child td{border-bottom:none;}
+  .data-table tbody tr:hover{background:var(--paper);}
+  .cell-sub{font-size:11.5px;color:var(--text-muted);margin-top:2px;}
+  .cell-actions{white-space:nowrap;text-align:right;}
+
+  .badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+  .badge.ok{background:var(--fresh-soft);color:var(--fresh);}
+  .badge.alerte{background:var(--danger-soft);color:var(--danger);}
+
+  .icon-btn{
+    width:29px;height:29px;border-radius:7px;border:1px solid var(--border);
+    background:var(--surface);display:inline-flex;align-items:center;justify-content:center;
+    cursor:pointer;margin-left:5px;transition:all .15s ease;
+  }
+  .icon-btn svg{width:14px;height:14px;stroke:var(--text-muted);}
+  .icon-btn:hover{border-color:var(--accent);}
+  .icon-btn:hover svg{stroke:var(--accent-dark);}
+  .icon-btn.danger:hover{border-color:var(--danger);}
+  .icon-btn.danger:hover svg{stroke:var(--danger);}
+
+  /* ---------- MODALES ---------- */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(15,42,46,0.45);
+    display:none;align-items:center;justify-content:center;z-index:100;padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-panel{
+    background:var(--surface);border-radius:12px;max-width:600px;width:100%;
+    max-height:88vh;overflow-y:auto;padding:24px 26px;box-shadow:0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;}
+  .modal-head h2{margin:0;font-size:17px;}
+  .modal-sub{font-size:12.5px;color:var(--text-muted);margin-bottom:18px;}
+  .modal-close-btn{background:none;border:none;cursor:pointer;padding:4px;}
+  .modal-close-btn svg{width:18px;height:18px;stroke:var(--text-muted);}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;}
+
+  /* ---------- FORMULAIRES ---------- */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .form-group{display:flex;flex-direction:column;gap:5px;}
+  .form-group.full{grid-column:1 / -1;}
+  .form-group label{font-size:12px;font-weight:600;color:var(--text-muted);}
+  .form-group .hint{font-size:11px;color:var(--text-muted);font-weight:400;margin-top:2px;}
+  input,select,textarea{
+    font-family:inherit;padding:9px 11px;border:1px solid var(--border);border-radius:7px;
+    font-size:13.5px;background:var(--paper);color:var(--text);width:100%;
+  }
+  textarea{resize:vertical;min-height:70px;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:var(--surface);}
+
+  /* ---------- NOTIFICATIONS (toasts) ---------- */
+  .toast-container{position:fixed;bottom:22px;right:22px;z-index:200;display:flex;flex-direction:column;gap:8px;}
+  .toast{
+    padding:12px 16px;border-radius:8px;font-size:13px;font-weight:600;color:#fff;
+    min-width:240px;box-shadow:0 8px 24px rgba(0,0,0,0.18);animation:toastIn .25s ease;
+  }
+  .toast.success{background:var(--fresh);}
+  .toast.error{background:var(--danger);}
+  @keyframes toastIn{from{transform:translateY(10px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+  .empty-state{padding:40px 20px;text-align:center;color:var(--text-muted);font-size:13px;}
+
   /* ---------- RESPONSIVE ---------- */
   @media (max-width: 980px){
     .panel-grid,.lower-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width: 700px){
+    .form-grid{grid-template-columns:1fr;}
   }
   @media (max-width: 860px){
     .sidebar{transform:translateX(-100%);}
@@ -251,7 +332,7 @@
            lisible ici : chaque bouton a data-view="id-de-la-vue" -->
     </nav>
 
-    <div class="sidebar-foot">JusStock v0.1 — Phase 5.1</div>
+    <div class="sidebar-foot">JusStock v0.2 — Phase 5.2</div>
   </aside>
 
   <div class="main">
@@ -322,10 +403,73 @@
       <!-- ============================================================
            VUES À VENIR — placeholders (Phases 5.2 à 5.4)
            ============================================================ -->
-      <section class="view" id="view-produits"></section>
+      <section class="view" id="view-produits">
+        <div class="toolbar">
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="rechercheProduits" placeholder="Rechercher un produit, un code...">
+          </div>
+          <button class="btn btn-accent" onclick="ouvrirModalProduit()">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Nouveau produit
+          </button>
+        </div>
+        <div class="table-panel">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Produit</th>
+                  <th>Stock</th>
+                  <th>Prix vente conseillé</th>
+                  <th>Statut</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="corpsTableProduits">
+                <tr><td colspan="5" class="empty-state">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-stock">
+        <div class="toolbar">
+          <div><span class="subtitle" id="resumeStock"></span></div>
+          <button class="btn btn-accent" onclick="ouvrirModalCorrection()">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M2 14h4M10 8h4M18 12h4"/></svg>
+            Corriger un stock
+          </button>
+        </div>
+
+        <div class="table-panel" style="margin-bottom:18px;">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr><th>Produit</th><th>Stock</th><th>Seuil minimum</th><th>Statut</th></tr>
+              </thead>
+              <tbody id="corpsTableStock">
+                <tr><td colspan="4" class="empty-state">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Historique des mouvements</h3>
+          <div class="form-group" style="max-width:340px;margin-bottom:14px;">
+            <select id="selectProduitMouvements" onchange="chargerMouvements(this.value)">
+              <option value="">— Choisir un produit —</option>
+            </select>
+          </div>
+          <div id="mouvementsWrap">
+            <div class="empty-state">Choisis un produit ci-dessus pour voir son historique.</div>
+          </div>
+        </div>
+      </section>
       <section class="view" id="view-achats"></section>
       <section class="view" id="view-ventes"></section>
-      <section class="view" id="view-stock"></section>
       <section class="view" id="view-clients"></section>
       <section class="view" id="view-fournisseurs"></section>
       <section class="view" id="view-comptabilite"></section>
@@ -337,6 +481,17 @@
     </main>
   </div>
 </div>
+
+<!-- ============================================================
+     MODALE GÉNÉRIQUE — réutilisée par tous les formulaires
+     (Produits, correction de stock, et les modules à venir)
+     ============================================================ -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) fermerModal()">
+  <div class="modal-panel" id="modalPanel"></div>
+</div>
+
+<!-- Conteneur des notifications (succès / erreur) -->
+<div class="toast-container" id="toastContainer"></div>
 
 <script>
 // ============================================================
@@ -354,10 +509,10 @@ const CONFIG = {
 // ============================================================
 const NAV_ITEMS = [
   { id: 'dashboard',     label: 'Tableau de bord', ready: true,  icon: 'grid',      subtitle: "Vue d'ensemble de l'activité en temps réel" },
-  { id: 'produits',      label: 'Produits',        ready: false, icon: 'bottle',    subtitle: 'Catalogue des produits, prix et conversions paquet/bouteille' },
+  { id: 'produits',      label: 'Produits',        ready: true,  icon: 'bottle',    subtitle: 'Catalogue des produits, prix et conversions paquet/bouteille' },
   { id: 'achats',        label: 'Achats',          ready: false, icon: 'download',  subtitle: 'Enregistrement des achats et calcul du coût réel' },
   { id: 'ventes',        label: 'Ventes',          ready: false, icon: 'upload',    subtitle: 'Ventes au détail et en gros, bonus et remises' },
-  { id: 'stock',         label: 'Stock',           ready: false, icon: 'layers',    subtitle: 'Niveaux de stock, mouvements et alertes' },
+  { id: 'stock',         label: 'Stock',           ready: true,  icon: 'layers',    subtitle: 'Niveaux de stock, mouvements et alertes' },
   { id: 'clients',       label: 'Clients',         ready: false, icon: 'user',      subtitle: 'Clients enregistrés, historique et dettes' },
   { id: 'fournisseurs',  label: 'Fournisseurs',    ready: false, icon: 'truck',     subtitle: 'Fournisseurs, historique et paiements' },
   { id: 'comptabilite',  label: 'Comptabilité',    ready: false, icon: 'book',      subtitle: 'Journal, grand livre, balance, bilan' },
@@ -382,6 +537,13 @@ const ICONS = {
   settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.5-2.4.6a7.7 7.7 0 0 0-1.7-1L15 3h-6l-.3 2.6a7.7 7.7 0 0 0-1.7 1l-2.4-.6-2 3.5L4.6 11a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.5 2.4-.6a7.7 7.7 0 0 0 1.7 1L9 21h6l.3-2.6a7.7 7.7 0 0 0 1.7-1l2.4.6 2-3.5-2-1.5Z"/>',
   alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16h.01"/>',
   wallet: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="14" r="1.2"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  archive: '<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/>',
+  trash: '<path d="M4 7h16"/><path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/><path d="M8 7v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V7"/><path d="M10 11v6M14 11v6"/>',
+  close: '<path d="M18 6 6 18M6 6l12 12"/>',
+  sliders: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M2 14h4M10 8h4M18 12h4"/>',
 };
 
 function svgIcon(name, extra){
@@ -424,6 +586,11 @@ function afficherVue(id){
 
   // Ferme le menu mobile après un choix
   document.getElementById('sidebar').classList.remove('open');
+
+  // Charge les données de la vue sélectionnée
+  if (id === 'dashboard') chargerDashboard();
+  if (id === 'produits') chargerProduits();
+  if (id === 'stock') chargerStock();
 }
 
 document.getElementById('menuToggle').addEventListener('click', () => {
@@ -439,7 +606,7 @@ function formatNombre(valeur){
   return (Number(valeur) || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
 }
 
-// ---------- Appel API ----------
+// ---------- Appel API (lecture) ----------
 async function appelApi(chemin){
   const reponse = await fetch(CONFIG.API_BASE_URL + chemin);
   if (!reponse.ok) {
@@ -448,6 +615,41 @@ async function appelApi(chemin){
   }
   return reponse.json();
 }
+
+// ---------- Appel API (écriture : POST / PUT / PATCH / DELETE) ----------
+async function appelApiEcriture(chemin, methode, corpsRequete){
+  const options = { method: methode, headers: { 'Content-Type': 'application/json' } };
+  if (corpsRequete !== undefined) options.body = JSON.stringify(corpsRequete);
+
+  const reponse = await fetch(CONFIG.API_BASE_URL + chemin, options);
+  const corps = await reponse.json().catch(() => ({}));
+  if (!reponse.ok) {
+    throw new Error(corps.erreur || `Erreur HTTP ${reponse.status}`);
+  }
+  return corps;
+}
+
+// ---------- Notifications (toasts) ----------
+function afficherToast(message, type){
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + (type || 'success');
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+}
+
+// ---------- Modale générique ----------
+function ouvrirModal(html){
+  document.getElementById('modalPanel').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function fermerModal(){
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.getElementById('modalPanel').innerHTML = '';
+}
+// Ferme la modale avec la touche Échap
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermerModal(); });
 
 // ---------- Cartes KPI ----------
 function construireKpiCards(donnees){
@@ -613,8 +815,338 @@ async function chargerDashboard(){
   }
 }
 
-document.getElementById('refreshBtn').addEventListener('click', chargerDashboard);
+// ============================================================
+// MODULE : PRODUITS
+// ============================================================
+let produitsCache = [];
+let minuteurRechercheProduits = null;
+
+async function chargerProduits(recherche){
+  const corps = document.getElementById('corpsTableProduits');
+  const terme = recherche !== undefined ? recherche : document.getElementById('rechercheProduits').value;
+
+  try {
+    const chemin = '/produits' + (terme ? `?recherche=${encodeURIComponent(terme)}` : '');
+    produitsCache = await appelApi(chemin);
+    dessinerTableProduits(produitsCache);
+  } catch (err) {
+    corps.innerHTML = `<tr><td colspan="5" class="empty-state">Impossible de charger les produits (${err.message}).</td></tr>`;
+  }
+}
+
+document.getElementById('rechercheProduits')?.addEventListener('input', (e) => {
+  clearTimeout(minuteurRechercheProduits);
+  const valeur = e.target.value;
+  minuteurRechercheProduits = setTimeout(() => chargerProduits(valeur), 300);
+});
+
+function dessinerTableProduits(produits){
+  const corps = document.getElementById('corpsTableProduits');
+  if (!produits || produits.length === 0) {
+    corps.innerHTML = '<tr><td colspan="5" class="empty-state">Aucun produit. Clique sur "Nouveau produit" pour commencer.</td></tr>';
+    return;
+  }
+
+  corps.innerHTML = produits.map(p => `
+    <tr>
+      <td>
+        <strong>${p.nom}</strong>
+        <div class="cell-sub">${[p.categorie, p.marque, p.contenance].filter(Boolean).join(' · ') || '—'}</div>
+      </td>
+      <td>
+        <span class="unit-chip">${svgIcon('bottle')}${formatNombre(p.stock_bouteilles)} bout.<span class="sep">·</span>${formatNombre(p.stock_paquets_complets)} paq.</span>
+      </td>
+      <td>${p.prix_vente_conseille ? formatMontant(p.prix_vente_conseille) : '—'}</td>
+      <td>${p.en_alerte_stock ? '<span class="badge alerte">Stock faible</span>' : '<span class="badge ok">OK</span>'}</td>
+      <td class="cell-actions">
+        <button class="icon-btn" title="Modifier" onclick="ouvrirModalProduit('${p.id}')">${svgIcon('edit')}</button>
+        <button class="icon-btn" title="Archiver" onclick="archiverProduit('${p.id}')">${svgIcon('archive')}</button>
+        <button class="icon-btn danger" title="Supprimer" onclick="supprimerProduit('${p.id}')">${svgIcon('trash')}</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function ouvrirModalProduit(id){
+  const produit = id ? produitsCache.find(p => p.id === id) : null;
+  const v = (champ, defaut) => produit && produit[champ] !== null && produit[champ] !== undefined ? produit[champ] : (defaut !== undefined ? defaut : '');
+
+  ouvrirModal(`
+    <div class="modal-head">
+      <div>
+        <h2>${produit ? 'Modifier le produit' : 'Nouveau produit'}</h2>
+        <div class="modal-sub">${produit ? produit.nom : "Les champs marqués d'un * sont obligatoires."}</div>
+      </div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form id="formProduit" onsubmit="soumettreProduit(event, ${produit ? `'${produit.id}'` : 'null'})">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Nom du produit *</label>
+          <input type="text" name="nom" required value="${v('nom')}" placeholder="Ex : Jus Orange 1.5L">
+        </div>
+        <div class="form-group">
+          <label>Catégorie</label>
+          <input type="text" name="categorie" value="${v('categorie')}" placeholder="Ex : Jus">
+        </div>
+        <div class="form-group">
+          <label>Marque</label>
+          <input type="text" name="marque" value="${v('marque')}">
+        </div>
+        <div class="form-group">
+          <label>Contenance</label>
+          <input type="text" name="contenance" value="${v('contenance')}" placeholder="Ex : 1.5L">
+        </div>
+        <div class="form-group">
+          <label>Bouteilles par paquet *</label>
+          <input type="number" name="bouteilles_par_paquet" min="1" required value="${v('bouteilles_par_paquet', 12)}">
+        </div>
+        <div class="form-group">
+          <label>Prix de vente conseillé (FC)</label>
+          <input type="number" step="0.01" name="prix_vente_conseille" value="${v('prix_vente_conseille')}">
+        </div>
+        <div class="form-group">
+          <label>Stock minimum (bouteilles)</label>
+          <input type="number" min="0" name="stock_min_bouteilles" value="${v('stock_min_bouteilles', 24)}">
+        </div>
+        <div class="form-group">
+          <label>Prix minimum (FC)</label>
+          <input type="number" step="0.01" name="prix_min" value="${v('prix_min')}">
+        </div>
+        <div class="form-group">
+          <label>Prix maximum (FC)</label>
+          <input type="number" step="0.01" name="prix_max" value="${v('prix_max')}">
+        </div>
+        <div class="form-group">
+          <label>Code produit</label>
+          <input type="text" name="code_produit" value="${v('code_produit')}">
+        </div>
+        <div class="form-group">
+          <label>Code-barres</label>
+          <input type="text" name="code_barre" value="${v('code_barre')}">
+        </div>
+        <div class="form-group full">
+          <label>Description</label>
+          <textarea name="description">${v('description')}</textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">${produit ? 'Enregistrer' : 'Créer le produit'}</button>
+      </div>
+    </form>
+  `);
+}
+
+async function soumettreProduit(event, id){
+  event.preventDefault();
+  const formulaire = event.target;
+  const donnees = new FormData(formulaire);
+  const payload = {};
+  for (const [cle, valeur] of donnees.entries()) {
+    if (valeur === '') continue; // on n'envoie pas les champs vides (laisse la valeur existante ou null en base)
+    const champsNumeriques = ['bouteilles_par_paquet', 'prix_vente_conseille', 'prix_min', 'prix_max', 'stock_min_bouteilles'];
+    payload[cle] = champsNumeriques.includes(cle) ? Number(valeur) : valeur;
+  }
+
+  const boutonSubmit = formulaire.querySelector('button[type="submit"]');
+  boutonSubmit.disabled = true;
+
+  try {
+    if (id) {
+      await appelApiEcriture(`/produits/${id}`, 'PUT', payload);
+      afficherToast('Produit modifié avec succès.', 'success');
+    } else {
+      await appelApiEcriture('/produits', 'POST', payload);
+      afficherToast('Produit créé avec succès.', 'success');
+    }
+    fermerModal();
+    chargerProduits();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    boutonSubmit.disabled = false;
+  }
+}
+
+async function archiverProduit(id){
+  if (!confirm('Archiver ce produit ? Il ne sera plus proposé dans les achats/ventes mais son historique reste conservé.')) return;
+  try {
+    await appelApiEcriture(`/produits/${id}/archiver`, 'PATCH');
+    afficherToast('Produit archivé.', 'success');
+    chargerProduits();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+async function supprimerProduit(id){
+  if (!confirm('Supprimer définitivement ce produit ? Cette action est irréversible.')) return;
+  try {
+    await appelApiEcriture(`/produits/${id}`, 'DELETE');
+    afficherToast('Produit supprimé.', 'success');
+    chargerProduits();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+// ============================================================
+// MODULE : STOCK
+// ============================================================
+async function chargerStock(){
+  const corps = document.getElementById('corpsTableStock');
+  try {
+    const produits = await appelApi('/stock');
+    dessinerTableStock(produits);
+    remplirSelectProduitsMouvements(produits);
+
+    const totalBouteilles = produits.reduce((acc, p) => acc + Number(p.stock_bouteilles), 0);
+    const totalAlertes = produits.filter(p => p.en_alerte_stock).length;
+    document.getElementById('resumeStock').textContent =
+      `${formatNombre(totalBouteilles)} bouteille(s) au total · ${totalAlertes} alerte(s) de stock faible`;
+  } catch (err) {
+    corps.innerHTML = `<tr><td colspan="4" class="empty-state">Impossible de charger le stock (${err.message}).</td></tr>`;
+  }
+}
+
+function dessinerTableStock(produits){
+  const corps = document.getElementById('corpsTableStock');
+  if (!produits || produits.length === 0) {
+    corps.innerHTML = '<tr><td colspan="4" class="empty-state">Aucun produit actif.</td></tr>';
+    return;
+  }
+  corps.innerHTML = produits.map(p => `
+    <tr>
+      <td><strong>${p.nom}</strong></td>
+      <td><span class="unit-chip">${svgIcon('bottle')}${formatNombre(p.stock_bouteilles)} bout.<span class="sep">·</span>${formatNombre(p.stock_paquets_complets)} paq.</span></td>
+      <td class="mono">${formatNombre(p.stock_min_bouteilles)} bout.</td>
+      <td>${p.en_alerte_stock ? '<span class="badge alerte">Stock faible</span>' : '<span class="badge ok">OK</span>'}</td>
+    </tr>
+  `).join('');
+}
+
+function remplirSelectProduitsMouvements(produits){
+  const select = document.getElementById('selectProduitMouvements');
+  const valeurActuelle = select.value;
+  select.innerHTML = '<option value="">— Choisir un produit —</option>' +
+    produits.map(p => `<option value="${p.id}">${p.nom}</option>`).join('');
+  select.value = valeurActuelle;
+}
+
+async function chargerMouvements(produitId){
+  const wrap = document.getElementById('mouvementsWrap');
+  if (!produitId) {
+    wrap.innerHTML = '<div class="empty-state">Choisis un produit ci-dessus pour voir son historique.</div>';
+    return;
+  }
+  wrap.innerHTML = '<div class="empty-state">Chargement…</div>';
+
+  try {
+    const mouvements = await appelApi(`/stock/${produitId}/mouvements`);
+    if (mouvements.length === 0) {
+      wrap.innerHTML = '<div class="empty-state">Aucun mouvement enregistré pour ce produit.</div>';
+      return;
+    }
+    const LIBELLES_TYPE = { achat: 'Achat', vente: 'Vente', bonus: 'Bonus offert', correction: 'Correction', inventaire: 'Inventaire', transfert: 'Transfert' };
+    wrap.innerHTML = `
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th>Date</th><th>Type</th><th>Quantité</th><th>Stock après</th><th>Notes</th></tr></thead>
+          <tbody>
+            ${mouvements.map(m => `
+              <tr>
+                <td class="mono">${new Date(m.created_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</td>
+                <td>${LIBELLES_TYPE[m.type_mouvement] || m.type_mouvement}</td>
+                <td class="mono" style="color:${m.quantite_bouteilles < 0 ? 'var(--danger)' : 'var(--fresh)'}">${m.quantite_bouteilles > 0 ? '+' : ''}${formatNombre(m.quantite_bouteilles)}</td>
+                <td class="mono">${formatNombre(m.stock_apres)}</td>
+                <td class="cell-sub">${m.notes || '—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch (err) {
+    wrap.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+  }
+}
+
+function ouvrirModalCorrection(){
+  const options = produitsCache.length
+    ? produitsCache.map(p => `<option value="${p.id}" data-stock="${p.stock_bouteilles}">${p.nom} (stock actuel : ${formatNombre(p.stock_bouteilles)} bout.)</option>`).join('')
+    : '<option value="">Charge d\'abord le module Produits</option>';
+
+  ouvrirModal(`
+    <div class="modal-head">
+      <div>
+        <h2>Corriger un stock</h2>
+        <div class="modal-sub">À utiliser après un inventaire physique, pour ajuster un écart constaté.</div>
+      </div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form id="formCorrection" onsubmit="soumettreCorrection(event)">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Produit *</label>
+          <select name="produit_id" required>
+            <option value="">— Choisir —</option>
+            ${options}
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Nouveau stock réel (en bouteilles) *</label>
+          <input type="number" name="nouveau_stock_bouteilles" min="0" required>
+          <div class="hint">Saisis le nombre total de bouteilles réellement compté, pas l'écart.</div>
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea name="notes" placeholder="Ex : Inventaire physique du 09/07/2026"></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">Enregistrer la correction</button>
+      </div>
+    </form>
+  `);
+}
+
+async function soumettreCorrection(event){
+  event.preventDefault();
+  const formulaire = event.target;
+  const donnees = new FormData(formulaire);
+  const produitId = donnees.get('produit_id');
+  const payload = {
+    nouveau_stock_bouteilles: Number(donnees.get('nouveau_stock_bouteilles')),
+    notes: donnees.get('notes') || undefined,
+  };
+
+  if (!produitId) { afficherToast('Choisis un produit.', 'error'); return; }
+
+  const boutonSubmit = formulaire.querySelector('button[type="submit"]');
+  boutonSubmit.disabled = true;
+
+  try {
+    const resultat = await appelApiEcriture(`/stock/${produitId}/correction`, 'POST', payload);
+    afficherToast(`Correction enregistrée (écart : ${resultat.ecart > 0 ? '+' : ''}${resultat.ecart} bouteille(s)).`, 'success');
+    fermerModal();
+    chargerStock();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    boutonSubmit.disabled = false;
+  }
+}
+
+// ============================================================
+// INITIALISATION
+// ============================================================
+document.getElementById('refreshBtn').addEventListener('click', () => {
+  const idActif = document.querySelector('.nav-item.active')?.dataset.view || 'dashboard';
+  if (idActif === 'produits') chargerProduits();
+  else if (idActif === 'stock') chargerStock();
+  else chargerDashboard();
+});
 chargerDashboard();
+
 </script>
 </body>
 </html>
