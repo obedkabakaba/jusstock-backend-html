@@ -367,6 +367,18 @@
   .user-chip .u-nom{font-weight:700;font-size:12.5px;}
   .user-chip .u-role{font-size:10.5px;color:var(--text-muted);text-transform:capitalize;}
 
+  /* ---------- RÔLE CONSULTANT : lecture seule ---------- */
+  /* Masque tous les boutons de création/modification/suppression/paiement.
+     Le backend refuse de toute façon ces actions pour ce rôle (403) — on
+     évite simplement d'afficher un bouton qui mènerait à une erreur. */
+  body.role-consultant .action-ecriture{display:none !important;}
+  .consultant-banner{
+    background:#E1EEFB;color:#1F4E79;padding:9px 16px;border-radius:8px;
+    font-size:12.5px;font-weight:600;margin-bottom:16px;display:none;
+    align-items:center;gap:8px;
+  }
+  body.role-consultant .consultant-banner{display:flex;}
+
   /* ---------- RESPONSIVE ---------- */
   @media (max-width: 980px){
     .panel-grid,.lower-grid{grid-template-columns:1fr;}
@@ -451,6 +463,11 @@
            ============================================================ -->
       <section class="view active" id="view-dashboard">
 
+        <div class="consultant-banner">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          Mode consultation — accès en lecture seule à l'ensemble des données de JusStock.
+        </div>
+
         <div class="banner" id="apiErrorBanner" style="display:none;">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16h.01"/></svg>
           <div>
@@ -498,7 +515,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
             <input type="text" id="rechercheProduits" placeholder="Rechercher un produit, un code...">
           </div>
-          <button class="btn btn-accent" onclick="ouvrirModalProduit()">
+          <button class="btn btn-accent action-ecriture" onclick="ouvrirModalProduit()">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             Nouveau produit
           </button>
@@ -527,7 +544,7 @@
       <section class="view" id="view-stock">
         <div class="toolbar">
           <div><span class="subtitle" id="resumeStock"></span></div>
-          <button class="btn btn-accent" onclick="ouvrirModalCorrection()">
+          <button class="btn btn-accent action-ecriture" onclick="ouvrirModalCorrection()">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M2 14h4M10 8h4M18 12h4"/></svg>
             Corriger un stock
           </button>
@@ -561,7 +578,7 @@
       <section class="view" id="view-achats">
         <div class="toolbar">
           <div><span class="subtitle" id="resumeAchats"></span></div>
-          <button class="btn btn-accent" onclick="ouvrirModalAchat()">
+          <button class="btn btn-accent action-ecriture" onclick="ouvrirModalAchat()">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             Nouvel achat
           </button>
@@ -581,7 +598,7 @@
       <section class="view" id="view-ventes">
         <div class="toolbar">
           <div><span class="subtitle" id="resumeVentes"></span></div>
-          <button class="btn btn-accent" onclick="ouvrirModalVente()">
+          <button class="btn btn-accent action-ecriture" onclick="ouvrirModalVente()">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             Nouvelle vente
           </button>
@@ -603,7 +620,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
             <input type="text" id="rechercheClients" placeholder="Rechercher un client...">
           </div>
-          <button class="btn btn-accent" onclick="ouvrirModalClientPage()">
+          <button class="btn btn-accent action-ecriture" onclick="ouvrirModalClientPage()">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             Nouveau client
           </button>
@@ -628,7 +645,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
             <input type="text" id="rechercheFournisseurs" placeholder="Rechercher un fournisseur...">
           </div>
-          <button class="btn btn-accent" onclick="ouvrirModalFournisseurPage()">
+          <button class="btn btn-accent action-ecriture" onclick="ouvrirModalFournisseurPage()">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             Nouveau fournisseur
           </button>
@@ -646,7 +663,7 @@
       <section class="view" id="view-charges">
         <div class="toolbar">
           <div><span class="subtitle" id="resumeCharges"></span></div>
-          <button class="btn btn-accent" onclick="ouvrirModalCharge()">
+          <button class="btn btn-accent action-ecriture" onclick="ouvrirModalCharge()">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             Nouvelle charge
           </button>
@@ -704,7 +721,7 @@
       <section class="view" id="view-utilisateurs">
         <div class="toolbar">
           <div><span class="subtitle" id="resumeUtilisateurs"></span></div>
-          <button class="btn btn-accent" onclick="ouvrirModalUtilisateur()">
+          <button class="btn btn-accent action-ecriture" onclick="ouvrirModalUtilisateur()">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             Nouvel utilisateur
           </button>
@@ -738,7 +755,7 @@
               <div class="form-group full"><label>Préfixe de numérotation des factures</label><input type="text" name="numerotation_facture_prefixe" id="pPrefixeFacture"></div>
             </div>
             <div class="modal-actions" style="justify-content:flex-start;">
-              <button type="submit" class="btn btn-accent">Enregistrer les paramètres</button>
+              <button type="submit" class="btn btn-accent action-ecriture">Enregistrer les paramètres</button>
             </div>
           </form>
         </div>
@@ -1149,9 +1166,9 @@ function dessinerTableProduits(produits){
       </td>
       <td>${p.en_alerte_stock ? '<span class="badge alerte">Stock faible</span>' : '<span class="badge ok">OK</span>'}</td>
       <td class="cell-actions">
-        <button class="icon-btn" title="Modifier" onclick="ouvrirModalProduit('${p.id}')">${svgIcon('edit')}</button>
-        <button class="icon-btn" title="Archiver" onclick="archiverProduit('${p.id}')">${svgIcon('archive')}</button>
-        <button class="icon-btn danger" title="Supprimer" onclick="supprimerProduit('${p.id}')">${svgIcon('trash')}</button>
+        <button class="icon-btn action-ecriture" title="Modifier" onclick="ouvrirModalProduit('${p.id}')">${svgIcon('edit')}</button>
+        <button class="icon-btn action-ecriture" title="Archiver" onclick="archiverProduit('${p.id}')">${svgIcon('archive')}</button>
+        <button class="icon-btn danger action-ecriture" title="Supprimer" onclick="supprimerProduit('${p.id}')">${svgIcon('trash')}</button>
       </td>
     </tr>
   `).join('');
@@ -2079,8 +2096,8 @@ function dessinerTableClients(clients){
       <td class="mono" style="${Number(c.dette_actuelle) > 0 ? 'color:var(--danger)' : ''}">${formatMontant(c.dette_actuelle)}</td>
       <td class="cell-actions">
         <button class="icon-btn" title="Voir le détail" onclick="voirDetailClientPage('${c.id}')">${svgIcon('eye')}</button>
-        <button class="icon-btn" title="Modifier" onclick="ouvrirModalClientPage('${c.id}')">${svgIcon('edit')}</button>
-        <button class="icon-btn danger" title="Supprimer" onclick="supprimerClientPage('${c.id}')">${svgIcon('trash')}</button>
+        <button class="icon-btn action-ecriture" title="Modifier" onclick="ouvrirModalClientPage('${c.id}')">${svgIcon('edit')}</button>
+        <button class="icon-btn danger action-ecriture" title="Supprimer" onclick="supprimerClientPage('${c.id}')">${svgIcon('trash')}</button>
       </td>
     </tr>
   `).join('');
@@ -2166,7 +2183,7 @@ async function voirDetailClientPage(id){
         <div><div class="dg-label">Montant dépensé</div><div class="dg-value">${formatMontant(client.montant_total_depense)}</div></div>
         <div><div class="dg-label">Dette actuelle</div><div class="dg-value" style="${Number(client.dette_actuelle) > 0 ? 'color:var(--danger)' : ''}">${formatMontant(client.dette_actuelle)}</div></div>
       </div>
-      ${Number(client.dette_actuelle) > 0 ? `<button class="btn btn-accent" style="margin-bottom:18px;" onclick="ouvrirModalPaiementClient('${client.id}', ${client.dette_actuelle})">Régler la dette</button>` : ''}
+      ${Number(client.dette_actuelle) > 0 ? `<button class="btn btn-accent action-ecriture" style="margin-bottom:18px;" onclick="ouvrirModalPaiementClient('${client.id}', ${client.dette_actuelle})">Régler la dette</button>` : ''}
       <h3 style="font-size:13px;">Historique des ventes</h3>
       <div class="table-scroll" style="margin-bottom:16px;">
         <table class="data-table">
@@ -2274,8 +2291,8 @@ function dessinerTableFournisseurs(fournisseurs){
       <td class="mono" style="${Number(f.dette_actuelle) > 0 ? 'color:var(--danger)' : ''}">${formatMontant(f.dette_actuelle)}</td>
       <td class="cell-actions">
         <button class="icon-btn" title="Voir le détail" onclick="voirDetailFournisseurPage('${f.id}')">${svgIcon('eye')}</button>
-        <button class="icon-btn" title="Modifier" onclick="ouvrirModalFournisseurPage('${f.id}')">${svgIcon('edit')}</button>
-        <button class="icon-btn danger" title="Supprimer" onclick="supprimerFournisseurPage('${f.id}')">${svgIcon('trash')}</button>
+        <button class="icon-btn action-ecriture" title="Modifier" onclick="ouvrirModalFournisseurPage('${f.id}')">${svgIcon('edit')}</button>
+        <button class="icon-btn danger action-ecriture" title="Supprimer" onclick="supprimerFournisseurPage('${f.id}')">${svgIcon('trash')}</button>
       </td>
     </tr>
   `).join('');
@@ -2346,7 +2363,7 @@ async function voirDetailFournisseurPage(id){
         <div><div class="dg-label">Montant total acheté</div><div class="dg-value">${formatMontant(fournisseur.montant_total_achete || 0)}</div></div>
         <div><div class="dg-label">Dette actuelle</div><div class="dg-value" style="${Number(fournisseur.dette_actuelle) > 0 ? 'color:var(--danger)' : ''}">${formatMontant(fournisseur.dette_actuelle)}</div></div>
       </div>
-      ${Number(fournisseur.dette_actuelle) > 0 ? `<button class="btn btn-accent" style="margin-bottom:18px;" onclick="ouvrirModalPaiementFournisseur('${fournisseur.id}', ${fournisseur.dette_actuelle})">Régler la dette</button>` : ''}
+      ${Number(fournisseur.dette_actuelle) > 0 ? `<button class="btn btn-accent action-ecriture" style="margin-bottom:18px;" onclick="ouvrirModalPaiementFournisseur('${fournisseur.id}', ${fournisseur.dette_actuelle})">Régler la dette</button>` : ''}
       <h3 style="font-size:13px;">Historique des achats</h3>
       <div class="table-scroll" style="margin-bottom:16px;">
         <table class="data-table">
@@ -2446,7 +2463,7 @@ function dessinerTableCharges(charges){
       <td class="cell-sub">${c.description || '—'}</td>
       <td class="mono">${formatMontant(c.montant)}</td>
       <td><span class="badge neutral">${LIBELLES_PAIEMENT[c.mode_paiement] || c.mode_paiement}</span></td>
-      <td class="cell-actions"><button class="icon-btn danger" title="Supprimer" onclick="supprimerCharge('${c.id}')">${svgIcon('trash')}</button></td>
+      <td class="cell-actions"><button class="icon-btn danger action-ecriture" title="Supprimer" onclick="supprimerCharge('${c.id}')">${svgIcon('trash')}</button></td>
     </tr>
   `).join('');
 }
@@ -2809,7 +2826,7 @@ let utilisateurConnecte = null;
 
 const LIBELLES_ROLES = {
   administrateur: 'Administrateur', manager: 'Manager', comptable: 'Comptable',
-  caissier: 'Caissier', vendeur: 'Vendeur', magasinier: 'Magasinier',
+  caissier: 'Caissier', vendeur: 'Vendeur', magasinier: 'Magasinier', consultant: 'Consultant',
 };
 
 async function initialiserAuthentification(){
@@ -2951,11 +2968,13 @@ function gererExpirationSession(){
 // certains rôles — inutile de laisser un bouton qui mènera à une erreur 403).
 function appliquerPermissionsUI(){
   const role = utilisateurConnecte.role;
+  document.body.classList.toggle('role-consultant', role === 'consultant');
+
   document.querySelectorAll('.nav-item').forEach((btn) => {
     const id = btn.dataset.view;
     let visible = true;
     if (id === 'utilisateurs') visible = role === 'administrateur';
-    else if (id === 'comptabilite') visible = ['administrateur', 'manager', 'comptable'].includes(role);
+    else if (id === 'comptabilite') visible = ['administrateur', 'manager', 'comptable', 'consultant'].includes(role);
     btn.style.display = visible ? '' : 'none';
   });
 }
@@ -2990,9 +3009,9 @@ function dessinerTableUtilisateurs(utilisateurs){
       <td>${LIBELLES_ROLES[u.role] || u.role}</td>
       <td>${u.actif ? '<span class="badge ok">Actif</span>' : '<span class="badge alerte">Désactivé</span>'}</td>
       <td class="cell-actions">
-        <button class="icon-btn" title="Modifier" onclick="ouvrirModalUtilisateur('${u.id}')">${svgIcon('edit')}</button>
-        <button class="icon-btn" title="Réinitialiser le mot de passe" onclick="ouvrirModalMotDePasse('${u.id}')">${svgIcon('sliders')}</button>
-        ${u.id !== utilisateurConnecte.id ? `<button class="icon-btn danger" title="Désactiver" onclick="desactiverUtilisateur('${u.id}')">${svgIcon('trash')}</button>` : ''}
+        <button class="icon-btn action-ecriture" title="Modifier" onclick="ouvrirModalUtilisateur('${u.id}')">${svgIcon('edit')}</button>
+        <button class="icon-btn action-ecriture" title="Réinitialiser le mot de passe" onclick="ouvrirModalMotDePasse('${u.id}')">${svgIcon('sliders')}</button>
+        ${u.id !== utilisateurConnecte.id ? `<button class="icon-btn danger action-ecriture" title="Désactiver" onclick="desactiverUtilisateur('${u.id}')">${svgIcon('trash')}</button>` : ''}
       </td>
     </tr>
   `).join('');
