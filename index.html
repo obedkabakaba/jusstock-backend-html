@@ -296,6 +296,37 @@
 
   .empty-state{padding:40px 20px;text-align:center;color:var(--text-muted);font-size:13px;}
 
+  .badge.info{background:#E1EEFB;color:#2F6FB5;}
+  .badge.neutral{background:var(--paper);color:var(--text-muted);border:1px solid var(--border);}
+
+  /* ---------- LIGNES DYNAMIQUES (achats / ventes) ---------- */
+  .line-item-row{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr)) 38px;
+    gap:8px;align-items:end;margin-bottom:10px;padding-bottom:10px;
+    border-bottom:1px dashed var(--border);
+  }
+  .line-item-row:last-of-type{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .btn-remove-line{
+    width:32px;height:32px;border-radius:7px;border:1px solid var(--border);
+    background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    align-self:center;
+  }
+  .btn-remove-line svg{width:13px;height:13px;stroke:var(--danger);}
+  .btn-add-line{margin-top:2px;}
+  .lines-container{margin-bottom:6px;}
+
+  .form-summary{background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-top:14px;font-size:13px;}
+  .form-summary .row{display:flex;justify-content:space-between;padding:3px 0;}
+  .form-summary .row.total{font-weight:700;font-size:15px;border-top:1px solid var(--border);margin-top:6px;padding-top:8px;font-family:var(--font-mono);}
+
+  .select-with-action{display:flex;gap:6px;align-items:center;}
+  .select-with-action select{flex:1;}
+  .link-btn{background:none;border:none;color:var(--accent-dark);font-size:11.5px;font-weight:600;cursor:pointer;padding:0;white-space:nowrap;text-decoration:underline;}
+
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px 22px;margin-bottom:16px;font-size:13px;}
+  .detail-grid .dg-label{color:var(--text-muted);font-size:11.5px;}
+  .detail-grid .dg-value{font-weight:600;}
+
   /* ---------- RESPONSIVE ---------- */
   @media (max-width: 980px){
     .panel-grid,.lower-grid{grid-template-columns:1fr;}
@@ -468,8 +499,45 @@
           </div>
         </div>
       </section>
-      <section class="view" id="view-achats"></section>
-      <section class="view" id="view-ventes"></section>
+      <section class="view" id="view-achats">
+        <div class="toolbar">
+          <div><span class="subtitle" id="resumeAchats"></span></div>
+          <button class="btn btn-accent" onclick="ouvrirModalAchat()">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Nouvel achat
+          </button>
+        </div>
+        <div class="table-panel">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr><th>Référence</th><th>Date</th><th>Fournisseur</th><th>Coût total</th><th>Payé</th><th>Statut</th><th></th></tr>
+              </thead>
+              <tbody id="corpsTableAchats"><tr><td colspan="7" class="empty-state">Chargement…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-ventes">
+        <div class="toolbar">
+          <div><span class="subtitle" id="resumeVentes"></span></div>
+          <button class="btn btn-accent" onclick="ouvrirModalVente()">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Nouvelle vente
+          </button>
+        </div>
+        <div class="table-panel">
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr><th>Référence</th><th>Date</th><th>Client</th><th>Paiement</th><th>Total</th><th>Bénéfice</th><th></th></tr>
+              </thead>
+              <tbody id="corpsTableVentes"><tr><td colspan="7" class="empty-state">Chargement…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
       <section class="view" id="view-clients"></section>
       <section class="view" id="view-fournisseurs"></section>
       <section class="view" id="view-comptabilite"></section>
@@ -510,8 +578,8 @@ const CONFIG = {
 const NAV_ITEMS = [
   { id: 'dashboard',     label: 'Tableau de bord', ready: true,  icon: 'grid',      subtitle: "Vue d'ensemble de l'activité en temps réel" },
   { id: 'produits',      label: 'Produits',        ready: true,  icon: 'bottle',    subtitle: 'Catalogue des produits, prix et conversions paquet/bouteille' },
-  { id: 'achats',        label: 'Achats',          ready: false, icon: 'download',  subtitle: 'Enregistrement des achats et calcul du coût réel' },
-  { id: 'ventes',        label: 'Ventes',          ready: false, icon: 'upload',    subtitle: 'Ventes au détail et en gros, bonus et remises' },
+  { id: 'achats',        label: 'Achats',          ready: true,  icon: 'download',  subtitle: 'Enregistrement des achats et calcul du coût réel' },
+  { id: 'ventes',        label: 'Ventes',          ready: true,  icon: 'upload',    subtitle: 'Ventes au détail et en gros, bonus et remises' },
   { id: 'stock',         label: 'Stock',           ready: true,  icon: 'layers',    subtitle: 'Niveaux de stock, mouvements et alertes' },
   { id: 'clients',       label: 'Clients',         ready: false, icon: 'user',      subtitle: 'Clients enregistrés, historique et dettes' },
   { id: 'fournisseurs',  label: 'Fournisseurs',    ready: false, icon: 'truck',     subtitle: 'Fournisseurs, historique et paiements' },
@@ -544,6 +612,7 @@ const ICONS = {
   trash: '<path d="M4 7h16"/><path d="M6 7V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/><path d="M8 7v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V7"/><path d="M10 11v6M14 11v6"/>',
   close: '<path d="M18 6 6 18M6 6l12 12"/>',
   sliders: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M2 14h4M10 8h4M18 12h4"/>',
+  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
 };
 
 function svgIcon(name, extra){
@@ -591,6 +660,8 @@ function afficherVue(id){
   if (id === 'dashboard') chargerDashboard();
   if (id === 'produits') chargerProduits();
   if (id === 'stock') chargerStock();
+  if (id === 'achats') chargerAchats();
+  if (id === 'ventes') chargerVentes();
 }
 
 document.getElementById('menuToggle').addEventListener('click', () => {
@@ -1137,12 +1208,539 @@ async function soumettreCorrection(event){
 }
 
 // ============================================================
-// INITIALISATION
+// MODULE : ACHATS
 // ============================================================
+let produitsPourFormulaire = [];   // snapshot des produits au moment d'ouvrir un formulaire achat/vente
+let fournisseursPourFormulaire = [];
+let clientsPourFormulaire = [];
+
+async function chargerAchats(){
+  const corps = document.getElementById('corpsTableAchats');
+  try {
+    const achats = await appelApi('/achats');
+    document.getElementById('resumeAchats').textContent = `${achats.length} achat(s) enregistré(s)`;
+    dessinerTableAchats(achats);
+  } catch (err) {
+    corps.innerHTML = `<tr><td colspan="7" class="empty-state">Impossible de charger les achats (${err.message}).</td></tr>`;
+  }
+}
+
+function dessinerTableAchats(achats){
+  const corps = document.getElementById('corpsTableAchats');
+  if (!achats || achats.length === 0) {
+    corps.innerHTML = '<tr><td colspan="7" class="empty-state">Aucun achat. Clique sur "Nouvel achat" pour commencer.</td></tr>';
+    return;
+  }
+  corps.innerHTML = achats.map(a => {
+    let statut = '<span class="badge alerte">Non payé</span>';
+    if (Number(a.montant_paye) >= Number(a.cout_total)) statut = '<span class="badge ok">Payé</span>';
+    else if (Number(a.montant_paye) > 0) statut = '<span class="badge info">Partiel</span>';
+    return `
+      <tr>
+        <td class="mono">${a.reference}</td>
+        <td class="mono">${new Date(a.date_achat).toLocaleDateString('fr-FR')}</td>
+        <td>${a.fournisseur_nom || '—'}</td>
+        <td class="mono">${formatMontant(a.cout_total)}</td>
+        <td class="mono">${formatMontant(a.montant_paye)}</td>
+        <td>${statut}</td>
+        <td class="cell-actions"><button class="icon-btn" title="Voir le détail" onclick="voirDetailAchat('${a.id}')">${svgIcon('eye')}</button></td>
+      </tr>`;
+  }).join('');
+}
+
+async function voirDetailAchat(id){
+  try {
+    const achat = await appelApi(`/achats/${id}`);
+    ouvrirModal(`
+      <div class="modal-head">
+        <div><h2>Achat ${achat.reference}</h2><div class="modal-sub">${new Date(achat.date_achat).toLocaleDateString('fr-FR')} — ${achat.fournisseur_nom || 'Fournisseur non renseigné'}</div></div>
+        <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+      </div>
+      <div class="detail-grid">
+        <div><div class="dg-label">Coût total</div><div class="dg-value">${formatMontant(achat.cout_total)}</div></div>
+        <div><div class="dg-label">Montant payé</div><div class="dg-value">${formatMontant(achat.montant_paye)}</div></div>
+        <div><div class="dg-label">Transport</div><div class="dg-value">${formatMontant(achat.transport)}</div></div>
+        <div><div class="dg-label">Autres frais</div><div class="dg-value">${formatMontant(achat.autres_frais)}</div></div>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th>Produit</th><th>Paquets</th><th>Bout. isolées</th><th>Coût/paquet</th><th>Coût/bout.</th><th>Montant payé</th></tr></thead>
+          <tbody>
+            ${achat.lignes.map(l => `
+              <tr>
+                <td>${l.produit_nom}</td>
+                <td class="mono">${formatNombre(l.nombre_paquets)}</td>
+                <td class="mono">${formatNombre(l.nombre_bouteilles_isolees)}</td>
+                <td class="mono">${formatMontant(l.cout_par_paquet)}</td>
+                <td class="mono">${formatMontant(l.cout_par_bouteille)}</td>
+                <td class="mono">${formatMontant(l.montant_paye_ligne)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      ${achat.notes ? `<div class="hint" style="margin-top:12px;">Notes : ${achat.notes}</div>` : ''}
+    `);
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+async function ouvrirModalAchat(preselectionFournisseurId){
+  try {
+    const [fournisseurs, produits] = await Promise.all([appelApi('/fournisseurs'), appelApi('/produits')]);
+    fournisseursPourFormulaire = fournisseurs;
+    produitsPourFormulaire = produits;
+
+    if (produits.length === 0) {
+      afficherToast("Crée d'abord au moins un produit avant d'enregistrer un achat.", 'error');
+      return;
+    }
+    construireFormAchat(preselectionFournisseurId);
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+function optionsProduitsHtml(){
+  return produitsPourFormulaire.map(p => `<option value="${p.id}">${p.nom}</option>`).join('');
+}
+
+function ligneAchatHtml(){
+  return `
+    <div class="line-item-row">
+      <div class="form-group"><label>Produit *</label><select name="ligne_produit_id" required><option value="">—</option>${optionsProduitsHtml()}</select></div>
+      <div class="form-group"><label>Paquets</label><input type="number" name="ligne_paquets" min="0" value="0"></div>
+      <div class="form-group"><label>Bout. isolées</label><input type="number" name="ligne_bouteilles_isolees" min="0" value="0"></div>
+      <div class="form-group"><label>Montant payé (ligne) *</label><input type="number" name="ligne_montant_paye" min="0" step="0.01" required></div>
+      <button type="button" class="btn-remove-line" onclick="supprimerLigne(this)" title="Retirer la ligne">${svgIcon('close')}</button>
+    </div>`;
+}
+
+function ajouterLigneAchat(){
+  document.getElementById('lignesAchatContainer').insertAdjacentHTML('beforeend', ligneAchatHtml());
+}
+
+function supprimerLigne(bouton){
+  bouton.closest('.line-item-row').remove();
+  recalculerApercuVente();
+}
+
+function construireFormAchat(preselectionFournisseurId){
+  const optionsFournisseurs = fournisseursPourFormulaire.map(f =>
+    `<option value="${f.id}" ${f.id === preselectionFournisseurId ? 'selected' : ''}>${f.nom}</option>`
+  ).join('');
+
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>Nouvel achat</h2><div class="modal-sub">Le coût par paquet/bouteille et le CMP du produit sont recalculés automatiquement.</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form id="formAchat" onsubmit="soumettreAchat(event)">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Fournisseur</label>
+          <div class="select-with-action">
+            <select name="fournisseur_id" id="selectFournisseurAchat">
+              <option value="">— Aucun / non renseigné —</option>
+              ${optionsFournisseurs}
+            </select>
+            <button type="button" class="link-btn" onclick="ouvrirModalFournisseurRapide()">+ Nouveau fournisseur</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Date de l'achat</label>
+          <input type="date" name="date_achat" value="${new Date().toISOString().slice(0,10)}">
+        </div>
+        <div class="form-group">
+          <label>Transport (FC)</label>
+          <input type="number" name="transport" min="0" step="0.01" value="0">
+        </div>
+        <div class="form-group">
+          <label>Autres frais (FC)</label>
+          <input type="number" name="autres_frais" min="0" step="0.01" value="0">
+        </div>
+        <div class="form-group">
+          <label>Montant payé au fournisseur (FC)</label>
+          <input type="number" name="montant_paye" min="0" step="0.01" value="0">
+          <div class="hint">Peut être inférieur au coût total (le reste devient une dette fournisseur).</div>
+        </div>
+      </div>
+
+      <h3 style="font-size:13px;margin:18px 0 8px 0;">Lignes d'achat</h3>
+      <div class="lines-container" id="lignesAchatContainer">${ligneAchatHtml()}</div>
+      <button type="button" class="btn btn-add-line" onclick="ajouterLigneAchat()">${svgIcon('plus')} Ajouter une ligne</button>
+
+      <div class="form-group full" style="margin-top:14px;">
+        <label>Notes</label>
+        <textarea name="notes"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">Enregistrer l'achat</button>
+      </div>
+    </form>
+  `);
+}
+
+async function soumettreAchat(event){
+  event.preventDefault();
+  const formulaire = event.target;
+  const donnees = new FormData(formulaire);
+
+  const produitIds = donnees.getAll('ligne_produit_id');
+  const paquets = donnees.getAll('ligne_paquets');
+  const bouteillesIsolees = donnees.getAll('ligne_bouteilles_isolees');
+  const montantsLigne = donnees.getAll('ligne_montant_paye');
+
+  const lignes = produitIds.map((produit_id, i) => ({
+    produit_id,
+    nombre_paquets: Number(paquets[i] || 0),
+    nombre_bouteilles_isolees: Number(bouteillesIsolees[i] || 0),
+    montant_paye_ligne: Number(montantsLigne[i] || 0),
+  })).filter(l => l.produit_id); // ignore les lignes vides éventuelles
+
+  if (lignes.length === 0) { afficherToast("Ajoute au moins une ligne d'achat.", 'error'); return; }
+
+  const payload = {
+    fournisseur_id: donnees.get('fournisseur_id') || null,
+    date_achat: donnees.get('date_achat') || null,
+    transport: Number(donnees.get('transport') || 0),
+    autres_frais: Number(donnees.get('autres_frais') || 0),
+    montant_paye: Number(donnees.get('montant_paye') || 0),
+    notes: donnees.get('notes') || null,
+    lignes,
+  };
+
+  const boutonSubmit = formulaire.querySelector('button[type="submit"]');
+  boutonSubmit.disabled = true;
+
+  try {
+    await appelApiEcriture('/achats', 'POST', payload);
+    afficherToast('Achat enregistré avec succès.', 'success');
+    fermerModal();
+    chargerAchats();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    boutonSubmit.disabled = false;
+  }
+}
+
+function ouvrirModalFournisseurRapide(){
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>Nouveau fournisseur</h2><div class="modal-sub">Création rapide</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form onsubmit="soumettreFournisseurRapide(event)">
+      <div class="form-grid">
+        <div class="form-group full"><label>Nom *</label><input type="text" name="nom" required></div>
+        <div class="form-group"><label>Téléphone</label><input type="text" name="telephone"></div>
+        <div class="form-group"><label>Adresse</label><input type="text" name="adresse"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">Créer</button>
+      </div>
+    </form>
+  `);
+}
+
+async function soumettreFournisseurRapide(event){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  const payload = Object.fromEntries(donnees.entries());
+  try {
+    const nouveau = await appelApiEcriture('/fournisseurs', 'POST', payload);
+    afficherToast('Fournisseur créé.', 'success');
+    await ouvrirModalAchat(nouveau.id);
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+// ============================================================
+// MODULE : VENTES
+// ============================================================
+async function chargerVentes(){
+  const corps = document.getElementById('corpsTableVentes');
+  try {
+    const ventes = await appelApi('/ventes');
+    document.getElementById('resumeVentes').textContent = `${ventes.length} vente(s) enregistrée(s)`;
+    dessinerTableVentes(ventes);
+  } catch (err) {
+    corps.innerHTML = `<tr><td colspan="7" class="empty-state">Impossible de charger les ventes (${err.message}).</td></tr>`;
+  }
+}
+
+const LIBELLES_PAIEMENT = { especes: 'Espèces', mobile_money: 'Mobile Money', carte: 'Carte', credit: 'Crédit' };
+
+function dessinerTableVentes(ventes){
+  const corps = document.getElementById('corpsTableVentes');
+  if (!ventes || ventes.length === 0) {
+    corps.innerHTML = '<tr><td colspan="7" class="empty-state">Aucune vente. Clique sur "Nouvelle vente" pour commencer.</td></tr>';
+    return;
+  }
+  corps.innerHTML = ventes.map(v => `
+    <tr>
+      <td class="mono">${v.reference}</td>
+      <td class="mono">${new Date(v.date_vente).toLocaleDateString('fr-FR')}</td>
+      <td>${v.client_nom || 'Client de passage'}</td>
+      <td>${v.mode_paiement === 'credit' ? '<span class="badge alerte">Crédit</span>' : `<span class="badge neutral">${LIBELLES_PAIEMENT[v.mode_paiement] || v.mode_paiement}</span>`}</td>
+      <td class="mono">${formatMontant(v.total)}</td>
+      <td class="mono" style="color:var(--fresh)">${formatMontant(v.benefice_total)}</td>
+      <td class="cell-actions"><button class="icon-btn" title="Voir le détail" onclick="voirDetailVente('${v.id}')">${svgIcon('eye')}</button></td>
+    </tr>
+  `).join('');
+}
+
+async function voirDetailVente(id){
+  try {
+    const vente = await appelApi(`/ventes/${id}`);
+    ouvrirModal(`
+      <div class="modal-head">
+        <div><h2>Vente ${vente.reference}</h2><div class="modal-sub">${new Date(vente.date_vente).toLocaleDateString('fr-FR')} — ${vente.client_nom || 'Client de passage'}</div></div>
+        <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+      </div>
+      <div class="detail-grid">
+        <div><div class="dg-label">Total</div><div class="dg-value">${formatMontant(vente.total)}</div></div>
+        <div><div class="dg-label">Bénéfice</div><div class="dg-value">${formatMontant(vente.benefice_total)}</div></div>
+        <div><div class="dg-label">Remise</div><div class="dg-value">${formatMontant(vente.remise)}</div></div>
+        <div><div class="dg-label">Paiement</div><div class="dg-value">${LIBELLES_PAIEMENT[vente.mode_paiement] || vente.mode_paiement}</div></div>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th>Produit</th><th>Type</th><th>Qté</th><th>Bonus</th><th>Prix unit.</th><th>Montant</th><th>Bénéfice</th></tr></thead>
+          <tbody>
+            ${vente.lignes.map(l => `
+              <tr>
+                <td>${l.produit_nom}</td>
+                <td>${l.type_vente === 'gros' ? 'Gros' : 'Détail'}</td>
+                <td class="mono">${formatNombre(l.quantite)}</td>
+                <td class="mono">${formatNombre(l.bonus_quantite)}</td>
+                <td class="mono">${formatMontant(l.prix_unitaire)}</td>
+                <td class="mono">${formatMontant(l.montant_ligne)}</td>
+                <td class="mono" style="color:var(--fresh)">${formatMontant(l.benefice_ligne)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      ${vente.notes ? `<div class="hint" style="margin-top:12px;">Notes : ${vente.notes}</div>` : ''}
+    `);
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+async function ouvrirModalVente(preselectionClientId){
+  try {
+    const [clients, produits] = await Promise.all([appelApi('/clients'), appelApi('/produits')]);
+    clientsPourFormulaire = clients;
+    produitsPourFormulaire = produits;
+
+    if (produits.length === 0) {
+      afficherToast("Crée d'abord au moins un produit avant d'enregistrer une vente.", 'error');
+      return;
+    }
+    construireFormVente(preselectionClientId);
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+function ligneVenteHtml(){
+  return `
+    <div class="line-item-row">
+      <div class="form-group"><label>Produit *</label><select name="ligne_produit_id" required>${optionsProduitsHtml()}</select></div>
+      <div class="form-group"><label>Type *</label><select name="ligne_type_vente"><option value="detail">Détail (bouteille)</option><option value="gros">Gros (paquet)</option></select></div>
+      <div class="form-group"><label>Quantité *</label><input type="number" name="ligne_quantite" min="1" value="1" required></div>
+      <div class="form-group"><label>Prix unitaire *</label><input type="number" name="ligne_prix_unitaire" min="0" step="0.01" required></div>
+      <div class="form-group"><label>Bonus offert</label><input type="number" name="ligne_bonus_quantite" min="0" value="0"></div>
+      <button type="button" class="btn-remove-line" onclick="supprimerLigne(this)" title="Retirer la ligne">${svgIcon('close')}</button>
+    </div>`;
+}
+
+function ajouterLigneVente(){
+  document.getElementById('lignesVenteContainer').insertAdjacentHTML('beforeend', ligneVenteHtml());
+  recalculerApercuVente();
+}
+
+function construireFormVente(preselectionClientId){
+  const optionsClients = clientsPourFormulaire.map(c =>
+    `<option value="${c.id}" ${c.id === preselectionClientId ? 'selected' : ''}>${c.nom}${c.telephone ? ' — ' + c.telephone : ''}</option>`
+  ).join('');
+
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>Nouvelle vente</h2><div class="modal-sub">Le bonus sort du stock mais n'entre pas dans le chiffre d'affaires.</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form id="formVente" onsubmit="soumettreVente(event)">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Client</label>
+          <div class="select-with-action">
+            <select name="client_id" id="selectClientVente">
+              <option value="">— Client de passage —</option>
+              ${optionsClients}
+            </select>
+            <button type="button" class="link-btn" onclick="ouvrirModalClientRapide()">+ Nouveau client</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Mode de paiement *</label>
+          <select name="mode_paiement" required>
+            <option value="especes">Espèces</option>
+            <option value="mobile_money">Mobile Money</option>
+            <option value="carte">Carte</option>
+            <option value="credit">Crédit (client enregistré uniquement)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Remise (FC)</label>
+          <input type="number" name="remise" min="0" step="0.01" value="0">
+        </div>
+        <div class="form-group">
+          <label>TVA (FC)</label>
+          <input type="number" name="tva_montant" min="0" step="0.01" value="0">
+        </div>
+      </div>
+
+      <h3 style="font-size:13px;margin:18px 0 8px 0;">Lignes de vente</h3>
+      <div class="lines-container" id="lignesVenteContainer">${ligneVenteHtml()}</div>
+      <button type="button" class="btn btn-add-line" onclick="ajouterLigneVente()">${svgIcon('plus')} Ajouter une ligne</button>
+
+      <div class="form-group full" style="margin-top:14px;">
+        <label>Notes</label>
+        <textarea name="notes"></textarea>
+      </div>
+
+      <div class="form-summary">
+        <div class="row"><span>Sous-total</span><span id="apercuSousTotal">0 FC</span></div>
+        <div class="row total"><span>Total</span><span id="apercuTotal">0 FC</span></div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">Enregistrer la vente</button>
+      </div>
+    </form>
+  `);
+
+  document.getElementById('formVente').addEventListener('input', recalculerApercuVente);
+  recalculerApercuVente();
+}
+
+function recalculerApercuVente(){
+  const formulaire = document.getElementById('formVente');
+  if (!formulaire) return;
+
+  const quantites = [...formulaire.querySelectorAll('[name="ligne_quantite"]')].map(el => Number(el.value) || 0);
+  const prix = [...formulaire.querySelectorAll('[name="ligne_prix_unitaire"]')].map(el => Number(el.value) || 0);
+
+  let sousTotal = 0;
+  quantites.forEach((q, i) => { sousTotal += q * (prix[i] || 0); });
+
+  const remise = Number(formulaire.querySelector('[name="remise"]')?.value) || 0;
+  const tva = Number(formulaire.querySelector('[name="tva_montant"]')?.value) || 0;
+  const total = sousTotal - remise + tva;
+
+  document.getElementById('apercuSousTotal').textContent = formatMontant(sousTotal);
+  document.getElementById('apercuTotal').textContent = formatMontant(total);
+}
+
+async function soumettreVente(event){
+  event.preventDefault();
+  const formulaire = event.target;
+  const donnees = new FormData(formulaire);
+
+  const modePaiement = donnees.get('mode_paiement');
+  const clientId = donnees.get('client_id') || null;
+
+  if (modePaiement === 'credit' && !clientId) {
+    afficherToast("Une vente à crédit nécessite un client enregistré (pas un client de passage).", 'error');
+    return;
+  }
+
+  const produitIds = donnees.getAll('ligne_produit_id');
+  const typesVente = donnees.getAll('ligne_type_vente');
+  const quantites = donnees.getAll('ligne_quantite');
+  const prixUnitaires = donnees.getAll('ligne_prix_unitaire');
+  const bonusQuantites = donnees.getAll('ligne_bonus_quantite');
+
+  const lignes = produitIds.map((produit_id, i) => ({
+    produit_id,
+    type_vente: typesVente[i],
+    quantite: Number(quantites[i] || 0),
+    prix_unitaire: Number(prixUnitaires[i] || 0),
+    bonus_quantite: Number(bonusQuantites[i] || 0),
+  })).filter(l => l.produit_id && l.quantite > 0);
+
+  if (lignes.length === 0) { afficherToast('Ajoute au moins une ligne de vente valide.', 'error'); return; }
+
+  const payload = {
+    client_id: clientId,
+    mode_paiement: modePaiement,
+    remise: Number(donnees.get('remise') || 0),
+    tva_montant: Number(donnees.get('tva_montant') || 0),
+    notes: donnees.get('notes') || null,
+    lignes,
+  };
+
+  const boutonSubmit = formulaire.querySelector('button[type="submit"]');
+  boutonSubmit.disabled = true;
+
+  try {
+    await appelApiEcriture('/ventes', 'POST', payload);
+    afficherToast('Vente enregistrée avec succès.', 'success');
+    fermerModal();
+    chargerVentes();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    boutonSubmit.disabled = false;
+  }
+}
+
+function ouvrirModalClientRapide(){
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>Nouveau client</h2><div class="modal-sub">Création rapide (client enregistré)</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form onsubmit="soumettreClientRapide(event)">
+      <div class="form-grid">
+        <div class="form-group full"><label>Nom *</label><input type="text" name="nom" required></div>
+        <div class="form-group"><label>Téléphone</label><input type="text" name="telephone"></div>
+        <div class="form-group"><label>Adresse</label><input type="text" name="adresse"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">Créer</button>
+      </div>
+    </form>
+  `);
+}
+
+async function soumettreClientRapide(event){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  const payload = { ...Object.fromEntries(donnees.entries()), type: 'enregistre' };
+  try {
+    const nouveau = await appelApiEcriture('/clients', 'POST', payload);
+    afficherToast('Client créé.', 'success');
+    await ouvrirModalVente(nouveau.id);
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+
 document.getElementById('refreshBtn').addEventListener('click', () => {
   const idActif = document.querySelector('.nav-item.active')?.dataset.view || 'dashboard';
   if (idActif === 'produits') chargerProduits();
   else if (idActif === 'stock') chargerStock();
+  else if (idActif === 'achats') chargerAchats();
+  else if (idActif === 'ventes') chargerVentes();
   else chargerDashboard();
 });
 chargerDashboard();
