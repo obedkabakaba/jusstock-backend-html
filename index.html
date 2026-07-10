@@ -817,6 +817,12 @@
               <div class="form-group"><label>Stock minimum par défaut (bouteilles)</label><input type="number" name="stock_min_bouteille_defaut" id="pStockMinBout"></div>
               <div class="form-group"><label>Stock minimum par défaut (paquets)</label><input type="number" name="stock_min_paquet_defaut" id="pStockMinPaq"></div>
               <div class="form-group full"><label>Préfixe de numérotation des factures</label><input type="text" name="numerotation_facture_prefixe" id="pPrefixeFacture"></div>
+              <div class="form-group full" style="margin-top:4px;margin-bottom:-4px;">
+                <label style="font-size:12.5px;color:var(--text);">Capital de référence (suivi du retour sur investissement)</label>
+                <div class="hint">Ce que tu as réellement investi au départ dans l'activité (même avant JusStock). Sert uniquement à afficher ta progression dans le Bilan — n'a aucun impact sur les calculs comptables (qui restent basés sur ta caisse/banque/stock réels d'aujourd'hui).</div>
+              </div>
+              <div class="form-group"><label>Montant (FC)</label><input type="number" step="0.01" name="capital_reference" id="pCapitalReference" placeholder="Ex : 1144000"></div>
+              <div class="form-group"><label>Date de cet investissement</label><input type="date" name="capital_reference_date" id="pCapitalReferenceDate"></div>
             </div>
             <div class="modal-actions" style="justify-content:flex-start;">
               <button type="submit" class="btn btn-accent action-ecriture">Enregistrer les paramètres</button>
@@ -2828,7 +2834,16 @@ async function afficherResultat(du, au, contenu){
 
 async function afficherBilan(au, contenu){
   const b = await appelApi(`/comptabilite/bilan?a_la_date=${au}`);
+  const progressionHtml = b.progression ? `
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">Capital de référence</div><div class="kpi-value">${formatMontant(b.progression.capital_reference)}</div>${b.progression.capital_reference_date ? `<div class="kpi-sub">au ${new Date(b.progression.capital_reference_date).toLocaleDateString('fr-FR')}</div>` : ''}</div>
+      <div class="kpi-card"><div class="kpi-label">Valeur actuelle (Actif total)</div><div class="kpi-value">${formatMontant(b.progression.valeur_actuelle)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Évolution</div><div class="kpi-value" style="color:${b.progression.evolution_montant >= 0 ? 'var(--fresh)' : 'var(--danger)'}">${b.progression.evolution_montant >= 0 ? '+' : ''}${formatMontant(b.progression.evolution_montant)}</div><div class="kpi-sub">${b.progression.evolution_pourcentage !== null ? (b.progression.evolution_pourcentage >= 0 ? '+' : '') + b.progression.evolution_pourcentage + '%' : ''}</div></div>
+    </div>` : `
+    <div class="hint" style="margin-bottom:16px;">Renseigne un "Capital de référence" dans Paramètres pour voir ta progression / ton retour sur investissement ici.</div>`;
+
   contenu.innerHTML = `
+    ${progressionHtml}
     <div class="banner" style="background:${b.equilibre ? 'var(--fresh-soft)' : 'var(--danger-soft)'};color:${b.equilibre ? '#3F6B26' : '#8A332A'};">
       <span>${b.equilibre ? 'Le bilan est équilibré (Actif = Passif + Capitaux propres).' : "Le bilan n'est pas équilibré — vérifie les écritures comptables."}</span>
     </div>
@@ -2844,6 +2859,7 @@ async function afficherBilan(au, contenu){
         <h3>Passif &amp; Capitaux <span class="legend">${formatMontant(b.passif_capitaux.total)}</span></h3>
         <table class="data-table"><tbody>
           ${b.passif_capitaux.comptes.map(c => `<tr><td>${c.code} — ${c.nom}</td><td class="mono">${formatMontant(c.solde)}</td></tr>`).join('')}
+          <tr><td><strong>Capital correspondant à la valeur du stock</strong></td><td class="mono">${formatMontant(b.passif_capitaux.capital_implicite_stock)}</td></tr>
           <tr><td><strong>Résultat net cumulé</strong></td><td class="mono">${formatMontant(b.passif_capitaux.resultat_net_cumule)}</td></tr>
         </tbody></table>
       </div>
@@ -3089,6 +3105,8 @@ async function chargerParametres(){
     document.getElementById('pStockMinBout').value = p.stock_min_bouteille_defaut ?? '';
     document.getElementById('pStockMinPaq').value = p.stock_min_paquet_defaut ?? '';
     document.getElementById('pPrefixeFacture').value = p.numerotation_facture_prefixe || '';
+    document.getElementById('pCapitalReference').value = p.capital_reference ?? '';
+    document.getElementById('pCapitalReferenceDate').value = p.capital_reference_date ? p.capital_reference_date.slice(0, 10) : '';
 
     // Seul l'administrateur peut modifier les paramètres généraux (le bouton
     // Enregistrer est déjà masqué pour les autres via .action-ecriture, mais
@@ -3104,7 +3122,7 @@ async function chargerParametres(){
 async function soumettreParametres(event){
   event.preventDefault();
   const donnees = new FormData(event.target);
-  const champsNumeriques = ['taux_change', 'taux_tva', 'stock_min_bouteille_defaut', 'stock_min_paquet_defaut'];
+  const champsNumeriques = ['taux_change', 'taux_tva', 'stock_min_bouteille_defaut', 'stock_min_paquet_defaut', 'capital_reference'];
   const payload = {};
   for (const [cle, valeur] of donnees.entries()) {
     payload[cle] = champsNumeriques.includes(cle) ? Number(valeur) : valeur;
