@@ -346,6 +346,25 @@
   .filtre-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:18px;}
   .filtre-row .form-group{min-width:150px;}
 
+  /* ---------- IMPRESSION / EXPORT PDF (rapport de période) ---------- */
+  #zoneImpression{display:none;}
+  @media print{
+    body *{visibility:hidden;}
+    #zoneImpression, #zoneImpression *{visibility:visible;}
+    #zoneImpression{
+      display:block;position:absolute;left:0;top:0;width:100%;padding:24px;
+      font-family:Arial, sans-serif;color:#000;
+    }
+    #zoneImpression h1{font-size:20px;margin:0 0 2px 0;}
+    #zoneImpression h2{font-size:14px;font-weight:600;margin:0 0 4px 0;color:#333;}
+    #zoneImpression .impression-genere{font-size:11px;color:#666;margin:0 0 20px 0;}
+    #zoneImpression h3{font-size:13px;margin:22px 0 8px 0;border-bottom:1px solid #000;padding-bottom:4px;}
+    #zoneImpression table.impression-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px;}
+    #zoneImpression table.impression-table td{padding:5px 8px;border-bottom:1px solid #ddd;}
+    #zoneImpression table.impression-table td:last-child{text-align:right;font-family:monospace;}
+    #zoneImpression tr.impression-total td{font-weight:bold;border-top:2px solid #000;border-bottom:none;padding-top:8px;}
+  }
+
   /* ---------- ÉCRAN DE CONNEXION ---------- */
   .login-screen{
     position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;
@@ -773,6 +792,10 @@
           <div class="form-group" id="rapportDuWrap" style="display:none;"><label>Du</label><input type="date" id="rapportDu"></div>
           <div class="form-group" id="rapportAuWrap" style="display:none;"><label>Au</label><input type="date" id="rapportAu"></div>
           <button class="btn btn-accent" onclick="rafraichirRapports()">Actualiser</button>
+          <button class="btn" onclick="imprimerRapportPeriode()" style="margin-left:auto;">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Imprimer / Exporter en PDF
+          </button>
         </div>
         <div class="tabs-row">
           <button class="tab-btn active" data-tab="ventes" onclick="changerOngletRapport('ventes')">Ventes</button>
@@ -872,6 +895,12 @@
 
 <!-- Conteneur des notifications (succès / erreur) -->
 <div class="toast-container" id="toastContainer"></div>
+
+<!-- ============================================================
+     ZONE D'IMPRESSION — invisible à l'écran, ne s'affiche que lors
+     d'un Ctrl+P / window.print() (voir @media print dans le <style>)
+     ============================================================ -->
+<div id="zoneImpression"></div>
 
 <script>
 // ============================================================
@@ -3119,6 +3148,73 @@ async function afficherRapportCharges(q, contenu){
       <thead><tr><th>Catégorie</th><th>Nombre</th><th>Montant</th></tr></thead>
       <tbody>${r.par_categorie.map(c => `<tr><td>${c.categorie}</td><td class="mono">${formatNombre(c.nombre)}</td><td class="mono">${formatMontant(c.montant_total)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty-state">Aucune donnée</td></tr>'}</tbody>
     </table></div>`;
+}
+
+// ---------- Impression / export PDF du rapport de la période affichée ----------
+// Construit une version imprimable propre (résumé + détails) et déclenche
+// l'impression du navigateur (Ctrl+P / window.print()) — l'utilisateur choisit
+// ensuite "Enregistrer en PDF" comme destination, sans avoir besoin d'une
+// bibliothèque PDF côté serveur.
+async function imprimerRapportPeriode(){
+  try {
+    const q = construireQueryPeriode();
+    const [rVentes, rAchats, rCharges, params] = await Promise.all([
+      appelApi(`/rapports/ventes?${q}`),
+      appelApi(`/rapports/achats?${q}`),
+      appelApi(`/rapports/charges?${q}`),
+      appelApi('/parametres'),
+    ]);
+
+    const du = rVentes.periode.du;
+    const au = rVentes.periode.au;
+    const resultat = await appelApi(`/comptabilite/compte-resultat?du=${du}&au=${au}`);
+
+    const nomEntreprise = params.nom_entreprise || 'JusStock';
+    const libellePeriode = du === au
+      ? new Date(du).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+      : `Du ${new Date(du).toLocaleDateString('fr-FR')} au ${new Date(au).toLocaleDateString('fr-FR')}`;
+
+    document.getElementById('zoneImpression').innerHTML = `
+      <h1>${nomEntreprise}</h1>
+      <h2>Rapport d'activité — ${libellePeriode}</h2>
+      <div class="impression-genere">Généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
+
+      <h3>Résumé</h3>
+      <table class="impression-table">
+        <tr><td>Chiffre d'affaires</td><td>${formatMontant(rVentes.chiffre_affaires)}</td></tr>
+        <tr><td>Coût des marchandises vendues</td><td>${formatMontant(rVentes.cout_total)}</td></tr>
+        <tr><td>Bénéfice brut sur ventes</td><td>${formatMontant(rVentes.benefice_total)}</td></tr>
+        <tr><td>Total des achats</td><td>${formatMontant(rAchats.montant_total)}</td></tr>
+        <tr><td>Total des charges</td><td>${formatMontant(rCharges.montant_total)}</td></tr>
+        <tr class="impression-total"><td>Résultat net (compte de résultat)</td><td>${formatMontant(resultat.resultat_net)}</td></tr>
+      </table>
+
+      <h3>Ventes — répartition détail / gros</h3>
+      <table class="impression-table">
+        ${rVentes.repartition_detail_gros.map(x => `<tr><td>${x.type_vente === 'gros' ? 'Gros (paquets)' : 'Détail (bouteilles)'}</td><td>${formatMontant(x.montant)}</td></tr>`).join('') || '<tr><td colspan="2">Aucune vente sur cette période</td></tr>'}
+      </table>
+
+      <h3>Produits les plus vendus</h3>
+      <table class="impression-table">
+        ${rVentes.produits_plus_vendus.map((p, i) => `<tr><td>${i + 1}. ${p.nom}</td><td>${formatMontant(p.montant_total)}</td></tr>`).join('') || '<tr><td colspan="2">Aucune donnée</td></tr>'}
+      </table>
+
+      <h3>Achats par fournisseur</h3>
+      <table class="impression-table">
+        ${rAchats.par_fournisseur.map(f => `<tr><td>${f.nom} (${formatNombre(f.nombre_achats)} achat(s))</td><td>${formatMontant(f.montant_total)}</td></tr>`).join('') || '<tr><td colspan="2">Aucun achat sur cette période</td></tr>'}
+      </table>
+
+      <h3>Charges par catégorie</h3>
+      <table class="impression-table">
+        ${rCharges.par_categorie.map(c => `<tr><td>${c.categorie} (${formatNombre(c.nombre)})</td><td>${formatMontant(c.montant_total)}</td></tr>`).join('') || '<tr><td colspan="2">Aucune charge sur cette période</td></tr>'}
+      </table>
+    `;
+
+    // Laisse le DOM se mettre à jour avant d'ouvrir la boîte d'impression du navigateur
+    setTimeout(() => window.print(), 150);
+  } catch (err) {
+    afficherToast(`Impossible de générer le rapport (${err.message}).`, 'error');
+  }
 }
 
 // ============================================================
