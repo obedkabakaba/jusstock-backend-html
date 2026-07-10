@@ -379,6 +379,7 @@
      Le backend refuse de toute façon ces actions pour ce rôle (403) — on
      évite simplement d'afficher un bouton qui mènerait à une erreur. */
   body.role-consultant .action-ecriture{display:none !important;}
+  body:not(.role-administrateur) .action-admin-seul{display:none !important;}
   .consultant-banner{
     background:#E1EEFB;color:#1F4E79;padding:9px 16px;border-radius:8px;
     font-size:12.5px;font-weight:600;margin-bottom:16px;display:none;
@@ -741,6 +742,10 @@
           <div class="form-group"><label>Du</label><input type="date" id="compteDu"></div>
           <div class="form-group"><label>Au</label><input type="date" id="compteAu"></div>
           <button class="btn btn-accent" onclick="rafraichirCompta()">Filtrer</button>
+          <button class="btn action-admin-seul" onclick="ouvrirModalCapitalInitial()" style="margin-left:auto;" title="Réservé à l'administrateur — solde d'ouverture">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="14" r="1.2"/></svg>
+            Capital initial
+          </button>
         </div>
         <div class="tabs-row">
           <button class="tab-btn active" data-tab="journal" onclick="changerOngletCompta('journal')">Journal</button>
@@ -1503,6 +1508,11 @@ function ouvrirModalCorrection(){
           <div class="hint">Saisis le nombre total de bouteilles réellement compté, pas l'écart.</div>
         </div>
         <div class="form-group full">
+          <label>Coût unitaire par bouteille (FC) — optionnel</label>
+          <input type="number" name="nouveau_prix_achat_moyen" min="0" step="0.01" placeholder="Laisse vide pour une correction normale">
+          <div class="hint">Ne remplis ce champ QUE pour un "stock d'ouverture" (premier remplissage du système avec un stock déjà possédé). Ça fixe le coût moyen (CMP) du produit sans passer par un faux achat. Pour une correction d'inventaire normale, laisse vide.</div>
+        </div>
+        <div class="form-group full">
           <label>Notes</label>
           <textarea name="notes" placeholder="Ex : Inventaire physique du 09/07/2026"></textarea>
         </div>
@@ -1520,10 +1530,14 @@ async function soumettreCorrection(event){
   const formulaire = event.target;
   const donnees = new FormData(formulaire);
   const produitId = donnees.get('produit_id');
+  const coutUnitaire = donnees.get('nouveau_prix_achat_moyen');
   const payload = {
     nouveau_stock_bouteilles: Number(donnees.get('nouveau_stock_bouteilles')),
     notes: donnees.get('notes') || undefined,
   };
+  if (coutUnitaire !== '' && coutUnitaire !== null) {
+    payload.nouveau_prix_achat_moyen = Number(coutUnitaire);
+  }
 
   if (!produitId) { afficherToast('Choisis un produit.', 'error'); return; }
 
@@ -1663,6 +1677,96 @@ function ajouterLigneAchat(){
   document.getElementById('lignesAchatContainer').insertAdjacentHTML('beforeend', ligneAchatHtml());
 }
 
+// ---------- Répartition automatique d'un montant groupé entre plusieurs produits ----------
+// Cas d'usage : le fournisseur vend plusieurs produits différents (ex: Vitalo,
+// Fanta, Coca) mais donne un seul montant global pour le tout. On répartit ce
+// montant proportionnellement à la quantité de chaque produit (en équivalent-
+// paquets), puis on ajoute une ligne normale et distincte pour chaque produit
+// dans le formulaire principal, avec son coût déjà calculé.
+
+function ligneGroupeHtml(){
+  return `
+    <div class="line-item-row">
+      <div class="form-group"><label>Produit</label><select class="groupe-produit">${optionsProduitsHtml()}</select></div>
+      <div class="form-group"><label>Paquets</label><input type="number" class="groupe-paquets" min="0" value="0"></div>
+      <div class="form-group"><label>Bout. isolées</label><input type="number" class="groupe-bouteilles" min="0" value="0"></div>
+      <button type="button" class="btn-remove-line" onclick="this.closest('.line-item-row').remove()" title="Retirer">${svgIcon('close')}</button>
+    </div>`;
+}
+
+function ajouterLigneGroupe(){
+  document.getElementById('lignesGroupeContainer').insertAdjacentHTML('beforeend', ligneGroupeHtml());
+}
+
+function toggleRepartitionGroupee(){
+  const panel = document.getElementById('panelRepartitionGroupee');
+  const estVisible = panel.style.display !== 'none';
+  panel.style.display = estVisible ? 'none' : 'block';
+  if (!estVisible && document.getElementById('lignesGroupeContainer').children.length === 0) {
+    ajouterLigneGroupe();
+    ajouterLigneGroupe();
+  }
+}
+
+function calculerRepartitionGroupee(){
+  const montantTotal = Number(document.getElementById('montantGroupeTotal').value || 0);
+  if (montantTotal <= 0) { afficherToast('Indique le montant total du lot.', 'error'); return; }
+
+  const lignesBrutes = [...document.querySelectorAll('#lignesGroupeContainer .line-item-row')].map((ligne) => {
+    const produitId = ligne.querySelector('.groupe-produit').value;
+    const paquets = Number(ligne.querySelector('.groupe-paquets').value || 0);
+    const bouteilles = Number(ligne.querySelector('.groupe-bouteilles').value || 0);
+    const produit = produitsPourFormulaire.find((p) => p.id === produitId);
+    const bouteillesParPaquet = produit ? produit.bouteilles_par_paquet : 12;
+    const paquetsEquivalents = paquets + (bouteilles / bouteillesParPaquet);
+    return { produitId, paquets, bouteilles, paquetsEquivalents };
+  }).filter((l) => l.produitId && l.paquetsEquivalents > 0);
+
+  if (lignesBrutes.length === 0) { afficherToast('Ajoute au moins un produit avec une quantité dans le lot.', 'error'); return; }
+
+  const totalEquivalents = lignesBrutes.reduce((acc, l) => acc + l.paquetsEquivalents, 0);
+
+  // La dernière ligne absorbe l'arrondi, pour que la somme colle exactement au montant total.
+  let sommeAllouee = 0;
+  const repartition = lignesBrutes.map((l, index) => {
+    let montant;
+    if (index === lignesBrutes.length - 1) {
+      montant = Math.round((montantTotal - sommeAllouee) * 100) / 100;
+    } else {
+      montant = Math.round((montantTotal * l.paquetsEquivalents / totalEquivalents) * 100) / 100;
+      sommeAllouee += montant;
+    }
+    return { ...l, montant };
+  });
+
+  // Si la seule ligne présente dans le formulaire principal est encore vide
+  // (celle créée par défaut à l'ouverture), on la retire pour éviter une
+  // ligne vide bloquante à côté des lignes réparties.
+  const lignesPrincipales = document.querySelectorAll('#lignesAchatContainer .line-item-row');
+  if (lignesPrincipales.length === 1) {
+    const premiere = lignesPrincipales[0];
+    const produitVide = premiere.querySelector('[name="ligne_produit_id"]').value === '';
+    const montantVide = premiere.querySelector('[name="ligne_montant_paye"]').value === '';
+    if (produitVide && montantVide) premiere.remove();
+  }
+
+  repartition.forEach((l) => {
+    document.getElementById('lignesAchatContainer').insertAdjacentHTML('beforeend', ligneAchatHtml());
+    const nouvelleLigne = document.getElementById('lignesAchatContainer').lastElementChild;
+    nouvelleLigne.querySelector('[name="ligne_produit_id"]').value = l.produitId;
+    nouvelleLigne.querySelector('[name="ligne_paquets"]').value = l.paquets;
+    nouvelleLigne.querySelector('[name="ligne_bouteilles_isolees"]').value = l.bouteilles;
+    nouvelleLigne.querySelector('[name="ligne_montant_paye"]').value = l.montant;
+  });
+
+  afficherToast(`Réparti sur ${repartition.length} produit(s), total vérifié : ${formatMontant(montantTotal)}.`, 'success');
+
+  // Réinitialise et referme le panneau de répartition
+  document.getElementById('montantGroupeTotal').value = '';
+  document.getElementById('lignesGroupeContainer').innerHTML = '';
+  toggleRepartitionGroupee();
+}
+
 function supprimerLigne(bouton){
   bouton.closest('.line-item-row').remove();
   recalculerApercuVente();
@@ -1713,6 +1817,23 @@ function construireFormAchat(preselectionFournisseurId){
       <div class="hint" style="margin-bottom:10px;">Pour chaque produit acheté : combien de paquets/bouteilles, et le "Coût de cette ligne" = ce que TE COÛTE ce lot (utilisé pour calculer ton coût par bouteille) — pas forcément ce que tu as payé cash (ça, c'est le champ au-dessus).</div>
       <div class="lines-container" id="lignesAchatContainer">${ligneAchatHtml()}</div>
       <button type="button" class="btn btn-add-line" onclick="ajouterLigneAchat()">${svgIcon('plus')} Ajouter une ligne</button>
+
+      <div style="margin:14px 0;">
+        <button type="button" class="link-btn" onclick="toggleRepartitionGroupee()">+ Le fournisseur m'a donné un seul montant pour plusieurs produits mélangés → répartir automatiquement</button>
+      </div>
+      <div id="panelRepartitionGroupee" style="display:none;background:var(--paper);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px;">
+        <div class="form-group full" style="margin-bottom:10px;">
+          <label>Montant total payé pour tout ce lot (FC) *</label>
+          <input type="number" id="montantGroupeTotal" min="0.01" step="0.01" placeholder="Ex : 100000">
+          <div class="hint">Le montant sera réparti entre les produits ci-dessous, proportionnellement à la quantité de chacun (en équivalent-paquets). C'est juste pour toi que le calcul se fasse tout seul — chaque produit garde bien sa propre ligne et son propre coût une fois réparti.</div>
+        </div>
+        <div id="lignesGroupeContainer"></div>
+        <button type="button" class="btn btn-add-line" onclick="ajouterLigneGroupe()">${svgIcon('plus')} Ajouter un produit à ce lot</button>
+        <div class="modal-actions" style="margin-top:12px;">
+          <button type="button" class="btn" onclick="toggleRepartitionGroupee()">Annuler</button>
+          <button type="button" class="btn btn-accent" onclick="calculerRepartitionGroupee()">Répartir et ajouter aux lignes ci-dessus</button>
+        </div>
+      </div>
 
       <div class="form-group full" style="margin-top:14px;">
         <label>Notes</label>
@@ -2758,6 +2879,73 @@ async function afficherDetailGrandLivre(){
   }
 }
 
+// ---------- Capital initial (solde d'ouverture, admin uniquement) ----------
+function ouvrirModalCapitalInitial(){
+  ouvrirModal(`
+    <div class="modal-head">
+      <div>
+        <h2>Capital initial</h2>
+        <div class="modal-sub">L'argent que tu as déjà en main aujourd'hui, avant d'utiliser JusStock — à faire une seule fois, au démarrage.</div>
+      </div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form onsubmit="soumettreCapitalInitial(event)">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Montant (FC) *</label>
+          <input type="number" name="montant" min="0.01" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label>Où se trouve cet argent ? *</label>
+          <select name="compte" required>
+            <option value="especes">Caisse (espèces)</option>
+            <option value="banque">Banque</option>
+            <option value="mobile_money">Mobile Money</option>
+            <option value="carte">Carte</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" name="date" value="${new Date().toISOString().slice(0,10)}">
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea name="notes" placeholder="Ex : Capital de départ de l'activité"></textarea>
+        </div>
+      </div>
+      <div class="hint" style="margin-bottom:10px;">
+        N'affecte jamais tes bénéfices (Compte de résultat) — sert seulement à ce que la Trésorerie et le Bilan reflètent correctement l'argent que tu as déjà, en plus de la valeur de ton stock.
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">Enregistrer</button>
+      </div>
+    </form>
+  `);
+}
+
+async function soumettreCapitalInitial(event){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  const payload = {
+    montant: Number(donnees.get('montant')),
+    compte: donnees.get('compte'),
+    date: donnees.get('date') || null,
+    notes: donnees.get('notes') || null,
+  };
+  const bouton = event.target.querySelector('button[type="submit"]');
+  bouton.disabled = true;
+  try {
+    await appelApiEcriture('/comptabilite/capital-initial', 'POST', payload);
+    afficherToast('Capital initial enregistré.', 'success');
+    fermerModal();
+    rafraichirCompta();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    bouton.disabled = false;
+  }
+}
+
 // ============================================================
 // MODULE : RAPPORTS
 // ============================================================
@@ -3050,6 +3238,7 @@ function gererExpirationSession(){
 function appliquerPermissionsUI(){
   const role = utilisateurConnecte.role;
   document.body.classList.toggle('role-consultant', role === 'consultant');
+  document.body.classList.toggle('role-administrateur', role === 'administrateur');
 
   document.querySelectorAll('.nav-item').forEach((btn) => {
     const id = btn.dataset.view;
