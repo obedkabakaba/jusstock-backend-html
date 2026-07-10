@@ -614,10 +614,10 @@
           <div class="table-scroll">
             <table class="data-table">
               <thead>
-                <tr><th>Produit</th><th>Stock</th><th>Seuil minimum</th><th>Statut</th></tr>
+                <tr><th>Produit</th><th>Stock</th><th>Coût moyen (CMP/bout.)</th><th>Valeur du stock</th><th>Seuil minimum</th><th>Statut</th></tr>
               </thead>
               <tbody id="corpsTableStock">
-                <tr><td colspan="4" class="empty-state">Chargement…</td></tr>
+                <tr><td colspan="6" class="empty-state">Chargement…</td></tr>
               </tbody>
             </table>
           </div>
@@ -806,28 +806,55 @@
 
       <section class="view" id="view-parametres">
         <div class="panel" style="max-width:680px;">
-          <h3>Informations générales de l'entreprise</h3>
-          <form id="formParametres" onsubmit="soumettreParametres(event)">
-            <div class="form-grid">
-              <div class="form-group full"><label>Nom de l'entreprise</label><input type="text" name="nom_entreprise" id="pNomEntreprise"></div>
-              <div class="form-group"><label>Devise principale</label><input type="text" name="devise_principale" id="pDevisePrincipale"></div>
-              <div class="form-group"><label>Devise secondaire</label><input type="text" name="devise_secondaire" id="pDeviseSecondaire"></div>
-              <div class="form-group"><label>Taux de change (FC pour 1 unité de devise secondaire)</label><input type="number" step="0.01" name="taux_change" id="pTauxChange"></div>
-              <div class="form-group"><label>Taux de TVA (%)</label><input type="number" step="0.01" name="taux_tva" id="pTauxTva"></div>
-              <div class="form-group"><label>Stock minimum par défaut (bouteilles)</label><input type="number" name="stock_min_bouteille_defaut" id="pStockMinBout"></div>
-              <div class="form-group"><label>Stock minimum par défaut (paquets)</label><input type="number" name="stock_min_paquet_defaut" id="pStockMinPaq"></div>
-              <div class="form-group full"><label>Préfixe de numérotation des factures</label><input type="text" name="numerotation_facture_prefixe" id="pPrefixeFacture"></div>
-              <div class="form-group full" style="margin-top:4px;margin-bottom:-4px;">
-                <label style="font-size:12.5px;color:var(--text);">Capital de référence (suivi du retour sur investissement)</label>
-                <div class="hint">Ce que tu as réellement investi au départ dans l'activité (même avant JusStock). Sert uniquement à afficher ta progression dans le Bilan — n'a aucun impact sur les calculs comptables (qui restent basés sur ta caisse/banque/stock réels d'aujourd'hui).</div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+            <h3 style="margin:0;">Informations générales de l'entreprise</h3>
+            <button type="button" class="btn action-admin-seul" onclick="basculerModeEditionParametres(true)">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              Modifier
+            </button>
+          </div>
+
+          <!-- Affichage statique (lecture seule), visible par défaut -->
+          <div id="parametresAffichage" style="margin-top:14px;">
+            <div class="detail-grid">
+              <div><div class="dg-label">Nom de l'entreprise</div><div class="dg-value" id="afNomEntreprise">—</div></div>
+              <div><div class="dg-label">Devise principale</div><div class="dg-value" id="afDevisePrincipale">—</div></div>
+              <div><div class="dg-label">Devise secondaire</div><div class="dg-value" id="afDeviseSecondaire">—</div></div>
+              <div><div class="dg-label">Taux de change</div><div class="dg-value" id="afTauxChange">—</div></div>
+              <div><div class="dg-label">Taux de TVA</div><div class="dg-value" id="afTauxTva">—</div></div>
+              <div><div class="dg-label">Stock minimum par défaut (bouteilles)</div><div class="dg-value" id="afStockMinBout">—</div></div>
+              <div><div class="dg-label">Stock minimum par défaut (paquets)</div><div class="dg-value" id="afStockMinPaq">—</div></div>
+              <div><div class="dg-label">Préfixe de numérotation des factures</div><div class="dg-value" id="afPrefixeFacture">—</div></div>
+              <div><div class="dg-label">Capital de référence</div><div class="dg-value" id="afCapitalReference">—</div></div>
+              <div><div class="dg-label">Date de cet investissement</div><div class="dg-value" id="afCapitalReferenceDate">—</div></div>
+            </div>
+          </div>
+
+          <!-- Formulaire d'édition, masqué par défaut -->
+          <div id="parametresFormWrap" style="display:none;margin-top:14px;">
+            <form id="formParametres" onsubmit="soumettreParametres(event)">
+              <div class="form-grid">
+                <div class="form-group full"><label>Nom de l'entreprise</label><input type="text" name="nom_entreprise" id="pNomEntreprise"></div>
+                <div class="form-group"><label>Devise principale</label><input type="text" name="devise_principale" id="pDevisePrincipale"></div>
+                <div class="form-group"><label>Devise secondaire</label><input type="text" name="devise_secondaire" id="pDeviseSecondaire"></div>
+                <div class="form-group"><label>Taux de change (FC pour 1 unité de devise secondaire)</label><input type="number" step="0.01" name="taux_change" id="pTauxChange"></div>
+                <div class="form-group"><label>Taux de TVA (%)</label><input type="number" step="0.01" name="taux_tva" id="pTauxTva"></div>
+                <div class="form-group"><label>Stock minimum par défaut (bouteilles)</label><input type="number" name="stock_min_bouteille_defaut" id="pStockMinBout"></div>
+                <div class="form-group"><label>Stock minimum par défaut (paquets)</label><input type="number" name="stock_min_paquet_defaut" id="pStockMinPaq"></div>
+                <div class="form-group full"><label>Préfixe de numérotation des factures</label><input type="text" name="numerotation_facture_prefixe" id="pPrefixeFacture"></div>
+                <div class="form-group full" style="margin-top:4px;margin-bottom:-4px;">
+                  <label style="font-size:12.5px;color:var(--text);">Capital de référence (suivi du retour sur investissement)</label>
+                  <div class="hint">Ce que tu as réellement investi au départ dans l'activité (même avant JusStock). Sert uniquement à afficher ta progression dans le Bilan — n'a aucun impact sur les calculs comptables (qui restent basés sur ta caisse/banque/stock réels d'aujourd'hui).</div>
+                </div>
+                <div class="form-group"><label>Montant (FC)</label><input type="number" step="0.01" name="capital_reference" id="pCapitalReference" placeholder="Ex : 1144000"></div>
+                <div class="form-group"><label>Date de cet investissement</label><input type="date" name="capital_reference_date" id="pCapitalReferenceDate"></div>
               </div>
-              <div class="form-group"><label>Montant (FC)</label><input type="number" step="0.01" name="capital_reference" id="pCapitalReference" placeholder="Ex : 1144000"></div>
-              <div class="form-group"><label>Date de cet investissement</label><input type="date" name="capital_reference_date" id="pCapitalReferenceDate"></div>
-            </div>
-            <div class="modal-actions" style="justify-content:flex-start;">
-              <button type="submit" class="btn btn-accent action-ecriture">Enregistrer les paramètres</button>
-            </div>
-          </form>
+              <div class="modal-actions" style="justify-content:flex-start;">
+                <button type="submit" class="btn btn-accent">Enregistrer les paramètres</button>
+                <button type="button" class="btn" onclick="basculerModeEditionParametres(false)">Annuler</button>
+              </div>
+            </form>
+          </div>
         </div>
       </section>
 
@@ -1243,6 +1270,9 @@ function dessinerTableProduits(produits){
       </td>
       <td>
         <span class="unit-chip">${svgIcon('bottle')}${formatNombre(p.stock_bouteilles)} bout.<span class="sep">·</span>${formatNombre(p.stock_paquets_complets)} paq.</span>
+        <div class="cell-sub" style="${Number(p.prix_achat_moyen) === 0 && Number(p.stock_bouteilles) > 0 ? 'color:var(--danger);font-weight:600;' : ''}">
+          CMP : ${Number(p.prix_achat_moyen) > 0 ? formatMontant(p.prix_achat_moyen) + '/bout.' : 'non renseigné ⚠️'}
+        </div>
       </td>
       <td>${p.prix_detail_conseille ? formatMontant(p.prix_detail_conseille) : '—'}</td>
       <td>
@@ -3094,24 +3124,55 @@ async function afficherRapportCharges(q, contenu){
 // ============================================================
 // MODULE : PARAMÈTRES
 // ============================================================
+let parametresCache = {};
+
+function afficherParametresStatique(p){
+  document.getElementById('afNomEntreprise').textContent = p.nom_entreprise || '—';
+  document.getElementById('afDevisePrincipale').textContent = p.devise_principale || '—';
+  document.getElementById('afDeviseSecondaire').textContent = p.devise_secondaire || '—';
+  document.getElementById('afTauxChange').textContent = (p.taux_change !== null && p.taux_change !== undefined) ? formatNombre(p.taux_change) : '—';
+  document.getElementById('afTauxTva').textContent = (p.taux_tva !== null && p.taux_tva !== undefined) ? `${p.taux_tva}%` : '—';
+  document.getElementById('afStockMinBout').textContent = p.stock_min_bouteille_defaut ?? '—';
+  document.getElementById('afStockMinPaq').textContent = p.stock_min_paquet_defaut ?? '—';
+  document.getElementById('afPrefixeFacture').textContent = p.numerotation_facture_prefixe || '—';
+  document.getElementById('afCapitalReference').textContent = p.capital_reference ? formatMontant(p.capital_reference) : '—';
+  document.getElementById('afCapitalReferenceDate').textContent = p.capital_reference_date ? new Date(p.capital_reference_date).toLocaleDateString('fr-FR') : '—';
+}
+
+function remplirFormulaireParametres(p){
+  document.getElementById('pNomEntreprise').value = p.nom_entreprise || '';
+  document.getElementById('pDevisePrincipale').value = p.devise_principale || '';
+  document.getElementById('pDeviseSecondaire').value = p.devise_secondaire || '';
+  document.getElementById('pTauxChange').value = p.taux_change ?? '';
+  document.getElementById('pTauxTva').value = p.taux_tva ?? '';
+  document.getElementById('pStockMinBout').value = p.stock_min_bouteille_defaut ?? '';
+  document.getElementById('pStockMinPaq').value = p.stock_min_paquet_defaut ?? '';
+  document.getElementById('pPrefixeFacture').value = p.numerotation_facture_prefixe || '';
+  document.getElementById('pCapitalReference').value = p.capital_reference ?? '';
+  document.getElementById('pCapitalReferenceDate').value = p.capital_reference_date ? p.capital_reference_date.slice(0, 10) : '';
+}
+
+// Bascule entre l'affichage statique et le formulaire d'édition. En sortant
+// de l'édition (Annuler ou après sauvegarde), on repart toujours des
+// dernières valeurs connues (parametresCache), jamais d'un brouillon non
+// enregistré resté dans les champs.
+function basculerModeEditionParametres(modeEdition){
+  document.getElementById('parametresAffichage').style.display = modeEdition ? 'none' : 'block';
+  document.getElementById('parametresFormWrap').style.display = modeEdition ? 'block' : 'none';
+  if (modeEdition) remplirFormulaireParametres(parametresCache);
+}
+
 async function chargerParametres(){
   try {
     const p = await appelApi('/parametres');
-    document.getElementById('pNomEntreprise').value = p.nom_entreprise || '';
-    document.getElementById('pDevisePrincipale').value = p.devise_principale || '';
-    document.getElementById('pDeviseSecondaire').value = p.devise_secondaire || '';
-    document.getElementById('pTauxChange').value = p.taux_change ?? '';
-    document.getElementById('pTauxTva').value = p.taux_tva ?? '';
-    document.getElementById('pStockMinBout').value = p.stock_min_bouteille_defaut ?? '';
-    document.getElementById('pStockMinPaq').value = p.stock_min_paquet_defaut ?? '';
-    document.getElementById('pPrefixeFacture').value = p.numerotation_facture_prefixe || '';
-    document.getElementById('pCapitalReference').value = p.capital_reference ?? '';
-    document.getElementById('pCapitalReferenceDate').value = p.capital_reference_date ? p.capital_reference_date.slice(0, 10) : '';
+    parametresCache = p;
+    afficherParametresStatique(p);
+    basculerModeEditionParametres(false);
 
     // Seul l'administrateur peut modifier les paramètres généraux (le bouton
-    // Enregistrer est déjà masqué pour les autres via .action-ecriture, mais
-    // on désactive aussi les champs pour que ce soit visuellement évident
-    // qu'ils ne sont pas éditables, plutôt que de laisser une fausse impression.
+    // "Modifier" est déjà masqué pour les autres via .action-admin-seul, mais
+    // on désactive aussi les champs par sécurité si jamais le formulaire
+    // s'affichait quand même).
     const modifiable = utilisateurConnecte.role === 'administrateur';
     document.querySelectorAll('#formParametres input').forEach((el) => { el.disabled = !modifiable; });
   } catch (err) {
@@ -3123,15 +3184,25 @@ async function soumettreParametres(event){
   event.preventDefault();
   const donnees = new FormData(event.target);
   const champsNumeriques = ['taux_change', 'taux_tva', 'stock_min_bouteille_defaut', 'stock_min_paquet_defaut', 'capital_reference'];
+  const champsDate = ['capital_reference_date'];
   const payload = {};
   for (const [cle, valeur] of donnees.entries()) {
-    payload[cle] = champsNumeriques.includes(cle) ? Number(valeur) : valeur;
+    if (champsDate.includes(cle)) {
+      payload[cle] = valeur === '' ? null : valeur; // une date vide ('') ferait planter la mise à jour en base
+    } else if (champsNumeriques.includes(cle)) {
+      payload[cle] = valeur === '' ? null : Number(valeur);
+    } else {
+      payload[cle] = valeur;
+    }
   }
 
   const bouton = event.target.querySelector('button[type="submit"]');
   bouton.disabled = true;
   try {
-    await appelApiEcriture('/parametres', 'PUT', payload);
+    const resultat = await appelApiEcriture('/parametres', 'PUT', payload);
+    parametresCache = resultat;
+    afficherParametresStatique(parametresCache);
+    basculerModeEditionParametres(false);
     afficherToast('Paramètres enregistrés.', 'success');
   } catch (err) {
     afficherToast(err.message, 'error');
