@@ -857,6 +857,11 @@
               <div><div class="dg-label">Capital de référence</div><div class="dg-value" id="afCapitalReference">—</div></div>
               <div><div class="dg-label">Date de cet investissement</div><div class="dg-value" id="afCapitalReferenceDate">—</div></div>
             </div>
+
+            <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+              <button type="button" class="btn btn-accent" id="boutonBasculeDevise" onclick="basculerDeviseAffichage()">Afficher en USD</button>
+              <div class="hint" style="margin-top:8px;">Change l'affichage de TOUS les montants dans l'application (Tableau de bord, Produits, Ventes, Rapports...) selon le taux de change ci-dessus — n'importe qui peut l'utiliser, ça ne modifie aucune donnée. Reclique sur ce même bouton pour revenir à la devise principale.</div>
+            </div>
           </div>
 
           <!-- Formulaire d'édition, masqué par défaut -->
@@ -1027,7 +1032,17 @@ document.getElementById('menuToggle').addEventListener('click', () => {
 // ---------- Formatage ----------
 function formatMontant(valeur, devise){
   const n = Number(valeur) || 0;
-  return n.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' ' + (devise || 'FC');
+
+  // Si une devise est explicitement demandée (cas rare), ou si la bascule
+  // d'affichage est sur la devise principale, comportement inchangé.
+  if (devise || deviseAffichage === 'principale' || !tauxChangeActuel) {
+    return n.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' ' + (devise || devisePrincipaleActuelle);
+  }
+
+  // Bascule active : convertit en devise secondaire selon le taux de change
+  // (FC pour 1 unité de devise secondaire), affichage à 2 décimales.
+  const convertie = n / tauxChangeActuel;
+  return convertie.toLocaleString('fr-FR', { maximumFractionDigits: 2, minimumFractionDigits: 2 }) + ' ' + deviseSecondaireActuelle;
 }
 function formatNombre(valeur){
   return (Number(valeur) || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
@@ -3348,6 +3363,53 @@ async function telechargerRapportPDF(){
 // ============================================================
 let parametresCache = {};
 
+// ---------- Devise d'affichage (bascule globale FC <-> devise secondaire) ----------
+// Change l'affichage de TOUS les montants dans l'app (formatMontant en tient
+// compte partout), sans jamais toucher aux vraies données en base — c'est
+// purement une conversion d'affichage, basée sur le taux de change renseigné
+// dans ces mêmes Paramètres.
+let deviseAffichage = 'principale'; // 'principale' ou 'secondaire'
+let devisePrincipaleActuelle = 'FC';
+let deviseSecondaireActuelle = 'USD';
+let tauxChangeActuel = null;
+
+function basculerDeviseAffichage(){
+  if (deviseAffichage === 'principale' && !tauxChangeActuel) {
+    afficherToast("Renseigne d'abord un taux de change dans Paramètres pour pouvoir afficher en " + deviseSecondaireActuelle + ".", 'error');
+    return;
+  }
+  deviseAffichage = deviseAffichage === 'principale' ? 'secondaire' : 'principale';
+  mettreAJourBoutonDevise();
+  rafraichirVueActive();
+}
+
+function mettreAJourBoutonDevise(){
+  const bouton = document.getElementById('boutonBasculeDevise');
+  if (!bouton) return;
+  bouton.textContent = deviseAffichage === 'principale'
+    ? `Afficher en ${deviseSecondaireActuelle}`
+    : `Revenir en ${devisePrincipaleActuelle}`;
+}
+
+// Recharge la vue actuellement affichée — utilisé par le bouton Actualiser
+// ET par la bascule de devise (pour que les montants déjà affichés se
+// remettent à jour immédiatement dans la nouvelle devise).
+function rafraichirVueActive(){
+  const idActif = document.querySelector('.nav-item.active')?.dataset.view || 'dashboard';
+  if (idActif === 'produits') chargerProduits();
+  else if (idActif === 'stock') chargerStock();
+  else if (idActif === 'achats') chargerAchats();
+  else if (idActif === 'ventes') chargerVentes();
+  else if (idActif === 'clients') chargerClients();
+  else if (idActif === 'fournisseurs') chargerFournisseurs();
+  else if (idActif === 'charges') chargerCharges();
+  else if (idActif === 'comptabilite') rafraichirCompta();
+  else if (idActif === 'rapports') rafraichirRapports();
+  else if (idActif === 'parametres') chargerParametres();
+  else if (idActif === 'utilisateurs') chargerUtilisateurs();
+  else chargerDashboard();
+}
+
 function afficherParametresStatique(p){
   document.getElementById('afNomEntreprise').textContent = p.nom_entreprise || '—';
   document.getElementById('afDevisePrincipale').textContent = p.devise_principale || '—';
@@ -3390,6 +3452,7 @@ async function chargerParametres(){
     parametresCache = p;
     afficherParametresStatique(p);
     basculerModeEditionParametres(false);
+    mettreAJourVariablesDevise(p);
 
     // Seul l'administrateur peut modifier les paramètres généraux (le bouton
     // "Modifier" est déjà masqué pour les autres via .action-admin-seul, mais
@@ -3425,6 +3488,8 @@ async function soumettreParametres(event){
     parametresCache = resultat;
     afficherParametresStatique(parametresCache);
     basculerModeEditionParametres(false);
+    mettreAJourVariablesDevise(resultat);
+    rafraichirVueActive();
     afficherToast('Paramètres enregistrés.', 'success');
   } catch (err) {
     afficherToast(err.message, 'error');
@@ -3568,7 +3633,33 @@ function afficherAppApresConnexion(){
   document.getElementById('utilisateurNomTopbar').textContent = utilisateurConnecte.nom;
   document.getElementById('utilisateurRoleTopbar').textContent = LIBELLES_ROLES[utilisateurConnecte.role] || utilisateurConnecte.role;
   appliquerPermissionsUI();
+  chargerParametresDevise();
   afficherVue('dashboard');
+}
+
+// Récupère juste les infos de devise/taux de change, sans dépendre d'une
+// visite de la page Paramètres — pour que la bascule soit utilisable
+// partout dès la connexion.
+// Récupère juste les infos de devise/taux de change, sans dépendre d'une
+// visite de la page Paramètres — pour que la bascule soit utilisable
+// partout dès la connexion.
+async function chargerParametresDevise(){
+  try {
+    const p = await appelApi('/parametres');
+    mettreAJourVariablesDevise(p);
+  } catch (err) {
+    // Non bloquant : la bascule de devise sera juste indisponible tant que
+    // les paramètres n'auront pas pu être chargés (ex: à la prochaine visite
+    // de la page Paramètres, qui les recharge aussi).
+    console.warn('Paramètres de devise indisponibles pour le moment :', err.message);
+  }
+}
+
+function mettreAJourVariablesDevise(p){
+  devisePrincipaleActuelle = p.devise_principale || 'FC';
+  deviseSecondaireActuelle = p.devise_secondaire || 'USD';
+  tauxChangeActuel = (p.taux_change !== null && p.taux_change !== undefined) ? Number(p.taux_change) : null;
+  mettreAJourBoutonDevise();
 }
 
 function deconnecter(){
@@ -3758,21 +3849,7 @@ async function chargerJournalAudit(){
 // ============================================================
 // INITIALISATION
 // ============================================================
-document.getElementById('refreshBtn').addEventListener('click', () => {
-  const idActif = document.querySelector('.nav-item.active')?.dataset.view || 'dashboard';
-  if (idActif === 'produits') chargerProduits();
-  else if (idActif === 'stock') chargerStock();
-  else if (idActif === 'achats') chargerAchats();
-  else if (idActif === 'ventes') chargerVentes();
-  else if (idActif === 'clients') chargerClients();
-  else if (idActif === 'fournisseurs') chargerFournisseurs();
-  else if (idActif === 'charges') chargerCharges();
-  else if (idActif === 'comptabilite') rafraichirCompta();
-  else if (idActif === 'rapports') rafraichirRapports();
-  else if (idActif === 'parametres') chargerParametres();
-  else if (idActif === 'utilisateurs') chargerUtilisateurs();
-  else chargerDashboard();
-});
+document.getElementById('refreshBtn').addEventListener('click', rafraichirVueActive);
 
 // Le point d'entrée n'est plus le dashboard directement : on vérifie d'abord
 // l'authentification (écran de connexion ou de création du premier compte).
