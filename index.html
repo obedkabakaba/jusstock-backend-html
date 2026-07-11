@@ -1897,6 +1897,16 @@ function construireFormAchat(preselectionFournisseurId){
           <input type="number" name="montant_paye" min="0" step="0.01" value="0">
           <div class="hint">L'argent (espèces/mobile money) que tu donnes VRAIMENT aujourd'hui. Mets 0 si tout est à crédit, ou le total si tu payes cash. Si c'est inférieur à la somme des coûts de lignes + transport + autres frais, la différence devient automatiquement une dette envers ce fournisseur (visible dans Fournisseurs).</div>
         </div>
+        <div class="form-group">
+          <label>Payé depuis quel compte ?</label>
+          <select name="compte_paiement">
+            <option value="especes">Caisse (espèces)</option>
+            <option value="banque">Banque</option>
+            <option value="mobile_money">Mobile Money</option>
+            <option value="carte">Carte</option>
+          </select>
+          <div class="hint">Utilisé seulement si le montant payé ci-dessus est supérieur à 0.</div>
+        </div>
       </div>
 
       <h3 style="font-size:13px;margin:18px 0 4px 0;">Lignes d'achat</h3>
@@ -1959,6 +1969,7 @@ async function soumettreAchat(event){
     transport: Number(donnees.get('transport') || 0),
     autres_frais: Number(donnees.get('autres_frais') || 0),
     montant_paye: Number(donnees.get('montant_paye') || 0),
+    compte_paiement: donnees.get('compte_paiement') || 'especes',
     notes: donnees.get('notes') || null,
     lignes,
   };
@@ -2864,7 +2875,8 @@ async function afficherJournal(du, au, contenu){
 
 async function afficherBalance(du, au, contenu){
   const comptes = await appelApi(`/comptabilite/balance?du=${du}&au=${au}`);
-  contenu.innerHTML = `<div class="table-panel"><div class="table-scroll"><table class="data-table">
+  contenu.innerHTML = `
+    <div class="table-panel"><div class="table-scroll"><table class="data-table">
     <thead><tr><th>Compte</th><th>Type</th><th>Total débit</th><th>Total crédit</th><th>Solde</th></tr></thead>
     <tbody>${comptes.map(c => `
       <tr>
@@ -2901,28 +2913,49 @@ async function afficherBilan(au, contenu){
     </div>` : `
     <div class="hint" style="margin-bottom:16px;">Renseigne un "Capital de référence" dans Paramètres pour voir ta progression / ton retour sur investissement ici.</div>`;
 
+  const verifOk = b.verification_stock.coherent;
+  const verifHtml = `
+    <div class="banner" style="background:${verifOk ? 'var(--fresh-soft)' : 'var(--danger-soft)'};color:${verifOk ? '#3F6B26' : '#8A332A'};justify-content:space-between;">
+      <span>
+        ${verifOk
+          ? 'Vérification stock : le compte 311 correspond exactement à la valeur théorique de tes produits.'
+          : `Vérification stock : écart de ${formatMontant(b.verification_stock.ecart)} entre le compte 311 (${formatMontant(b.verification_stock.valeur_journal_compte_311)}) et la valeur théorique (${formatMontant(b.verification_stock.valeur_theorique_produits)}).`}
+      </span>
+      ${!verifOk ? '<button type="button" class="btn action-admin-seul" onclick="rattraperStock()" style="flex-shrink:0;">Rattraper</button>' : ''}
+    </div>`;
+
   contenu.innerHTML = `
     ${progressionHtml}
     <div class="banner" style="background:${b.equilibre ? 'var(--fresh-soft)' : 'var(--danger-soft)'};color:${b.equilibre ? '#3F6B26' : '#8A332A'};">
       <span>${b.equilibre ? 'Le bilan est équilibré (Actif = Passif + Capitaux propres).' : "Le bilan n'est pas équilibré — vérifie les écritures comptables."}</span>
     </div>
+    ${verifHtml}
     <div class="panel-grid">
       <div class="panel">
         <h3>Actif <span class="legend">${formatMontant(b.actif.total)}</span></h3>
         <table class="data-table"><tbody>
           ${b.actif.comptes.map(c => `<tr><td>${c.code} — ${c.nom}</td><td class="mono">${formatMontant(c.solde)}</td></tr>`).join('')}
-          <tr><td><strong>Valeur du stock (calculée)</strong></td><td class="mono">${formatMontant(b.actif.valeur_stock_marchandises)}</td></tr>
         </tbody></table>
       </div>
       <div class="panel">
         <h3>Passif &amp; Capitaux <span class="legend">${formatMontant(b.passif_capitaux.total)}</span></h3>
         <table class="data-table"><tbody>
           ${b.passif_capitaux.comptes.map(c => `<tr><td>${c.code} — ${c.nom}</td><td class="mono">${formatMontant(c.solde)}</td></tr>`).join('')}
-          <tr><td><strong>Capital correspondant à la valeur du stock</strong></td><td class="mono">${formatMontant(b.passif_capitaux.capital_implicite_stock)}</td></tr>
           <tr><td><strong>Résultat net cumulé</strong></td><td class="mono">${formatMontant(b.passif_capitaux.resultat_net_cumule)}</td></tr>
         </tbody></table>
       </div>
     </div>`;
+}
+
+async function rattraperStock(){
+  if (!confirm("Rattraper le compte Stock (311) pour qu'il corresponde à la valeur théorique de tes produits ? Une écriture d'ajustement sera créée contre le Capital.")) return;
+  try {
+    const resultat = await appelApiEcriture('/comptabilite/rattraper-stock', 'POST', {});
+    afficherToast(`Stock rattrapé (écart appliqué : ${formatMontant(resultat.ecart_applique)}).`, 'success');
+    rafraichirCompta();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
 }
 
 async function afficherTresorerie(du, au, contenu){
