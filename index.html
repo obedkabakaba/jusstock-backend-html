@@ -1756,9 +1756,10 @@ async function ouvrirModalAchat(preselectionFournisseurId){
   }
 }
 
-function optionsProduitsHtml(){
+function optionsProduitsHtml(produitSelectionne){
   return produitsPourFormulaire.map(p =>
     `<option value="${p.id}"
+       ${produitSelectionne && p.id === produitSelectionne ? 'selected' : ''}
        data-prix-detail="${p.prix_detail_conseille || ''}"
        data-prix-gros="${p.prix_gros_conseille || ''}"
        data-bonus-seuil="${p.bonus_seuil_paquets || ''}"
@@ -2072,7 +2073,11 @@ function dessinerTableVentes(ventes){
       <td>${v.mode_paiement === 'credit' ? '<span class="badge alerte">Crédit</span>' : `<span class="badge neutral">${LIBELLES_PAIEMENT[v.mode_paiement] || v.mode_paiement}</span>`}</td>
       <td class="mono">${formatMontant(v.total)}</td>
       <td class="mono" style="color:var(--fresh)">${formatMontant(v.benefice_total)}</td>
-      <td class="cell-actions"><button class="icon-btn" title="Voir le détail" onclick="voirDetailVente('${v.id}')">${svgIcon('eye')}</button></td>
+      <td class="cell-actions">
+        <button class="icon-btn" title="Voir le détail" onclick="voirDetailVente('${v.id}')">${svgIcon('eye')}</button>
+        <button class="icon-btn action-ecriture" title="Modifier" onclick="ouvrirModalModifierVente('${v.id}')">${svgIcon('edit')}</button>
+        <button class="icon-btn danger action-ecriture" title="Annuler" onclick="annulerVente('${v.id}')">${svgIcon('trash')}</button>
+      </td>
     </tr>
   `).join('');
 }
@@ -2125,20 +2130,44 @@ async function ouvrirModalVente(preselectionClientId){
       afficherToast("Crée d'abord au moins un produit avant d'enregistrer une vente.", 'error');
       return;
     }
-    construireFormVente(preselectionClientId);
+    construireFormVente(preselectionClientId, null);
   } catch (err) {
     afficherToast(err.message, 'error');
   }
 }
 
-function ligneVenteHtml(){
+// Ouvre le même formulaire, pré-rempli avec une vente existante à corriger.
+async function ouvrirModalModifierVente(venteId){
+  try {
+    const [clients, produits, venteExistante] = await Promise.all([
+      appelApi('/clients'), appelApi('/produits'), appelApi(`/ventes/${venteId}`),
+    ]);
+    clientsPourFormulaire = clients;
+    produitsPourFormulaire = produits;
+    construireFormVente(null, venteExistante);
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+function formatDateTimeLocal(date){
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function ligneVenteHtml(valeurs){
+  const v = valeurs || {};
+  const dejaRempli = !!valeurs;
   return `
     <div class="line-item-row">
-      <div class="form-group"><label>Produit *</label><select name="ligne_produit_id" required onchange="suggererPrixVente(this); suggererBonusVente(this)">${optionsProduitsHtml()}</select></div>
-      <div class="form-group"><label>Type *</label><select name="ligne_type_vente" onchange="suggererPrixVente(this); suggererBonusVente(this)"><option value="detail">Détail (bouteille)</option><option value="gros">Gros (paquet)</option></select></div>
-      <div class="form-group"><label>Quantité *</label><input type="number" name="ligne_quantite" min="1" value="1" required oninput="suggererBonusVente(this)"></div>
-      <div class="form-group"><label>Prix unitaire *</label><input type="number" name="ligne_prix_unitaire" min="0" step="0.01" required oninput="this.dataset.modifieManuel='true'"></div>
-      <div class="form-group"><label>Bonus offert</label><input type="number" name="ligne_bonus_quantite" min="0" value="0" oninput="this.dataset.modifieManuel='true'"></div>
+      <div class="form-group"><label>Produit *</label><select name="ligne_produit_id" required onchange="suggererPrixVente(this); suggererBonusVente(this)">${optionsProduitsHtml(v.produit_id)}</select></div>
+      <div class="form-group"><label>Type *</label><select name="ligne_type_vente" onchange="suggererPrixVente(this); suggererBonusVente(this)">
+        <option value="detail" ${v.type_vente === 'detail' ? 'selected' : ''}>Détail (bouteille)</option>
+        <option value="gros" ${v.type_vente === 'gros' ? 'selected' : ''}>Gros (paquet)</option>
+      </select></div>
+      <div class="form-group"><label>Quantité *</label><input type="number" name="ligne_quantite" min="1" value="${v.quantite ?? 1}" required oninput="suggererBonusVente(this)"></div>
+      <div class="form-group"><label>Prix unitaire *</label><input type="number" name="ligne_prix_unitaire" min="0" step="0.01" value="${v.prix_unitaire ?? ''}" required oninput="this.dataset.modifieManuel='true'" ${dejaRempli ? "data-modifie-manuel=\"true\"" : ''}></div>
+      <div class="form-group"><label>Bonus offert</label><input type="number" name="ligne_bonus_quantite" min="0" value="${v.bonus_quantite ?? 0}" oninput="this.dataset.modifieManuel='true'" ${dejaRempli ? "data-modifie-manuel=\"true\"" : ''}></div>
       <button type="button" class="btn-remove-line" onclick="supprimerLigne(this)" title="Retirer la ligne">${svgIcon('close')}</button>
     </div>`;
 }
@@ -2156,6 +2185,12 @@ function suggererPrixVente(element){
   const optionChoisie = selectProduit.options[selectProduit.selectedIndex];
   const suggestion = selectType.value === 'gros' ? optionChoisie?.dataset.prixGros : optionChoisie?.dataset.prixDetail;
   if (suggestion) inputPrix.value = suggestion;
+
+  // Modifier un champ par code (inputPrix.value = ...) ne déclenche aucun
+  // événement 'input' — sans cet appel explicite, l'aperçu du total resterait
+  // périmé (il afficherait encore l'ancien prix) tant que l'utilisateur ne
+  // tape pas lui-même quelque chose.
+  recalculerApercuVente();
 }
 
 // Calcule automatiquement le bonus offert selon la règle propre au produit
@@ -2171,7 +2206,7 @@ function suggererBonusVente(element){
   if (!selectProduit || !selectType || !inputQuantite || !inputBonus) return;
   if (inputBonus.dataset.modifieManuel === 'true') return;
 
-  if (selectType.value !== 'gros') { inputBonus.value = 0; return; }
+  if (selectType.value !== 'gros') { inputBonus.value = 0; recalculerApercuVente(); return; }
 
   const optionChoisie = selectProduit.options[selectProduit.selectedIndex];
   const seuil = Number(optionChoisie?.dataset.bonusSeuil || 0);
@@ -2181,6 +2216,7 @@ function suggererBonusVente(element){
   inputBonus.value = (seuil > 0 && offert > 0 && quantite >= seuil)
     ? Math.floor(quantite / seuil) * offert
     : 0;
+  recalculerApercuVente();
 }
 
 function ajouterLigneVente(){
@@ -2192,17 +2228,31 @@ function ajouterLigneVente(){
   recalculerApercuVente();
 }
 
-function construireFormVente(preselectionClientId){
+function construireFormVente(preselectionClientId, venteExistante){
+  const modeEdition = !!venteExistante;
+  const clientSelectionne = modeEdition ? venteExistante.client_id : preselectionClientId;
+
   const optionsClients = clientsPourFormulaire.map(c =>
-    `<option value="${c.id}" ${c.id === preselectionClientId ? 'selected' : ''}>${c.nom}${c.telephone ? ' — ' + c.telephone : ''}</option>`
+    `<option value="${c.id}" ${c.id === clientSelectionne ? 'selected' : ''}>${c.nom}${c.telephone ? ' — ' + c.telephone : ''}</option>`
   ).join('');
+
+  const dateParDefaut = modeEdition ? new Date(venteExistante.date_vente) : new Date();
+  const lignesInitiales = modeEdition
+    ? venteExistante.lignes.map(l => ligneVenteHtml({
+        produit_id: l.produit_id, type_vente: l.type_vente, quantite: l.quantite,
+        prix_unitaire: l.prix_unitaire, bonus_quantite: l.bonus_quantite,
+      })).join('')
+    : ligneVenteHtml();
 
   ouvrirModal(`
     <div class="modal-head">
-      <div><h2>Nouvelle vente</h2><div class="modal-sub">Le bonus sort du stock mais n'entre pas dans le chiffre d'affaires.</div></div>
+      <div>
+        <h2>${modeEdition ? `Modifier la vente ${venteExistante.reference}` : 'Nouvelle vente'}</h2>
+        <div class="modal-sub">${modeEdition ? "La référence ne change pas. L'ancien stock et les anciennes écritures sont annulés puis recalculés avec les nouvelles valeurs." : "Le bonus sort du stock mais n'entre pas dans le chiffre d'affaires."}</div>
+      </div>
       <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
     </div>
-    <form id="formVente" onsubmit="soumettreVente(event)">
+    <form id="formVente" onsubmit="soumettreVente(event, ${modeEdition ? `'${venteExistante.id}'` : 'null'})">
       <div class="form-grid">
         <div class="form-group full">
           <label>Client</label>
@@ -2217,31 +2267,36 @@ function construireFormVente(preselectionClientId){
         <div class="form-group">
           <label>Mode de paiement *</label>
           <select name="mode_paiement" required>
-            <option value="especes">Espèces</option>
-            <option value="mobile_money">Mobile Money</option>
-            <option value="carte">Carte</option>
-            <option value="credit">Crédit (client enregistré uniquement)</option>
+            <option value="especes" ${modeEdition && venteExistante.mode_paiement === 'especes' ? 'selected' : ''}>Espèces</option>
+            <option value="mobile_money" ${modeEdition && venteExistante.mode_paiement === 'mobile_money' ? 'selected' : ''}>Mobile Money</option>
+            <option value="carte" ${modeEdition && venteExistante.mode_paiement === 'carte' ? 'selected' : ''}>Carte</option>
+            <option value="credit" ${modeEdition && venteExistante.mode_paiement === 'credit' ? 'selected' : ''}>Crédit (client enregistré uniquement)</option>
           </select>
         </div>
         <div class="form-group">
+          <label>Date de la vente</label>
+          <input type="datetime-local" name="date_vente" value="${formatDateTimeLocal(dateParDefaut)}">
+          <div class="hint">Se remplit automatiquement à l'instant présent — à ajuster seulement si besoin (ex : vente saisie en retard).</div>
+        </div>
+        <div class="form-group">
           <label>Remise (FC)</label>
-          <input type="number" name="remise" min="0" step="0.01" value="0">
+          <input type="number" name="remise" min="0" step="0.01" value="${modeEdition ? venteExistante.remise : 0}">
           <div class="hint">Manuelle uniquement — une réduction en argent sur le total de la vente. Indépendante du bonus ci-dessous.</div>
         </div>
         <div class="form-group">
           <label>TVA (FC)</label>
-          <input type="number" name="tva_montant" min="0" step="0.01" value="0">
+          <input type="number" name="tva_montant" min="0" step="0.01" value="${modeEdition ? venteExistante.tva_montant : 0}">
         </div>
       </div>
 
       <h3 style="font-size:13px;margin:18px 0 4px 0;">Lignes de vente</h3>
       <div class="hint" style="margin-bottom:10px;">Le "Bonus offert" se calcule tout seul en gros si le produit a une règle configurée (ex : 10 paquets → 2 offerts), et se recalcule par palier (20 → 4). Il n'a aucun lien avec la "Remise" ci-dessus — ce sont deux réductions différentes et cumulables. Tu peux toujours corriger le chiffre du bonus à la main.</div>
-      <div class="lines-container" id="lignesVenteContainer">${ligneVenteHtml()}</div>
+      <div class="lines-container" id="lignesVenteContainer">${lignesInitiales}</div>
       <button type="button" class="btn btn-add-line" onclick="ajouterLigneVente()">${svgIcon('plus')} Ajouter une ligne</button>
 
       <div class="form-group full" style="margin-top:14px;">
         <label>Notes</label>
-        <textarea name="notes"></textarea>
+        <textarea name="notes">${modeEdition ? (venteExistante.notes || '') : ''}</textarea>
       </div>
 
       <div class="form-summary">
@@ -2251,7 +2306,7 @@ function construireFormVente(preselectionClientId){
 
       <div class="modal-actions">
         <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
-        <button type="submit" class="btn btn-accent">Enregistrer la vente</button>
+        <button type="submit" class="btn btn-accent">${modeEdition ? 'Enregistrer les modifications' : 'Enregistrer la vente'}</button>
       </div>
     </form>
   `);
@@ -2279,7 +2334,7 @@ function recalculerApercuVente(){
   document.getElementById('apercuTotal').textContent = formatMontant(total);
 }
 
-async function soumettreVente(event){
+async function soumettreVente(event, venteId){
   event.preventDefault();
   const formulaire = event.target;
   const donnees = new FormData(formulaire);
@@ -2308,12 +2363,15 @@ async function soumettreVente(event){
 
   if (lignes.length === 0) { afficherToast('Ajoute au moins une ligne de vente valide.', 'error'); return; }
 
+  const dateVenteSaisie = donnees.get('date_vente');
+
   const payload = {
     client_id: clientId,
     mode_paiement: modePaiement,
     remise: Number(donnees.get('remise') || 0),
     tva_montant: Number(donnees.get('tva_montant') || 0),
     notes: donnees.get('notes') || null,
+    date_vente: dateVenteSaisie ? new Date(dateVenteSaisie).toISOString() : null,
     lignes,
   };
 
@@ -2321,13 +2379,29 @@ async function soumettreVente(event){
   boutonSubmit.disabled = true;
 
   try {
-    await appelApiEcriture('/ventes', 'POST', payload);
-    afficherToast('Vente enregistrée avec succès.', 'success');
+    if (venteId) {
+      await appelApiEcriture(`/ventes/${venteId}`, 'PUT', payload);
+      afficherToast('Vente modifiée avec succès.', 'success');
+    } else {
+      await appelApiEcriture('/ventes', 'POST', payload);
+      afficherToast('Vente enregistrée avec succès.', 'success');
+    }
     fermerModal();
     chargerVentes();
   } catch (err) {
     afficherToast(err.message, 'error');
     boutonSubmit.disabled = false;
+  }
+}
+
+async function annulerVente(venteId){
+  if (!confirm("Annuler complètement cette vente ? Le stock sera remis, les écritures comptables supprimées, et la dette client annulée si c'était à crédit. Cette action ne peut pas être défaite (mais tu peux toujours refaire une nouvelle vente).")) return;
+  try {
+    await appelApiEcriture(`/ventes/${venteId}/annuler`, 'POST');
+    afficherToast('Vente annulée.', 'success');
+    chargerVentes();
+  } catch (err) {
+    afficherToast(err.message, 'error');
   }
 }
 
