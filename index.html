@@ -767,6 +767,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="14" r="1.2"/></svg>
             Ajuster la trésorerie
           </button>
+          <button class="btn action-admin-seul" onclick="reconstruireJournal()" style="color:var(--danger);border-color:var(--danger);" title="Réservé à l'administrateur — reconstruit tout le journal depuis les achats/ventes/charges">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
+            Reconstruire le journal
+          </button>
         </div>
         <div class="tabs-row">
           <button class="tab-btn active" data-tab="journal" onclick="changerOngletCompta('journal')">Journal</button>
@@ -2969,8 +2973,9 @@ async function afficherJournal(du, au, contenu){
 }
 
 async function afficherBalance(du, au, contenu){
-  const comptes = await appelApi(`/comptabilite/balance?du=${du}&au=${au}`);
+  const comptes = await appelApi(`/comptabilite/balance?au=${au}`);
   contenu.innerHTML = `
+    <div class="hint" style="margin-bottom:12px;">La Balance est toujours cumulée depuis le tout début de ton activité jusqu'au ${new Date(au).toLocaleDateString('fr-FR')} — le champ "Du" ne s'applique pas ici (une balance ne redémarre jamais à zéro à une date arbitraire, contrairement au Journal ou au Compte de résultat).</div>
     <div class="table-panel"><div class="table-scroll"><table class="data-table">
     <thead><tr><th>Compte</th><th>Type</th><th>Total débit</th><th>Total crédit</th><th>Solde</th></tr></thead>
     <tbody>${comptes.map(c => `
@@ -3092,8 +3097,16 @@ async function afficherDetailGrandLivre(){
   wrap.innerHTML = '<div class="empty-state">Chargement…</div>';
   try {
     const data = await appelApi(`/comptabilite/grand-livre/${compteId}?du=${du}&au=${au}`);
-    if (data.ecritures.length === 0) { wrap.innerHTML = '<div class="empty-state">Aucune écriture pour ce compte sur cette période.</div>'; return; }
-    wrap.innerHTML = `<div class="table-panel"><div class="table-scroll"><table class="data-table">
+    const soldeInitialHtml = Number(data.solde_initial) !== 0
+      ? `<div class="hint" style="margin-bottom:10px;">Solde initial au ${new Date(du).toLocaleDateString('fr-FR')} (cumul de tout ce qui précède) : <strong>${formatMontant(data.solde_initial)}</strong></div>`
+      : '';
+
+    if (data.ecritures.length === 0) {
+      wrap.innerHTML = `${soldeInitialHtml}<div class="empty-state">Aucune nouvelle écriture sur cette période.</div>
+        <div class="form-summary"><div class="row total"><span>Solde final</span><span>${formatMontant(data.solde_final)}</span></div></div>`;
+      return;
+    }
+    wrap.innerHTML = `${soldeInitialHtml}<div class="table-panel"><div class="table-scroll"><table class="data-table">
         <thead><tr><th>Date</th><th>Sens</th><th>Montant</th><th>Libellé</th><th>Solde progressif</th></tr></thead>
         <tbody>${data.ecritures.map(e => `<tr><td class="mono">${new Date(e.date_ecriture).toLocaleDateString('fr-FR')}</td><td>${e.sens === 'debit' ? 'Débit' : 'Crédit'}</td><td class="mono">${formatMontant(e.montant)}</td><td class="cell-sub">${e.libelle}</td><td class="mono" style="font-weight:700;">${formatMontant(e.solde_progressif)}</td></tr>`).join('')}</tbody>
       </table></div></div>
@@ -3192,6 +3205,32 @@ async function soumettreAjustementTresorerie(event){
   } catch (err) {
     afficherToast(err.message, 'error');
     bouton.disabled = false;
+  }
+}
+
+// ---------- Reconstruction complète du journal comptable (admin uniquement) ----------
+async function reconstruireJournal(){
+  const premiereConfirmation = confirm(
+    "Ceci va SUPPRIMER toutes les écritures comptables actuelles et les reconstruire depuis tes achats, ventes, charges et paiements, avec la logique comptable actuelle.\n\n" +
+    "Tes données de base (achats, ventes, stock, charges) ne sont JAMAIS touchées — seul le journal comptable dérivé est reconstruit.\n\n" +
+    "À utiliser seulement si ta comptabilité te semble incohérente. Continuer ?"
+  );
+  if (!premiereConfirmation) return;
+
+  const secondeConfirmation = confirm(
+    "Dernière confirmation : cette action est irréversible. Après ça, il faudra probablement refaire \"Rattraper le stock\" et \"Ajuster la trésorerie\" pour rétablir ton capital de départ proprement.\n\nLancer la reconstruction ?"
+  );
+  if (!secondeConfirmation) return;
+
+  try {
+    const resultat = await appelApiEcriture('/comptabilite/reconstruire-journal', 'POST', {});
+    afficherToast(
+      `Journal reconstruit : ${resultat.achats_rejoues} achat(s), ${resultat.ventes_rejouees} vente(s), ${resultat.charges_rejouees} charge(s), ${resultat.paiements_rejoues} paiement(s).`,
+      'success'
+    );
+    rafraichirCompta();
+  } catch (err) {
+    afficherToast(err.message, 'error');
   }
 }
 
