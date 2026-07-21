@@ -2998,8 +2998,8 @@ async function afficherResultat(du, au, contenu){
       <div class="kpi-card"><div class="kpi-label">Résultat net</div><div class="kpi-value" style="color:${r.resultat_net >= 0 ? 'var(--fresh)' : 'var(--danger)'}">${formatMontant(r.resultat_net)}</div></div>
     </div>
     <div class="panel-grid">
-      <div class="panel"><h3>Produits</h3><table class="data-table"><tbody>${r.produits.map(p => `<tr><td>${p.nom}</td><td class="mono">${formatMontant(p.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucun</td></tr>'}</tbody></table></div>
-      <div class="panel"><h3>Charges</h3><table class="data-table"><tbody>${r.charges.map(c => `<tr><td>${c.nom}</td><td class="mono">${formatMontant(c.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucune</td></tr>'}</tbody></table></div>
+      <div class="panel"><h3>Produits</h3><div class="table-scroll"><table class="data-table"><tbody>${r.produits.map(p => `<tr><td>${p.nom}</td><td class="mono">${formatMontant(p.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucun</td></tr>'}</tbody></table></div></div>
+      <div class="panel"><h3>Charges</h3><div class="table-scroll"><table class="data-table"><tbody>${r.charges.map(c => `<tr><td>${c.nom}</td><td class="mono">${formatMontant(c.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucune</td></tr>'}</tbody></table></div></div>
     </div>`;
 }
 
@@ -3033,16 +3033,16 @@ async function afficherBilan(au, contenu){
     <div class="panel-grid">
       <div class="panel">
         <h3>Actif <span class="legend">${formatMontant(b.actif.total)}</span></h3>
-        <table class="data-table"><tbody>
+        <div class="table-scroll"><table class="data-table"><tbody>
           ${b.actif.comptes.map(c => `<tr><td>${c.code} — ${c.nom}</td><td class="mono">${formatMontant(c.solde)}</td></tr>`).join('')}
-        </tbody></table>
+        </tbody></table></div>
       </div>
       <div class="panel">
         <h3>Passif &amp; Capitaux <span class="legend">${formatMontant(b.passif_capitaux.total)}</span></h3>
-        <table class="data-table"><tbody>
+        <div class="table-scroll"><table class="data-table"><tbody>
           ${b.passif_capitaux.comptes.map(c => `<tr><td>${c.code} — ${c.nom}</td><td class="mono">${formatMontant(c.solde)}</td></tr>`).join('')}
           <tr><td><strong>Résultat net cumulé</strong></td><td class="mono">${formatMontant(b.passif_capitaux.resultat_net_cumule)}</td></tr>
-        </tbody></table>
+        </tbody></table></div>
       </div>
     </div>`;
 }
@@ -3066,10 +3066,10 @@ async function afficherTresorerie(du, au, contenu){
       <div class="kpi-card"><div class="kpi-label">Décaissements</div><div class="kpi-value" style="color:var(--danger)">${formatMontant(t.total_decaissements)}</div></div>
       <div class="kpi-card"><div class="kpi-label">Variation nette</div><div class="kpi-value">${formatMontant(t.tresorerie_disponible_variation)}</div></div>
     </div>
-    <div class="table-panel"><table class="data-table">
+    <div class="table-panel"><div class="table-scroll"><table class="data-table">
       <thead><tr><th>Compte</th><th>Encaissements</th><th>Décaissements</th><th>Variation nette</th></tr></thead>
       <tbody>${t.detail_par_compte.map(c => `<tr><td>${c.code} — ${c.nom}</td><td class="mono">${formatMontant(c.encaissements)}</td><td class="mono">${formatMontant(c.decaissements)}</td><td class="mono">${formatMontant(c.variation_nette)}</td></tr>`).join('')}</tbody>
-    </table></div>`;
+    </table></div></div>`;
 }
 
 async function afficherGrandLivre(du, au, contenu){
@@ -3291,7 +3291,7 @@ async function afficherRapportVentes(q, contenu){
       <div class="kpi-card"><div class="kpi-label">Nombre de ventes</div><div class="kpi-value">${formatNombre(r.nombre_ventes)}</div></div>
     </div>
     <div class="panel-grid">
-      <div class="panel"><h3>Répartition détail / gros</h3><table class="data-table"><tbody>${r.repartition_detail_gros.map(x => `<tr><td>${x.type_vente === 'gros' ? 'Gros' : 'Détail'}</td><td class="mono">${formatMontant(x.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucune donnée</td></tr>'}</tbody></table></div>
+      <div class="panel"><h3>Répartition détail / gros</h3><div class="table-scroll"><table class="data-table"><tbody>${r.repartition_detail_gros.map(x => `<tr><td>${x.type_vente === 'gros' ? 'Gros' : 'Détail'}</td><td class="mono">${formatMontant(x.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucune donnée</td></tr>'}</tbody></table></div></div>
       <div class="panel"><h3>Produits les plus vendus</h3><ul class="row-list">${r.produits_plus_vendus.map((p, i) => `<li><span class="rank">${i + 1}</span><span class="name">${p.nom}</span><span class="value">${formatMontant(p.montant_total)}</span></li>`).join('') || '<div class="empty-row">Aucune donnée</div>'}</ul></div>
     </div>`;
 }
@@ -3303,10 +3303,10 @@ async function afficherRapportAchats(q, contenu){
       <div class="kpi-card"><div class="kpi-label">Montant total</div><div class="kpi-value">${formatMontant(r.montant_total)}</div></div>
       <div class="kpi-card"><div class="kpi-label">Nombre d'achats</div><div class="kpi-value">${formatNombre(r.nombre_achats)}</div></div>
     </div>
-    <div class="panel"><h3>Par fournisseur</h3><table class="data-table">
+    <div class="panel"><h3>Par fournisseur</h3><div class="table-scroll"><table class="data-table">
       <thead><tr><th>Fournisseur</th><th>Achats</th><th>Montant</th></tr></thead>
       <tbody>${r.par_fournisseur.map(f => `<tr><td>${f.nom}</td><td class="mono">${formatNombre(f.nombre_achats)}</td><td class="mono">${formatMontant(f.montant_total)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty-state">Aucune donnée</td></tr>'}</tbody>
-    </table></div>`;
+    </table></div></div>`;
 }
 
 async function afficherRapportCharges(q, contenu){
@@ -3316,10 +3316,10 @@ async function afficherRapportCharges(q, contenu){
       <div class="kpi-card"><div class="kpi-label">Montant total</div><div class="kpi-value">${formatMontant(r.montant_total)}</div></div>
       <div class="kpi-card"><div class="kpi-label">Nombre de charges</div><div class="kpi-value">${formatNombre(r.nombre_charges)}</div></div>
     </div>
-    <div class="panel"><h3>Par catégorie</h3><table class="data-table">
+    <div class="panel"><h3>Par catégorie</h3><div class="table-scroll"><table class="data-table">
       <thead><tr><th>Catégorie</th><th>Nombre</th><th>Montant</th></tr></thead>
       <tbody>${r.par_categorie.map(c => `<tr><td>${c.categorie}</td><td class="mono">${formatNombre(c.nombre)}</td><td class="mono">${formatMontant(c.montant_total)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty-state">Aucune donnée</td></tr>'}</tbody>
-    </table></div>`;
+    </table></div></div>`;
 }
 
 // ---------- Impression / export PDF du rapport de la période affichée ----------
