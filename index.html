@@ -763,9 +763,9 @@
           <div class="form-group"><label>Du</label><input type="date" id="compteDu"></div>
           <div class="form-group"><label>Au</label><input type="date" id="compteAu"></div>
           <button class="btn btn-accent" onclick="rafraichirCompta()">Filtrer</button>
-          <button class="btn action-admin-seul" onclick="ouvrirModalAjusterTresorerie()" style="margin-left:auto;" title="Réservé à l'administrateur — caisse, banque, mobile money, carte">
+          <button class="btn action-admin-seul" onclick="ouvrirModalApportTresorerie()" style="margin-left:auto;" title="Réservé à l'administrateur — caisse, banque, mobile money, carte">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="14" r="1.2"/></svg>
-            Ajuster la trésorerie
+            Apport de trésorerie
           </button>
           <button class="btn action-admin-seul" onclick="reconstruireJournal()" style="color:var(--danger);border-color:var(--danger);" title="Réservé à l'administrateur — reconstruit tout le journal depuis les achats/ventes/charges">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
@@ -3116,12 +3116,12 @@ async function afficherDetailGrandLivre(){
   }
 }
 
-// ---------- Ajuster la trésorerie (caisse/banque/mobile money/carte, admin uniquement) ----------
+// ---------- Apport de trésorerie (caisse/banque/mobile money/carte, admin uniquement) ----------
 const LIBELLES_COMPTES_TRESORERIE = { especes: 'Caisse (espèces)', banque: 'Banque', mobile_money: 'Mobile Money', carte: 'Carte' };
 const CODES_COMPTES_TRESORERIE = { especes: '571', banque: '512', mobile_money: '531', carte: '532' };
 let soldesTresorerieCache = {};
 
-async function ouvrirModalAjusterTresorerie(){
+async function ouvrirModalApportTresorerie(){
   try {
     const soldes = await appelApi('/comptabilite/tresorerie-actuelle');
     soldesTresorerieCache = {};
@@ -3134,15 +3134,15 @@ async function ouvrirModalAjusterTresorerie(){
   ouvrirModal(`
     <div class="modal-head">
       <div>
-        <h2>Ajuster la trésorerie</h2>
-        <div class="modal-sub">Fixe le solde réel d'un compte — pour le capital de départ, ou pour corriger un écart, à tout moment.</div>
+        <h2>Apport de trésorerie</h2>
+        <div class="modal-sub">Ajoute ou retire explicitement un montant — jamais de calcul automatique d'écart, pour ne jamais toucher ton Capital par surprise.</div>
       </div>
       <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
     </div>
-    <form onsubmit="soumettreAjustementTresorerie(event)">
+    <form onsubmit="soumettreApportTresorerie(event)">
       <div class="form-grid">
         <div class="form-group full">
-          <label>Compte à ajuster *</label>
+          <label>Compte concerné *</label>
           <select name="compte" id="selectCompteTresorerie" required onchange="afficherSoldeActuelTresorerie()">
             <option value="especes">Caisse (espèces)</option>
             <option value="banque">Banque</option>
@@ -3152,9 +3152,16 @@ async function ouvrirModalAjusterTresorerie(){
           <div class="hint" id="soldeActuelTresorerie" style="font-weight:600;color:var(--text);"></div>
         </div>
         <div class="form-group full">
-          <label>Nouveau solde réel (FC) *</label>
-          <input type="number" name="nouveau_solde" min="0" step="0.01" required placeholder="Ex : 1144000">
-          <div class="hint">Le montant réellement présent aujourd'hui sur ce compte. La différence avec le solde actuel est ajustée automatiquement contre le Capital — jamais contre tes bénéfices.</div>
+          <label>Action *</label>
+          <select name="sens" required>
+            <option value="ajouter">Ajouter de l'argent sur ce compte (ex : capital de départ)</option>
+            <option value="retirer">Retirer de l'argent de ce compte (ex : corriger une erreur)</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label>Montant (FC) *</label>
+          <input type="number" name="montant" min="0.01" step="0.01" required placeholder="Ex : 192000">
+          <div class="hint">Le montant exact à ajouter ou retirer — pas le nouveau solde final. Le compte de contrepartie est toujours le Capital (101).</div>
         </div>
         <div class="form-group">
           <label>Date</label>
@@ -3162,7 +3169,7 @@ async function ouvrirModalAjusterTresorerie(){
         </div>
         <div class="form-group full">
           <label>Notes</label>
-          <textarea name="notes" placeholder="Ex : Capital de départ de l'activité"></textarea>
+          <textarea name="notes" placeholder="Ex : Trésorerie de départ de l'activité"></textarea>
         </div>
       </div>
       <div class="modal-actions">
@@ -3180,26 +3187,24 @@ function afficherSoldeActuelTresorerie(){
   const code = CODES_COMPTES_TRESORERIE[compte];
   const solde = soldesTresorerieCache[code] || 0;
   document.getElementById('soldeActuelTresorerie').textContent =
-    `Solde actuellement calculé pour "${LIBELLES_COMPTES_TRESORERIE[compte]}" : ${formatMontant(solde)}`;
+    `Solde actuellement calculé pour "${LIBELLES_COMPTES_TRESORERIE[compte]}" (à titre indicatif) : ${formatMontant(solde)}`;
 }
 
-async function soumettreAjustementTresorerie(event){
+async function soumettreApportTresorerie(event){
   event.preventDefault();
   const donnees = new FormData(event.target);
   const payload = {
     compte: donnees.get('compte'),
-    nouveau_solde: Number(donnees.get('nouveau_solde')),
+    sens: donnees.get('sens'),
+    montant: Number(donnees.get('montant')),
     date: donnees.get('date') || null,
     notes: donnees.get('notes') || null,
   };
   const bouton = event.target.querySelector('button[type="submit"]');
   bouton.disabled = true;
   try {
-    const resultat = await appelApiEcriture('/comptabilite/ajuster-tresorerie', 'POST', payload);
-    const texteEcart = resultat.ecart === 0
-      ? 'Aucun changement (le solde était déjà correct).'
-      : `Écart appliqué : ${resultat.ecart > 0 ? '+' : ''}${formatMontant(resultat.ecart)}.`;
-    afficherToast(`Trésorerie ajustée. ${texteEcart}`, 'success');
+    await appelApiEcriture('/comptabilite/apport-tresorerie', 'POST', payload);
+    afficherToast('Trésorerie mise à jour.', 'success');
     fermerModal();
     rafraichirCompta();
   } catch (err) {
@@ -3218,7 +3223,7 @@ async function reconstruireJournal(){
   if (!premiereConfirmation) return;
 
   const secondeConfirmation = confirm(
-    "Dernière confirmation : cette action est irréversible. Après ça, il faudra probablement refaire \"Rattraper le stock\" et \"Ajuster la trésorerie\" pour rétablir ton capital de départ proprement.\n\nLancer la reconstruction ?"
+    "Dernière confirmation : cette action est irréversible. Après ça, il faudra probablement refaire \"Rattraper le stock\" et \"Apport de trésorerie\" pour rétablir ton capital de départ proprement.\n\nLancer la reconstruction ?"
   );
   if (!secondeConfirmation) return;
 
