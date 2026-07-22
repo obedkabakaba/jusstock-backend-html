@@ -196,6 +196,7 @@
 
   /* ---------- PANELS / CHARTS ---------- */
   .panel-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:16px;}
+  .panel-grid > *{min-width:0;}
   .panel{
     background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
     padding:18px 20px;box-shadow:var(--shadow);
@@ -1702,7 +1703,11 @@ function dessinerTableAchats(achats){
         <td class="mono">${formatMontant(a.cout_total)}</td>
         <td class="mono">${formatMontant(a.montant_paye)}</td>
         <td>${statut}</td>
-        <td class="cell-actions"><button class="icon-btn" title="Voir le détail" onclick="voirDetailAchat('${a.id}')">${svgIcon('eye')}</button></td>
+        <td class="cell-actions">
+          <button class="icon-btn" title="Voir le détail" onclick="voirDetailAchat('${a.id}')">${svgIcon('eye')}</button>
+          <button class="icon-btn action-ecriture" title="Modifier" onclick="ouvrirModalModifierAchat('${a.id}')">${svgIcon('edit')}</button>
+          <button class="icon-btn danger action-ecriture" title="Annuler" onclick="annulerAchat('${a.id}')">${svgIcon('trash')}</button>
+        </td>
       </tr>`;
   }).join('');
 }
@@ -1754,7 +1759,21 @@ async function ouvrirModalAchat(preselectionFournisseurId){
       afficherToast("Crée d'abord au moins un produit avant d'enregistrer un achat.", 'error');
       return;
     }
-    construireFormAchat(preselectionFournisseurId);
+    construireFormAchat(preselectionFournisseurId, null);
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  }
+}
+
+// Ouvre le même formulaire, pré-rempli avec un achat existant à corriger.
+async function ouvrirModalModifierAchat(achatId){
+  try {
+    const [fournisseurs, produits, achatExistant] = await Promise.all([
+      appelApi('/fournisseurs'), appelApi('/produits'), appelApi(`/achats/${achatId}`),
+    ]);
+    fournisseursPourFormulaire = fournisseurs;
+    produitsPourFormulaire = produits;
+    construireFormAchat(null, achatExistant);
   } catch (err) {
     afficherToast(err.message, 'error');
   }
@@ -1771,22 +1790,24 @@ function optionsProduitsHtml(produitSelectionne){
   ).join('');
 }
 
-function ligneAchatHtml(){
+function ligneAchatHtml(valeurs){
+  const v = valeurs || {};
   return `
     <div class="line-item-row">
-      <div class="form-group"><label>Produit *</label><select name="ligne_produit_id" required><option value="">—</option>${optionsProduitsHtml()}</select></div>
-      <div class="form-group"><label>Paquets</label><input type="number" name="ligne_paquets" min="0" value="0"></div>
-      <div class="form-group"><label>Bout. isolées</label><input type="number" name="ligne_bouteilles_isolees" min="0" value="0"></div>
+      <div class="form-group"><label>Produit *</label><select name="ligne_produit_id" required oninput="recalculerApercuAchat()"><option value="">—</option>${optionsProduitsHtml(v.produit_id)}</select></div>
+      <div class="form-group"><label>Paquets</label><input type="number" name="ligne_paquets" min="0" value="${v.nombre_paquets ?? 0}" oninput="recalculerApercuAchat()"></div>
+      <div class="form-group"><label>Bout. isolées</label><input type="number" name="ligne_bouteilles_isolees" min="0" value="${v.nombre_bouteilles_isolees ?? 0}" oninput="recalculerApercuAchat()"></div>
       <div class="form-group">
         <label>Coût de cette ligne (FC) *</label>
-        <input type="number" name="ligne_montant_paye" min="0" step="0.01" required placeholder="Ex : 100000">
+        <input type="number" name="ligne_montant_paye" min="0" step="0.01" required placeholder="Ex : 100000" value="${v.montant_paye_ligne ?? ''}" oninput="recalculerApercuAchat()">
       </div>
-      <button type="button" class="btn-remove-line" onclick="supprimerLigne(this)" title="Retirer la ligne">${svgIcon('close')}</button>
+      <button type="button" class="btn-remove-line" onclick="supprimerLigne(this); recalculerApercuAchat();" title="Retirer la ligne">${svgIcon('close')}</button>
     </div>`;
 }
 
 function ajouterLigneAchat(){
   document.getElementById('lignesAchatContainer').insertAdjacentHTML('beforeend', ligneAchatHtml());
+  recalculerApercuAchat();
 }
 
 // ---------- Répartition automatique d'un montant groupé entre plusieurs produits ----------
@@ -1877,6 +1898,7 @@ function calculerRepartitionGroupee(){
   document.getElementById('montantGroupeTotal').value = '';
   document.getElementById('lignesGroupeContainer').innerHTML = '';
   toggleRepartitionGroupee();
+  recalculerApercuAchat();
 }
 
 function supprimerLigne(bouton){
@@ -1884,17 +1906,31 @@ function supprimerLigne(bouton){
   recalculerApercuVente();
 }
 
-function construireFormAchat(preselectionFournisseurId){
+function construireFormAchat(preselectionFournisseurId, achatExistant){
+  const modeEdition = !!achatExistant;
+  const fournisseurSelectionne = modeEdition ? achatExistant.fournisseur_id : preselectionFournisseurId;
+
   const optionsFournisseurs = fournisseursPourFormulaire.map(f =>
-    `<option value="${f.id}" ${f.id === preselectionFournisseurId ? 'selected' : ''}>${f.nom}</option>`
+    `<option value="${f.id}" ${f.id === fournisseurSelectionne ? 'selected' : ''}>${f.nom}</option>`
   ).join('');
+
+  const dateParDefaut = modeEdition ? new Date(achatExistant.date_achat).toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
+  const lignesInitiales = modeEdition
+    ? achatExistant.lignes.map(l => ligneAchatHtml({
+        produit_id: l.produit_id, nombre_paquets: l.nombre_paquets,
+        nombre_bouteilles_isolees: l.nombre_bouteilles_isolees, montant_paye_ligne: l.montant_paye_ligne,
+      })).join('')
+    : ligneAchatHtml();
 
   ouvrirModal(`
     <div class="modal-head">
-      <div><h2>Nouvel achat</h2><div class="modal-sub">Le coût par paquet/bouteille et le CMP du produit sont recalculés automatiquement à partir du "Coût de cette ligne".</div></div>
+      <div>
+        <h2>${modeEdition ? `Modifier l'achat ${achatExistant.reference}` : 'Nouvel achat'}</h2>
+        <div class="modal-sub">${modeEdition ? "La référence ne change pas. Le stock de l'ancienne version est retiré puis les nouvelles lignes réappliquées." : 'Le coût par paquet/bouteille et le CMP du produit sont recalculés automatiquement à partir du "Coût de cette ligne".'}</div>
+      </div>
       <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
     </div>
-    <form id="formAchat" onsubmit="soumettreAchat(event)">
+    <form id="formAchat" onsubmit="soumettreAchat(event, ${modeEdition ? `'${achatExistant.id}'` : 'null'})">
       <div class="form-grid">
         <div class="form-group full">
           <label>Fournisseur</label>
@@ -1908,20 +1944,23 @@ function construireFormAchat(preselectionFournisseurId){
         </div>
         <div class="form-group">
           <label>Date de l'achat</label>
-          <input type="date" name="date_achat" value="${new Date().toISOString().slice(0,10)}">
+          <input type="date" name="date_achat" value="${dateParDefaut}">
         </div>
         <div class="form-group">
           <label>Transport (FC)</label>
-          <input type="number" name="transport" min="0" step="0.01" value="0">
+          <input type="number" name="transport" min="0" step="0.01" value="${modeEdition ? achatExistant.transport : 0}" oninput="recalculerApercuAchat()">
         </div>
         <div class="form-group">
           <label>Autres frais (FC)</label>
-          <input type="number" name="autres_frais" min="0" step="0.01" value="0">
+          <input type="number" name="autres_frais" min="0" step="0.01" value="${modeEdition ? achatExistant.autres_frais : 0}" oninput="recalculerApercuAchat()">
+        </div>
+        <div class="form-group full" style="background:var(--paper);border-radius:8px;padding:10px 12px;">
+          <div style="display:flex;justify-content:space-between;font-size:13.5px;"><span>Coût total de cet achat</span><strong id="apercuCoutTotalAchat">0 FC</strong></div>
         </div>
         <div class="form-group full">
           <label>Montant réellement remis au fournisseur maintenant (FC)</label>
-          <input type="number" name="montant_paye" min="0" step="0.01" value="0">
-          <div class="hint">L'argent (espèces/mobile money) que tu donnes VRAIMENT aujourd'hui. Mets 0 si tout est à crédit, ou le total si tu payes cash. Si c'est inférieur à la somme des coûts de lignes + transport + autres frais, la différence devient automatiquement une dette envers ce fournisseur (visible dans Fournisseurs).</div>
+          <input type="number" name="montant_paye" id="inputMontantPayeAchat" min="0" step="0.01" value="${modeEdition ? achatExistant.montant_paye : ''}" oninput="this.dataset.modifieManuel='true'">
+          <div class="hint">Se remplit automatiquement avec le coût total (payé intégralement) au fur et à mesure que tu remplis les lignes — modifie ce chiffre toi-même seulement si c'est payé partiellement ou à crédit.</div>
         </div>
         <div class="form-group">
           <label>Payé depuis quel compte ?</label>
@@ -1937,7 +1976,7 @@ function construireFormAchat(preselectionFournisseurId){
 
       <h3 style="font-size:13px;margin:18px 0 4px 0;">Lignes d'achat</h3>
       <div class="hint" style="margin-bottom:10px;">Pour chaque produit acheté : combien de paquets/bouteilles, et le "Coût de cette ligne" = ce que TE COÛTE ce lot (utilisé pour calculer ton coût par bouteille) — pas forcément ce que tu as payé cash (ça, c'est le champ au-dessus).</div>
-      <div class="lines-container" id="lignesAchatContainer">${ligneAchatHtml()}</div>
+      <div class="lines-container" id="lignesAchatContainer">${lignesInitiales}</div>
       <button type="button" class="btn btn-add-line" onclick="ajouterLigneAchat()">${svgIcon('plus')} Ajouter une ligne</button>
 
       <div style="margin:14px 0;">
@@ -1959,18 +1998,43 @@ function construireFormAchat(preselectionFournisseurId){
 
       <div class="form-group full" style="margin-top:14px;">
         <label>Notes</label>
-        <textarea name="notes"></textarea>
+        <textarea name="notes">${modeEdition ? (achatExistant.notes || '') : ''}</textarea>
       </div>
 
       <div class="modal-actions">
         <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
-        <button type="submit" class="btn btn-accent">Enregistrer l'achat</button>
+        <button type="submit" class="btn btn-accent">${modeEdition ? 'Enregistrer les modifications' : "Enregistrer l'achat"}</button>
       </div>
     </form>
   `);
+
+  recalculerApercuAchat();
 }
 
-async function soumettreAchat(event){
+// Calcule en direct le coût total de l'achat (lignes + transport + autres
+// frais), et remplit AUTOMATIQUEMENT "montant payé" avec ce total — tant que
+// l'utilisateur n'a pas lui-même touché ce champ (auquel cas on respecte son
+// choix, pour un paiement partiel ou à crédit).
+function recalculerApercuAchat(){
+  const formulaire = document.getElementById('formAchat');
+  if (!formulaire) return;
+
+  const montantsLignes = [...formulaire.querySelectorAll('[name="ligne_montant_paye"]')].map(el => Number(el.value) || 0);
+  const coutLignes = montantsLignes.reduce((acc, m) => acc + m, 0);
+  const transport = Number(formulaire.querySelector('[name="transport"]')?.value || 0);
+  const autresFrais = Number(formulaire.querySelector('[name="autres_frais"]')?.value || 0);
+  const coutTotal = coutLignes + transport + autresFrais;
+
+  const affichageCoutTotal = document.getElementById('apercuCoutTotalAchat');
+  if (affichageCoutTotal) affichageCoutTotal.textContent = formatMontant(coutTotal);
+
+  const inputMontantPaye = document.getElementById('inputMontantPayeAchat');
+  if (inputMontantPaye && inputMontantPaye.dataset.modifieManuel !== 'true') {
+    inputMontantPaye.value = coutTotal || '';
+  }
+}
+
+async function soumettreAchat(event, achatId){
   event.preventDefault();
   const formulaire = event.target;
   const donnees = new FormData(formulaire);
@@ -2004,13 +2068,29 @@ async function soumettreAchat(event){
   boutonSubmit.disabled = true;
 
   try {
-    await appelApiEcriture('/achats', 'POST', payload);
-    afficherToast('Achat enregistré avec succès.', 'success');
+    if (achatId) {
+      await appelApiEcriture(`/achats/${achatId}`, 'PUT', payload);
+      afficherToast('Achat modifié avec succès.', 'success');
+    } else {
+      await appelApiEcriture('/achats', 'POST', payload);
+      afficherToast('Achat enregistré avec succès.', 'success');
+    }
     fermerModal();
     chargerAchats();
   } catch (err) {
     afficherToast(err.message, 'error');
     boutonSubmit.disabled = false;
+  }
+}
+
+async function annulerAchat(achatId){
+  if (!confirm("Annuler complètement cet achat ? Le stock sera retiré (quantité) et les écritures comptables supprimées. Cette action ne peut pas être défaite.\n\nNote : si d'autres achats du même produit ont eu lieu depuis, vérifie le CMP du produit dans Produits après coup.")) return;
+  try {
+    await appelApiEcriture(`/achats/${achatId}/annuler`, 'POST');
+    afficherToast('Achat annulé.', 'success');
+    chargerAchats();
+  } catch (err) {
+    afficherToast(err.message, 'error');
   }
 }
 
