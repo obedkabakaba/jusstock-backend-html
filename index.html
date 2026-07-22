@@ -2068,13 +2068,15 @@ async function soumettreAchat(event, achatId){
   boutonSubmit.disabled = true;
 
   try {
+    let resultat;
     if (achatId) {
-      await appelApiEcriture(`/achats/${achatId}`, 'PUT', payload);
+      resultat = await appelApiEcriture(`/achats/${achatId}`, 'PUT', payload);
       afficherToast('Achat modifié avec succès.', 'success');
     } else {
-      await appelApiEcriture('/achats', 'POST', payload);
+      resultat = await appelApiEcriture('/achats', 'POST', payload);
       afficherToast('Achat enregistré avec succès.', 'success');
     }
+    (resultat.avertissements || []).forEach((a) => afficherToast(a, 'error'));
     fermerModal();
     chargerAchats();
   } catch (err) {
@@ -2084,10 +2086,11 @@ async function soumettreAchat(event, achatId){
 }
 
 async function annulerAchat(achatId){
-  if (!confirm("Annuler complètement cet achat ? Le stock sera retiré (quantité) et les écritures comptables supprimées. Cette action ne peut pas être défaite.\n\nNote : si d'autres achats du même produit ont eu lieu depuis, vérifie le CMP du produit dans Produits après coup.")) return;
+  if (!confirm("Annuler complètement cet achat ? Le stock sera retiré (quantité) et les écritures comptables supprimées. Cette action ne peut pas être défaite.")) return;
   try {
-    await appelApiEcriture(`/achats/${achatId}/annuler`, 'POST');
+    const resultat = await appelApiEcriture(`/achats/${achatId}/annuler`, 'POST');
     afficherToast('Achat annulé.', 'success');
+    (resultat.avertissements || []).forEach((a) => afficherToast(a, 'error'));
     chargerAchats();
   } catch (err) {
     afficherToast(err.message, 'error');
