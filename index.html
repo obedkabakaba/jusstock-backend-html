@@ -402,6 +402,11 @@
      évite simplement d'afficher un bouton qui mènerait à une erreur. */
   body.role-consultant .action-ecriture{display:none !important;}
   body:not(.role-administrateur) .action-admin-seul{display:none !important;}
+  /* Inventaire physique : refléter côté interface les rôles appliqués par
+     inventaires.routes.js — saisie pour administrateur/gérante, lecture de
+     l'historique en plus pour le consultant. */
+  body:not(.peut-inventorier) .action-inventaire{display:none !important;}
+  body:not(.peut-voir-inventaires) .zone-inventaire-lecture{display:none !important;}
   .consultant-banner{
     background:#E1EEFB;color:#1F4E79;padding:9px 16px;border-radius:8px;
     font-size:12.5px;font-weight:600;margin-bottom:16px;display:none;
@@ -656,6 +661,78 @@
             <div class="empty-state">Choisis un produit ci-dessus pour voir son historique.</div>
           </div>
         </div>
+
+        <!-- ------------------------------------------------------------
+             INVENTAIRE PHYSIQUE
+             Stock théorique = ce que JusStock a calculé.
+             Stock physique  = ce qui est réellement compté en magasin.
+             ------------------------------------------------------------ -->
+        <div class="panel action-inventaire" style="margin-top:18px;">
+          <h3>Inventaire physique</h3>
+          <div class="subtitle" style="margin:-6px 0 14px;">
+            Saisis ce que tu as réellement compté en magasin. L'écart est calculé automatiquement,
+            la correction est enregistrée comme un mouvement de stock et conservée dans l'historique.
+          </div>
+
+          <div class="filtre-row" style="margin-bottom:12px;">
+            <div class="form-group" style="min-width:240px;">
+              <label>Produit</label>
+              <select id="inventaireProduit" onchange="onChangementProduitInventaire()">
+                <option value="">— Choisir un produit —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Stock théorique (JusStock)</label>
+              <input type="text" id="inventaireTheorique" value="—" readonly style="font-family:var(--font-mono,monospace);">
+            </div>
+            <div class="form-group">
+              <label>Stock physique compté *</label>
+              <input type="number" id="inventairePhysique" min="0" step="1" placeholder="ex : 113" oninput="recalculerEcartInventaire()">
+            </div>
+            <div class="form-group">
+              <label>Écart</label>
+              <input type="text" id="inventaireEcart" value="—" readonly style="font-family:var(--font-mono,monospace);font-weight:700;">
+            </div>
+          </div>
+
+          <div class="filtre-row" style="margin-bottom:12px;">
+            <div class="form-group" style="min-width:200px;">
+              <label>Motif de l'écart</label>
+              <select id="inventaireMotif">
+                <option value="">— Aucun / non précisé —</option>
+                <option value="Casse">Casse</option>
+                <option value="Perte">Perte</option>
+                <option value="Vol">Vol</option>
+                <option value="Erreur de saisie">Erreur de saisie</option>
+                <option value="Consommation interne">Consommation interne</option>
+                <option value="Retour client">Retour client</option>
+                <option value="Autre">Autre</option>
+              </select>
+            </div>
+            <div class="form-group" style="flex:1;min-width:240px;">
+              <label>Notes</label>
+              <input type="text" id="inventaireNotes" placeholder="ex : comptage de fin de mois">
+            </div>
+            <button class="btn btn-accent" id="btnValiderInventaire" onclick="validerInventaire()" disabled>
+              Enregistrer le comptage
+            </button>
+          </div>
+
+          <div id="inventaireApercu" class="subtitle"></div>
+        </div>
+
+        <div class="panel zone-inventaire-lecture" style="margin-top:18px;">
+          <h3>Historique des inventaires</h3>
+          <div id="inventaireResume" style="margin-bottom:14px;"></div>
+          <div class="form-group" style="max-width:340px;margin-bottom:14px;">
+            <select id="filtreProduitInventaires" onchange="chargerHistoriqueInventaires()">
+              <option value="">Tous les produits</option>
+            </select>
+          </div>
+          <div id="historiqueInventairesWrap">
+            <div class="empty-state">Chargement…</div>
+          </div>
+        </div>
       </section>
       <section class="view" id="view-achats">
         <div class="toolbar">
@@ -745,6 +822,10 @@
       <section class="view" id="view-charges">
         <div class="toolbar">
           <div><span class="subtitle" id="resumeCharges"></span></div>
+          <button class="btn action-ecriture" onclick="ouvrirModalLoyer()">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 10v9h14v-9"/><path d="M10 19v-5h4v5"/></svg>
+            Provision loyer
+          </button>
           <button class="btn btn-accent action-ecriture" onclick="ouvrirModalCharge()">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             Nouvelle charge
@@ -814,6 +895,35 @@
           <button class="tab-btn" data-tab="charges" onclick="changerOngletRapport('charges')">Charges</button>
         </div>
         <div id="contenuRapports"><div class="empty-state">Chargement…</div></div>
+      </section>
+
+      <!-- ============================================================
+           VUE : ANALYSE — rythme, rotation, tendances, estimations
+           ============================================================ -->
+      <section class="view" id="view-analyse">
+        <div class="filtre-row">
+          <div class="form-group">
+            <label>Fenêtre d'analyse</label>
+            <select id="fenetreAnalyse" onchange="rafraichirAnalyse()">
+              <option value="30">30 derniers jours</option>
+              <option value="60" selected>60 derniers jours</option>
+              <option value="90">90 derniers jours</option>
+              <option value="180">180 derniers jours</option>
+            </select>
+          </div>
+          <button class="btn btn-accent" onclick="rafraichirAnalyse()">Actualiser</button>
+        </div>
+
+        <div class="tabs-row">
+          <button class="tab-btn active" data-tab="synthese"   onclick="changerOngletAnalyse('synthese')">Vue d'ensemble</button>
+          <button class="tab-btn"        data-tab="rythme"     onclick="changerOngletAnalyse('rythme')">Rythme de vente</button>
+          <button class="tab-btn"        data-tab="rotation"   onclick="changerOngletAnalyse('rotation')">Rotation du stock</button>
+          <button class="tab-btn"        data-tab="produits"   onclick="changerOngletAnalyse('produits')">Par produit</button>
+          <button class="tab-btn"        data-tab="previsions" onclick="changerOngletAnalyse('previsions')">Estimations</button>
+          <button class="tab-btn"        data-tab="anomalies"  onclick="changerOngletAnalyse('anomalies')">Alertes</button>
+        </div>
+
+        <div id="contenuAnalyse"><div class="empty-state">Chargement…</div></div>
       </section>
 
       <section class="view" id="view-utilisateurs">
@@ -943,6 +1053,7 @@ const NAV_ITEMS = [
   { id: 'comptabilite',  label: 'Comptabilité',    ready: true,  icon: 'book',      subtitle: 'Journal, grand livre, balance, bilan' },
   { id: 'charges',       label: 'Charges',         ready: true,  icon: 'receipt',   subtitle: 'Dépenses de l\'entreprise' },
   { id: 'rapports',      label: 'Rapports',        ready: true,  icon: 'bar-chart', subtitle: 'Rapports détaillés par période' },
+  { id: 'analyse',       label: 'Analyse',         ready: true,  icon: 'trend',     subtitle: 'Rythme de vente, rotation du stock, tendances et estimations' },
   { id: 'utilisateurs',  label: 'Utilisateurs',    ready: true,  icon: 'users',     subtitle: 'Rôles, permissions et journal d\'audit' },
   { id: 'parametres',    label: 'Paramètres',      ready: true,  icon: 'settings',  subtitle: "Configuration générale de l'entreprise" },
 ];
@@ -970,6 +1081,8 @@ const ICONS = {
   close: '<path d="M18 6 6 18M6 6l12 12"/>',
   sliders: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M2 14h4M10 8h4M18 12h4"/>',
   eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  trend: '<path d="M3 17l6-6 4 4 7-7"/><path d="M14 8h6v6"/>',
+  clipboard: '<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M9.5 11h5M9.5 15h5"/>',
 };
 
 function svgIcon(name, extra){
@@ -1025,6 +1138,7 @@ function afficherVue(id){
   if (id === 'charges') chargerCharges();
   if (id === 'comptabilite') chargerComptabilite();
   if (id === 'rapports') chargerRapports();
+  if (id === 'analyse') chargerAnalyse();
   if (id === 'parametres') chargerParametres();
   if (id === 'utilisateurs') chargerUtilisateurs();
 }
@@ -1513,26 +1627,30 @@ async function chargerStock(){
     const produits = await appelApi('/stock');
     dessinerTableStock(produits);
     remplirSelectProduitsMouvements(produits);
+    initialiserInventaire(produits);
 
     const totalBouteilles = produits.reduce((acc, p) => acc + Number(p.stock_bouteilles), 0);
+    const totalValeur = produits.reduce((acc, p) => acc + Number(p.valeur_stock || 0), 0);
     const totalAlertes = produits.filter(p => p.en_alerte_stock).length;
     document.getElementById('resumeStock').textContent =
-      `${formatNombre(totalBouteilles)} bouteille(s) au total · ${totalAlertes} alerte(s) de stock faible`;
+      `${formatNombre(totalBouteilles)} bouteille(s) au total · ${formatMontant(totalValeur)} immobilisés · ${totalAlertes} alerte(s) de stock faible`;
   } catch (err) {
-    corps.innerHTML = `<tr><td colspan="4" class="empty-state">Impossible de charger le stock (${err.message}).</td></tr>`;
+    corps.innerHTML = `<tr><td colspan="6" class="empty-state">Impossible de charger le stock (${err.message}).</td></tr>`;
   }
 }
 
 function dessinerTableStock(produits){
   const corps = document.getElementById('corpsTableStock');
   if (!produits || produits.length === 0) {
-    corps.innerHTML = '<tr><td colspan="4" class="empty-state">Aucun produit actif.</td></tr>';
+    corps.innerHTML = '<tr><td colspan="6" class="empty-state">Aucun produit actif.</td></tr>';
     return;
   }
   corps.innerHTML = produits.map(p => `
     <tr>
       <td><strong>${p.nom}</strong></td>
       <td><span class="unit-chip">${svgIcon('bottle')}${formatNombre(p.stock_bouteilles)} bout.<span class="sep">·</span>${formatNombre(p.stock_paquets_complets)} paq.</span></td>
+      <td class="mono">${formatMontant(p.prix_achat_moyen)}</td>
+      <td class="mono">${formatMontant(p.valeur_stock)}</td>
       <td class="mono">${formatNombre(p.stock_min_bouteilles)} bout.</td>
       <td>${badgeNiveauStock(p.stock_bouteilles, p.stock_min_bouteilles)}</td>
     </tr>
@@ -2969,6 +3087,117 @@ function ouvrirModalCharge(){
   `);
 }
 
+// ------------------------------------------------------------
+// Provision de loyer
+// ------------------------------------------------------------
+// Le local est payé grâce à une mise de côté quotidienne (5 $ par jour
+// par défaut). Ce n'est pas un mécanisme à part : c'est une charge de
+// catégorie « Loyer », enregistrée via le module Charges existant, donc
+// comptabilisée automatiquement au compte 622 et déduite du bénéfice
+// net comme n'importe quelle autre charge.
+const LOYER_PAR_JOUR_DEVISE_SECONDAIRE = 5;
+
+function premierJourDuMois(){
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+}
+
+function recalculerProvisionLoyer(){
+  const du = document.getElementById('loyerDu').value;
+  const au = document.getElementById('loyerAu').value;
+  const parJour = Number(document.getElementById('loyerParJour').value) || 0;
+  const taux = Number(document.getElementById('loyerTaux').value) || 0;
+  const apercu = document.getElementById('loyerApercu');
+  const champMontant = document.getElementById('loyerMontant');
+
+  if (!du || !au || new Date(au) < new Date(du)) {
+    apercu.textContent = 'Choisis une période valide (la date de fin doit suivre la date de début).';
+    champMontant.value = '';
+    return;
+  }
+
+  const jours = Math.round((new Date(au) - new Date(du)) / 86400000) + 1;
+  const montantFC = Math.round(jours * parJour * taux);
+  champMontant.value = montantFC;
+  apercu.innerHTML = `<strong>${jours} jour(s)</strong> × ${parJour} ${deviseSecondaireActuelle || 'USD'} × ${formatNombre(taux)}
+    = <strong>${formatNombre(montantFC)} ${devisePrincipaleActuelle || 'FC'}</strong> à enregistrer comme charge de loyer.`;
+}
+
+function ouvrirModalLoyer(){
+  const taux = tauxChangeActuel || 1;
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>Provision de loyer</h2>
+        <div class="modal-sub">Enregistre la mise de côté quotidienne comme une charge de catégorie « Loyer » (compte 622).</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form onsubmit="soumettreProvisionLoyer(event)">
+      <div class="form-grid">
+        <div class="form-group"><label>Du</label>
+          <input type="date" id="loyerDu" value="${premierJourDuMois()}" oninput="recalculerProvisionLoyer()"></div>
+        <div class="form-group"><label>Au</label>
+          <input type="date" id="loyerAu" value="${new Date().toISOString().slice(0,10)}" oninput="recalculerProvisionLoyer()"></div>
+        <div class="form-group"><label>Montant par jour (${deviseSecondaireActuelle || 'USD'})</label>
+          <input type="number" id="loyerParJour" min="0" step="0.01" value="${LOYER_PAR_JOUR_DEVISE_SECONDAIRE}" oninput="recalculerProvisionLoyer()"></div>
+        <div class="form-group"><label>Taux de change (${devisePrincipaleActuelle || 'FC'} pour 1 ${deviseSecondaireActuelle || 'USD'})</label>
+          <input type="number" id="loyerTaux" min="0" step="0.01" value="${taux}" oninput="recalculerProvisionLoyer()"></div>
+        <div class="form-group"><label>Montant total (${devisePrincipaleActuelle || 'FC'})</label>
+          <input type="number" id="loyerMontant" readonly style="font-weight:700;"></div>
+        <div class="form-group">
+          <label>Mode de paiement *</label>
+          <select id="loyerModePaiement" required>
+            <option value="especes">Espèces</option>
+            <option value="mobile_money">Mobile Money</option>
+            <option value="carte">Carte</option>
+          </select>
+        </div>
+        <div class="form-group full"><label>Description</label>
+          <input type="text" id="loyerDescription" placeholder="Laisser vide pour une description automatique"></div>
+      </div>
+      <div class="subtitle" id="loyerApercu" style="margin-bottom:6px;"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">Enregistrer la charge de loyer</button>
+      </div>
+    </form>
+  `);
+  recalculerProvisionLoyer();
+}
+
+async function soumettreProvisionLoyer(event){
+  event.preventDefault();
+  const du = document.getElementById('loyerDu').value;
+  const au = document.getElementById('loyerAu').value;
+  const montant = Number(document.getElementById('loyerMontant').value);
+  const parJour = Number(document.getElementById('loyerParJour').value);
+
+  if (!montant || montant <= 0) {
+    afficherToast('Le montant calculé doit être supérieur à zéro.', 'error');
+    return;
+  }
+
+  const bouton = event.target.querySelector('button[type="submit"]');
+  bouton.disabled = true;
+  try {
+    await appelApiEcriture('/charges', 'POST', {
+      // La date retenue est la fin de période : la charge est rattachée
+      // au mois où la provision est constatée.
+      date_charge: au,
+      categorie: 'Loyer',
+      montant,
+      mode_paiement: document.getElementById('loyerModePaiement').value,
+      description: document.getElementById('loyerDescription').value
+        || `Provision loyer du ${du} au ${au} (${parJour} ${deviseSecondaireActuelle || 'USD'} par jour)`,
+    });
+    afficherToast('Charge de loyer enregistrée.', 'success');
+    fermerModal();
+    chargerCharges();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    bouton.disabled = false;
+  }
+}
+
 async function soumettreCharge(event){
   event.preventDefault();
   const donnees = new FormData(event.target);
@@ -3888,14 +4117,616 @@ function appliquerPermissionsUI(){
   const role = utilisateurConnecte.role;
   document.body.classList.toggle('role-consultant', role === 'consultant');
   document.body.classList.toggle('role-administrateur', role === 'administrateur');
+  document.body.classList.toggle('peut-inventorier', ['administrateur', 'gerante'].includes(role));
+  document.body.classList.toggle('peut-voir-inventaires', ['administrateur', 'gerante', 'consultant'].includes(role));
 
   document.querySelectorAll('.nav-item').forEach((btn) => {
     const id = btn.dataset.view;
     let visible = true;
     if (id === 'utilisateurs') visible = role === 'administrateur';
     else if (id === 'comptabilite') visible = ['administrateur', 'gerante', 'consultant'].includes(role);
+    // Analyse expose coûts, marges et capital immobilisé : mêmes rôles
+    // que les rapports détaillés côté backend (analyse.routes.js).
+    else if (id === 'analyse') visible = ['administrateur', 'gerante', 'consultant'].includes(role);
     btn.style.display = visible ? '' : 'none';
   });
+}
+
+// ============================================================
+// MODULE : INVENTAIRE PHYSIQUE (intégré à la vue Stock)
+// ============================================================
+// Le backend reste seul juge des permissions (inventaires.routes.js) ;
+// ici on se contente de ne pas afficher — ni appeler — ce qui serait
+// de toute façon refusé en 403.
+
+let produitsInventaire = [];
+
+function aRole(...roles){
+  return !!utilisateurConnecte && roles.includes(utilisateurConnecte.role);
+}
+
+function initialiserInventaire(produits){
+  produitsInventaire = produits || [];
+
+  if (aRole('administrateur', 'gerante')) {
+    const select = document.getElementById('inventaireProduit');
+    const valeurActuelle = select.value;
+    select.innerHTML = '<option value="">— Choisir un produit —</option>' +
+      produitsInventaire.map(p =>
+        `<option value="${p.id}" data-stock="${p.stock_bouteilles}" data-cmp="${p.prix_achat_moyen || 0}">${p.nom}</option>`
+      ).join('');
+    select.value = valeurActuelle;
+    onChangementProduitInventaire();
+  }
+
+  if (aRole('administrateur', 'gerante', 'consultant')) {
+    const filtre = document.getElementById('filtreProduitInventaires');
+    const valeurFiltre = filtre.value;
+    filtre.innerHTML = '<option value="">Tous les produits</option>' +
+      produitsInventaire.map(p => `<option value="${p.id}">${p.nom}</option>`).join('');
+    filtre.value = valeurFiltre;
+    chargerResumeInventaires();
+    chargerHistoriqueInventaires();
+  }
+}
+
+function produitInventaireSelectionne(){
+  const select = document.getElementById('inventaireProduit');
+  const option = select.selectedOptions[0];
+  if (!select.value || !option) return null;
+  return {
+    id: select.value,
+    nom: option.textContent,
+    stockTheorique: Number(option.dataset.stock),
+    cmp: Number(option.dataset.cmp) || 0,
+  };
+}
+
+function onChangementProduitInventaire(){
+  const produit = produitInventaireSelectionne();
+  document.getElementById('inventaireTheorique').value =
+    produit ? `${formatNombre(produit.stockTheorique)} bout.` : '—';
+  document.getElementById('inventairePhysique').value = '';
+  recalculerEcartInventaire();
+}
+
+function recalculerEcartInventaire(){
+  const produit = produitInventaireSelectionne();
+  const champPhysique = document.getElementById('inventairePhysique');
+  const champEcart = document.getElementById('inventaireEcart');
+  const apercu = document.getElementById('inventaireApercu');
+  const bouton = document.getElementById('btnValiderInventaire');
+
+  const saisie = champPhysique.value;
+  if (!produit || saisie === '' || Number(saisie) < 0) {
+    champEcart.value = '—';
+    champEcart.style.color = '';
+    apercu.textContent = produit ? '' : 'Choisis un produit pour démarrer le comptage.';
+    bouton.disabled = true;
+    return;
+  }
+
+  const physique = Number(saisie);
+  const ecart = physique - produit.stockTheorique;
+  const impact = ecart * produit.cmp;
+
+  champEcart.value = `${ecart > 0 ? '+' : ''}${formatNombre(ecart)} bout.`;
+  champEcart.style.color = ecart === 0 ? 'var(--fresh)' : (ecart < 0 ? 'var(--danger)' : 'var(--fresh)');
+
+  apercu.innerHTML = ecart === 0
+    ? `Comptage conforme : le stock théorique correspond au stock physique. Le comptage sera tout de même enregistré dans l'historique.`
+    : `Écart de <strong>${ecart > 0 ? '+' : ''}${formatNombre(ecart)}</strong> bouteille(s), soit un impact de
+       <strong style="color:${impact < 0 ? 'var(--danger)' : 'var(--fresh)'}">${impact > 0 ? '+' : ''}${formatMontant(impact)}</strong>
+       sur la valeur du stock. Le coût moyen (CMP) du produit n'est pas modifié.`;
+
+  bouton.disabled = false;
+}
+
+async function validerInventaire(){
+  const produit = produitInventaireSelectionne();
+  const physique = document.getElementById('inventairePhysique').value;
+  if (!produit || physique === '') return;
+
+  const bouton = document.getElementById('btnValiderInventaire');
+  bouton.disabled = true; // empêche la double soumission par double clic
+  const libelleInitial = bouton.textContent;
+  bouton.textContent = 'Enregistrement…';
+
+  try {
+    const resultat = await appelApiEcriture('/inventaires', 'POST', {
+      produit_id: produit.id,
+      stock_physique: Number(physique),
+      // Verrou optimiste : le backend refuse en 409 si le stock a bougé
+      // depuis l'affichage, plutôt que d'appliquer une correction fausse.
+      stock_theorique_attendu: produit.stockTheorique,
+      motif: document.getElementById('inventaireMotif').value || null,
+      notes: document.getElementById('inventaireNotes').value || null,
+    });
+
+    afficherToast(resultat.message || 'Comptage enregistré.', 'success');
+    document.getElementById('inventaireNotes').value = '';
+    document.getElementById('inventaireMotif').value = '';
+    await chargerStock(); // recharge stock théorique, historique et résumé
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  } finally {
+    bouton.textContent = libelleInitial;
+    recalculerEcartInventaire();
+  }
+}
+
+async function chargerResumeInventaires(){
+  const zone = document.getElementById('inventaireResume');
+  try {
+    const r = await appelApi('/inventaires/resume?jours=90');
+    const nb = Number(r.nombre_comptages);
+    if (nb === 0) {
+      zone.innerHTML = `<div class="empty-state">Aucun inventaire enregistré sur les 90 derniers jours.
+        ${Number(r.produits_jamais_comptes?.length || 0)} produit(s) actif(s) n'ont jamais été comptés.</div>`;
+      return;
+    }
+    const ecart = Number(r.ecart_cumule_bouteilles);
+    const impact = Number(r.impact_valeur_cumule);
+    zone.innerHTML = `
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Comptages (90 j)</div><div class="kpi-value">${formatNombre(nb)}</div>
+          <div class="kpi-sub">${formatNombre(r.comptages_conformes)} sans écart · ${formatNombre(r.produits_comptes)} produit(s)</div></div>
+        <div class="kpi-card"><div class="kpi-label">Écart cumulé</div>
+          <div class="kpi-value" style="color:${ecart < 0 ? 'var(--danger)' : 'var(--fresh)'}">${ecart > 0 ? '+' : ''}${formatNombre(ecart)} bout.</div>
+          <div class="kpi-sub">${formatNombre(r.comptages_manquants)} manquant(s) · ${formatNombre(r.comptages_excedents)} excédent(s)</div></div>
+        <div class="kpi-card"><div class="kpi-label">Impact sur la valeur</div>
+          <div class="kpi-value" style="color:${impact < 0 ? 'var(--danger)' : 'var(--fresh)'}">${impact > 0 ? '+' : ''}${formatMontant(impact)}</div>
+          <div class="kpi-sub">journalisé en 6031 — Variation des stocks</div></div>
+        <div class="kpi-card"><div class="kpi-label">Jamais comptés</div><div class="kpi-value">${formatNombre(r.produits_jamais_comptes?.length || 0)}</div>
+          <div class="kpi-sub">produit(s) actif(s) sans aucun comptage</div></div>
+      </div>`;
+  } catch (err) {
+    zone.innerHTML = `<div class="empty-state">Résumé indisponible (${err.message}).</div>`;
+  }
+}
+
+async function chargerHistoriqueInventaires(){
+  const wrap = document.getElementById('historiqueInventairesWrap');
+  const produitId = document.getElementById('filtreProduitInventaires').value;
+  wrap.innerHTML = '<div class="empty-state">Chargement…</div>';
+
+  try {
+    const lignes = await appelApi('/inventaires' + (produitId ? `?produit_id=${produitId}` : ''));
+    if (lignes.length === 0) {
+      wrap.innerHTML = '<div class="empty-state">Aucun inventaire enregistré pour le moment.</div>';
+      return;
+    }
+    wrap.innerHTML = `
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr>
+            <th>Date</th><th>Produit</th><th>Théorique</th><th>Physique</th><th>Écart</th>
+            <th>Impact valeur</th><th>Motif</th><th>Par</th><th>Correction</th>
+          </tr></thead>
+          <tbody>
+            ${lignes.map(i => {
+              const ecart = Number(i.ecart);
+              const impact = Number(i.delta_valeur);
+              return `
+              <tr>
+                <td class="mono">${new Date(i.created_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</td>
+                <td><strong>${i.produit_nom}</strong></td>
+                <td class="mono">${formatNombre(i.stock_theorique)}</td>
+                <td class="mono">${formatNombre(i.stock_physique)}</td>
+                <td class="mono" style="font-weight:700;color:${ecart === 0 ? 'inherit' : (ecart < 0 ? 'var(--danger)' : 'var(--fresh)')}">${ecart > 0 ? '+' : ''}${formatNombre(ecart)}</td>
+                <td class="mono" style="color:${impact < 0 ? 'var(--danger)' : 'inherit'}">${impact === 0 ? '—' : (impact > 0 ? '+' : '') + formatMontant(impact)}</td>
+                <td class="cell-sub">${i.motif || '—'}${i.notes ? `<br><span style="opacity:.7">${i.notes}</span>` : ''}</td>
+                <td class="cell-sub">${i.utilisateur_nom || '—'}</td>
+                <td>${i.correction_appliquee
+                      ? '<span class="badge ok">Appliquée</span>'
+                      : '<span class="badge">Sans écart</span>'}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch (err) {
+    wrap.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+  }
+}
+
+// ============================================================
+// MODULE : ANALYSE (Menu 11 — rythme, rotation, tendances, estimations)
+// ============================================================
+
+let ongletAnalyseActif = 'synthese';
+
+const LIBELLES_TENDANCE = {
+  forte_hausse: 'Forte hausse', hausse: 'Hausse', stable: 'Stable',
+  baisse: 'Baisse', forte_baisse: 'Forte baisse', indeterminee: 'Indéterminée',
+};
+const LIBELLES_ROTATION = {
+  forte: 'Forte rotation', moyenne: 'Rotation moyenne', faible: 'Faible rotation',
+  stagnant: 'Stagnant', indetermine: 'Données insuffisantes',
+};
+
+function chargerAnalyse(){
+  rafraichirAnalyse();
+}
+
+function changerOngletAnalyse(tab){
+  ongletAnalyseActif = tab;
+  document.querySelectorAll('#view-analyse .tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  rafraichirAnalyse();
+}
+
+function fenetreAnalyse(){
+  return document.getElementById('fenetreAnalyse').value || '60';
+}
+
+/** Affiche une variation en % avec sa couleur, ou un tiret si non calculable. */
+function badgeVariation(pct, suffixe){
+  if (pct === null || pct === undefined) return '<span class="cell-sub">— (pas de référence)</span>';
+  const couleur = pct >= 0 ? 'var(--fresh)' : 'var(--danger)';
+  return `<span style="color:${couleur};font-weight:600">${pct > 0 ? '+' : ''}${pct} %</span>${suffixe ? ` <span class="cell-sub">${suffixe}</span>` : ''}`;
+}
+
+function blocTendance(t){
+  if (!t || !t.fiable) {
+    return `<div class="banner" style="margin-bottom:16px;">${svgIcon('alert')}<div>${(t && t.message) || 'Données insuffisantes pour produire une estimation fiable.'}</div></div>`;
+  }
+  return `<div class="panel" style="margin-bottom:16px;">
+    <h3>Tendance de l'activité</h3>
+    <div style="font-size:20px;font-weight:700;margin-bottom:4px;">${LIBELLES_TENDANCE[t.tendance] || t.tendance}</div>
+    <div class="subtitle">Évolution moyenne de ${t.pente_relative_pct > 0 ? '+' : ''}${t.pente_relative_pct} % par jour ·
+      régularité de la tendance : ${Math.round((t.r2 || 0) * 100)} %${(t.r2 || 0) < 0.3 ? ' (activité irrégulière — à interpréter avec prudence)' : ''}</div>
+  </div>`;
+}
+
+async function rafraichirAnalyse(){
+  const contenu = document.getElementById('contenuAnalyse');
+  contenu.innerHTML = '<div class="empty-state">Chargement…</div>';
+  const jours = fenetreAnalyse();
+  try {
+    if (ongletAnalyseActif === 'synthese')        await afficherAnalyseSynthese(contenu);
+    else if (ongletAnalyseActif === 'rythme')     await afficherAnalyseRythme(contenu, jours);
+    else if (ongletAnalyseActif === 'rotation')   await afficherAnalyseRotation(contenu, jours);
+    else if (ongletAnalyseActif === 'produits')   await afficherAnalyseProduits(contenu, jours);
+    else if (ongletAnalyseActif === 'previsions') await afficherAnalysePrevisions(contenu, jours);
+    else                                          await afficherAnalyseAnomalies(contenu, jours);
+  } catch (err) {
+    contenu.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+  }
+}
+
+async function afficherAnalyseSynthese(contenu){
+  const a = await appelApi('/analyse/synthese');
+  const ca = a.chiffre_affaires, r = a.resultat, s = a.stock, e = a.estimations;
+
+  const listeProduits = (titre, lignes, rendu, vide) => `
+    <div class="panel">
+      <h3>${titre}</h3>
+      ${lignes.length === 0 ? `<div class="empty-state">${vide}</div>` : `
+        <div class="table-scroll"><table class="data-table"><tbody>
+          ${lignes.map(rendu).join('')}
+        </tbody></table></div>`}
+    </div>`;
+
+  contenu.innerHTML = `
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">CA aujourd'hui</div><div class="kpi-value">${formatMontant(ca.aujourdhui)}</div>
+        <div class="kpi-sub">${formatNombre(a.activite.ventes_aujourdhui)} vente(s)</div></div>
+      <div class="kpi-card"><div class="kpi-label">CA 7 derniers jours</div><div class="kpi-value">${formatMontant(ca.sept_derniers_jours)}</div>
+        <div class="kpi-sub">moyenne ${formatMontant(a.activite.vente_moyenne_par_jour)} / jour</div></div>
+      <div class="kpi-card"><div class="kpi-label">CA ce mois</div><div class="kpi-value">${formatMontant(ca.mois_en_cours)}</div>
+        <div class="kpi-sub">${formatNombre(a.activite.ventes_mois)} ventes · panier ${formatMontant(a.activite.panier_moyen_mois)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">CA cette année</div><div class="kpi-value">${formatMontant(ca.annee_en_cours)}</div></div>
+    </div>
+
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">Bénéfice brut (mois)</div>
+        <div class="kpi-value" style="color:var(--fresh)">${formatMontant(r.benefice_brut_mois)}</div>
+        <div class="kpi-sub">marge ${r.marge_brute_pct === null ? '—' : r.marge_brute_pct + ' %'}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Charges (mois)</div><div class="kpi-value">${formatMontant(r.charges_mois)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Bénéfice net (mois)</div>
+        <div class="kpi-value" style="color:${r.benefice_net_mois >= 0 ? 'var(--fresh)' : 'var(--danger)'}">${formatMontant(r.benefice_net_mois)}</div>
+        <div class="kpi-sub">après charges enregistrées</div></div>
+      <div class="kpi-card"><div class="kpi-label">Capital immobilisé</div><div class="kpi-value">${formatMontant(s.capital_immobilise)}</div>
+        <div class="kpi-sub">${formatNombre(s.total_bouteilles)} bout. · ${formatNombre(s.nombre_produits)} produit(s)</div></div>
+    </div>
+
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">Rotation du stock</div>
+        <div class="kpi-value">${s.taux_rotation_annualise === null ? '—' : s.taux_rotation_annualise + '×'}</div>
+        <div class="kpi-sub">par an${s.duree_moyenne_en_stock_jours ? ` · ${s.duree_moyenne_en_stock_jours} j en stock en moyenne` : ''}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Estimation CA — prochaine semaine</div>
+        <div class="kpi-value">${e.ca_prochaine_semaine === null ? '—' : formatMontant(e.ca_prochaine_semaine)}</div>
+        <div class="kpi-sub">estimation, non garantie</div></div>
+      <div class="kpi-card"><div class="kpi-label">Estimation CA — prochain mois</div>
+        <div class="kpi-value">${e.ca_prochain_mois === null ? '—' : formatMontant(e.ca_prochain_mois)}</div>
+        <div class="kpi-sub">${e.historique_suffisant ? 'estimation, non garantie' : e.message}</div></div>
+    </div>
+
+    ${blocTendance(a.tendance)}
+
+    <div class="grid-2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;">
+      ${listeProduits('Produits à forte rotation', a.forte_rotation,
+        p => `<tr><td><strong>${p.nom}</strong></td><td class="mono">${formatNombre(p.quantite_vendue)} bout.</td><td class="mono">${p.taux_rotation_annualise}× / an</td></tr>`,
+        'Aucun produit ne dépasse encore le seuil de forte rotation sur la période.')}
+
+      ${listeProduits('Produits à faible rotation', a.faible_rotation,
+        p => `<tr><td><strong>${p.nom}</strong></td><td>${LIBELLES_ROTATION[p.niveau_rotation]}</td><td class="mono">${formatMontant(p.valeur_stock)} immobilisés</td></tr>`,
+        'Aucun produit en faible rotation — le stock tourne correctement.')}
+
+      ${listeProduits('Proches de la rupture', a.proches_rupture,
+        p => `<tr><td><strong>${p.nom}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)} bout.</td><td class="mono" style="color:var(--danger)">~${p.jours_stock_restants} j restants</td></tr>`,
+        "Aucun produit sous les 14 jours d'autonomie estimée.")}
+    </div>`;
+}
+
+async function afficherAnalyseRythme(contenu, jours){
+  const a = await appelApi(`/analyse/rythme?jours=${jours}`);
+  const m = a.moyennes;
+  const acc = a.acceleration;
+
+  const maxJourSemaine = Math.max(...a.par_jour_semaine.map(j => j.moyenne), 1);
+
+  contenu.innerHTML = `
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">Vente moyenne / jour</div><div class="kpi-value">${formatMontant(m.par_jour)}</div>
+        <div class="kpi-sub">${m.jours_actifs} jour(s) avec vente · ${m.jours_sans_vente} sans</div></div>
+      <div class="kpi-card"><div class="kpi-label">Vente moyenne / semaine</div><div class="kpi-value">${formatMontant(m.par_semaine)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Vente moyenne / mois</div><div class="kpi-value">${formatMontant(m.par_mois)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Nombre de ventes / jour</div><div class="kpi-value">${m.ventes_par_jour}</div>
+        <div class="kpi-sub">moyenne ${formatMontant(m.par_jour_actif)} les jours actifs</div></div>
+    </div>
+
+    ${blocTendance(a.tendance)}
+
+    <div class="panel" style="margin-bottom:16px;">
+      <h3>Accélération ou ralentissement</h3>
+      ${!acc.fiable
+        ? `<div class="empty-state">${acc.message}</div>`
+        : `<div style="font-size:20px;font-weight:700;margin-bottom:4px;">
+             ${acc.sens === 'acceleration' ? 'Accélération' : acc.sens === 'ralentissement' ? 'Ralentissement' : 'Rythme stable'}
+           </div>
+           <div class="subtitle">
+             ${formatMontant(acc.moyenne_jour_recente)} / jour sur les ${acc.fenetre_jours} derniers jours,
+             contre ${formatMontant(acc.moyenne_jour_precedente)} sur les ${acc.fenetre_jours} précédents —
+             ${badgeVariation(acc.variation_pct)}
+           </div>`}
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-bottom:16px;">
+      <div class="panel">
+        <h3>Activité par jour de la semaine</h3>
+        ${a.par_jour_semaine.map(j => `
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
+            <span style="width:74px;font-size:12.5px;">${j.jour}</span>
+            <span style="flex:1;height:8px;background:var(--border,#e5e7eb);border-radius:4px;overflow:hidden;">
+              <span style="display:block;height:100%;width:${Math.round((j.moyenne / maxJourSemaine) * 100)}%;background:var(--accent,#0ea5e9);"></span>
+            </span>
+            <span class="mono" style="width:100px;text-align:right;font-size:12.5px;">${formatMontant(j.moyenne)}</span>
+          </div>`).join('')}
+        <div class="subtitle" style="margin-top:10px;">
+          Jour le plus actif : <strong>${a.jours_les_plus_actifs[0]?.jour || '—'}</strong> ·
+          le moins actif : <strong>${a.jours_les_moins_actifs[0]?.jour || '—'}</strong>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Meilleures journées</h3>
+        <div class="table-scroll"><table class="data-table"><tbody>
+          ${a.meilleures_journees.map(j => `
+            <tr><td class="mono">${new Date(j.jour + 'T00:00:00').toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'short' })}</td>
+                <td class="mono">${formatMontant(j.montant)}</td>
+                <td class="cell-sub">${j.nombre} vente(s)</td></tr>`).join('')}
+        </tbody></table></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;">
+      <div class="panel"><h3>Produits qui partent vite</h3>
+        ${a.produits_rapides.length === 0 ? `<div class="empty-state">${a.note || 'Pas encore assez de ventes par produit pour classer.'}</div>` : `
+        <div class="table-scroll"><table class="data-table"><tbody>
+          ${a.produits_rapides.map(p => `<tr><td><strong>${p.nom}</strong></td><td class="mono">${p.vitesse_bouteilles_par_jour} bout./jour</td><td class="cell-sub">${formatNombre(p.quantite_vendue)} vendues</td></tr>`).join('')}
+        </tbody></table></div>`}
+      </div>
+      <div class="panel"><h3>Produits qui partent lentement</h3>
+        ${a.produits_lents.length === 0 ? `<div class="empty-state">${a.note || 'Pas encore assez de ventes par produit pour classer.'}</div>` : `
+        <div class="table-scroll"><table class="data-table"><tbody>
+          ${a.produits_lents.map(p => `<tr><td><strong>${p.nom}</strong></td><td class="mono">${p.vitesse_bouteilles_par_jour} bout./jour</td><td class="cell-sub">${formatNombre(p.quantite_vendue)} vendues</td></tr>`).join('')}
+        </tbody></table></div>`}
+      </div>
+      <div class="panel"><h3>Produits qui stagnent</h3>
+        ${a.produits_stagnants.length === 0 ? '<div class="empty-state">Aucun produit sans aucune vente sur la période.</div>' : `
+        <div class="table-scroll"><table class="data-table"><tbody>
+          ${a.produits_stagnants.map(p => `<tr><td><strong>${p.nom}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)} bout.</td><td class="mono">${formatMontant(p.valeur_stock)}</td></tr>`).join('')}
+        </tbody></table></div>`}
+      </div>
+    </div>`;
+}
+
+async function afficherAnalyseRotation(contenu, jours){
+  const a = await appelApi(`/analyse/rotation?jours=${jours}`);
+  const g = a.global, f = a.frequences, rel = a.relation_achats_ventes;
+
+  contenu.innerHTML = `
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">Capital immobilisé</div><div class="kpi-value">${formatMontant(g.capital_immobilise)}</div>
+        <div class="kpi-sub">${formatNombre(g.nombre_produits_actifs)} produit(s) en stock</div></div>
+      <div class="kpi-card"><div class="kpi-label">Taux de rotation</div>
+        <div class="kpi-value">${g.taux_rotation_annualise === null ? '—' : g.taux_rotation_annualise + '×'}</div>
+        <div class="kpi-sub">par an, sur ${a.periode.jours} jours observés</div></div>
+      <div class="kpi-card"><div class="kpi-label">Durée moyenne en stock</div>
+        <div class="kpi-value">${g.duree_moyenne_en_stock_jours === null ? '—' : g.duree_moyenne_en_stock_jours + ' j'}</div>
+        <div class="kpi-sub">entre l'entrée et la sortie</div></div>
+      <div class="kpi-card"><div class="kpi-label">Coût des marchandises vendues</div><div class="kpi-value">${formatMontant(g.cout_marchandises_vendues)}</div></div>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px;">
+      <h3>Cycle achat → stock → vente → réachat</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">
+        <div><div class="kpi-label">Achats sur la période</div><div style="font-size:17px;font-weight:700;">${formatNombre(f.achats_sur_periode)}</div>
+          <div class="cell-sub">${f.jours_entre_achats !== null ? `un achat tous les ${f.jours_entre_achats} jours en moyenne` : f.achats_message}</div></div>
+        <div><div class="kpi-label">Ventes sur la période</div><div style="font-size:17px;font-weight:700;">${formatNombre(f.ventes_sur_periode)}</div>
+          <div class="cell-sub">${f.ventes_par_jour} vente(s) par jour · ${f.jours_avec_vente} jour(s) actifs</div></div>
+        <div><div class="kpi-label">Bouteilles entrées</div><div style="font-size:17px;font-weight:700;">${formatNombre(rel.bouteilles_achetees)}</div>
+          <div class="cell-sub">achetées sur la période</div></div>
+        <div><div class="kpi-label">Bouteilles sorties</div><div style="font-size:17px;font-weight:700;">${formatNombre(rel.bouteilles_vendues)}</div>
+          <div class="cell-sub">${rel.bouteilles_vendues > rel.bouteilles_achetees
+            ? "le stock se vide plus vite qu'il ne se remplit"
+            : 'les entrées couvrent les sorties'}</div></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;">
+      <div class="panel"><h3>Où dort le capital</h3>
+        <div class="table-scroll"><table class="data-table">
+          <thead><tr><th>Produit</th><th>Stock</th><th>Valeur</th><th>Part</th><th>Rotation</th></tr></thead>
+          <tbody>${a.plus_gros_capital_immobilise.map(p => `
+            <tr><td><strong>${p.nom}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)}</td>
+                <td class="mono">${formatMontant(p.valeur_stock)}</td><td class="mono">${p.part_pct === null ? '—' : p.part_pct + ' %'}</td>
+                <td class="cell-sub">${LIBELLES_ROTATION[p.niveau_rotation]}</td></tr>`).join('')}
+          </tbody></table></div>
+      </div>
+
+      <div class="panel"><h3>Réapprovisionnements les plus fréquents</h3>
+        ${a.reapprovisionnements_frequents.length === 0
+          ? `<div class="empty-state">Pas encore assez d'achats répétés pour établir une fréquence fiable.</div>`
+          : `<div class="table-scroll"><table class="data-table">
+              <thead><tr><th>Produit</th><th>Achats</th><th>Fréquence</th></tr></thead>
+              <tbody>${a.reapprovisionnements_frequents.map(p => `
+                <tr><td><strong>${p.nom}</strong></td><td class="mono">${p.nombre_achats}</td>
+                    <td class="mono">tous les ${p.frequence_achats_jours} j</td></tr>`).join('')}
+              </tbody></table></div>`}
+      </div>
+    </div>`;
+}
+
+async function afficherAnalyseProduits(contenu, jours){
+  const a = await appelApi(`/analyse/produits?jours=${jours}`);
+  if (a.produits.length === 0) {
+    contenu.innerHTML = '<div class="empty-state">Aucun produit actif.</div>';
+    return;
+  }
+
+  contenu.innerHTML = `
+    <div class="subtitle" style="margin-bottom:12px;">
+      Sur les ${a.periode.jours} derniers jours (${a.periode.du} → ${a.periode.au}).
+      Les produits avec trop peu de ventes sont signalés : leurs indicateurs de vitesse ne sont pas fiables.
+    </div>
+    <div class="table-panel"><div class="table-scroll">
+      <table class="data-table">
+        <thead><tr>
+          <th>Produit</th><th>Vendu</th><th>CA</th><th>Bénéfice</th><th>Marge</th>
+          <th>Vitesse</th><th>Stock</th><th>Valeur</th><th>Jours restants</th><th>Rotation</th>
+        </tr></thead>
+        <tbody>
+          ${a.produits.map(p => `
+            <tr>
+              <td><strong>${p.nom}</strong>${p.fiable ? '' : ` <span class="badge" title="${p.message}">peu de données</span>`}</td>
+              <td class="mono">${formatNombre(p.quantite_vendue)} bout.<br><span class="cell-sub">${p.nombre_ventes} vente(s)</span></td>
+              <td class="mono">${formatMontant(p.chiffre_affaires)}</td>
+              <td class="mono" style="color:${p.benefice >= 0 ? 'var(--fresh)' : 'var(--danger)'}">${formatMontant(p.benefice)}</td>
+              <td class="mono">${p.marge_pct === null ? '—' : p.marge_pct + ' %'}</td>
+              <td class="mono">${p.vitesse_bouteilles_par_jour} /j</td>
+              <td class="mono">${formatNombre(p.stock_bouteilles)}<br><span class="cell-sub">moy. ${formatNombre(p.stock_moyen_bouteilles)}</span></td>
+              <td class="mono">${formatMontant(p.valeur_stock)}</td>
+              <td class="mono" style="${p.jours_stock_restants !== null && p.jours_stock_restants <= 14 ? 'color:var(--danger);font-weight:700' : ''}">
+                ${p.jours_stock_restants === null ? '—' : '~' + p.jours_stock_restants + ' j'}</td>
+              <td class="cell-sub">${LIBELLES_ROTATION[p.niveau_rotation]}${p.taux_rotation_annualise !== null ? `<br>${p.taux_rotation_annualise}× / an` : ''}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div></div>`;
+}
+
+async function afficherAnalysePrevisions(contenu, jours){
+  const a = await appelApi(`/analyse/previsions?jours=${jours}&couverture=30`);
+  const ca = a.estimation_chiffre_affaires, v = a.estimation_nombre_ventes;
+
+  const METHODES = { moyenne_recente: 'moyenne des 28 derniers jours', tendance_lineaire: 'prolongement de la tendance' };
+
+  contenu.innerHTML = `
+    <div class="banner" style="margin-bottom:16px;">
+      ${svgIcon('alert')}
+      <div>${a.avertissement}</div>
+    </div>
+
+    ${!a.historique_suffisant ? `<div class="empty-state" style="margin-bottom:16px;">${a.message}</div>` : `
+      <div class="kpi-grid" style="margin-bottom:16px;">
+        <div class="kpi-card"><div class="kpi-label">CA estimé — prochaine semaine</div><div class="kpi-value">${formatMontant(ca.prochaine_semaine)}</div>
+          <div class="kpi-sub">méthode : ${METHODES[ca.methode] || ca.methode}</div></div>
+        <div class="kpi-card"><div class="kpi-label">CA estimé — prochain mois</div><div class="kpi-value">${formatMontant(ca.prochain_mois)}</div>
+          <div class="kpi-sub">méthode : ${METHODES[ca.methode] || ca.methode}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Ventes estimées — semaine</div><div class="kpi-value">${formatNombre(v.prochaine_semaine)}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Ventes estimées — mois</div><div class="kpi-value">${formatNombre(v.prochain_mois)}</div></div>
+      </div>`}
+
+    ${blocTendance(a.tendance)}
+
+    <div class="panel">
+      <h3>Besoins de réapprovisionnement estimés</h3>
+      <div class="subtitle" style="margin:-6px 0 12px;">
+        Quantités nécessaires pour couvrir ${a.couverture_visee_jours} jours de vente au rythme observé. Estimations indicatives.
+      </div>
+      <div class="table-scroll"><table class="data-table">
+        <thead><tr><th>Produit</th><th>Stock</th><th>Vitesse</th><th>Rupture estimée</th><th>À prévoir</th><th>Coût estimé</th></tr></thead>
+        <tbody>
+          ${a.estimation_stock_necessaire.map(p => {
+            if (p.fiable === false && p.vitesse_bouteilles_par_jour === undefined) {
+              return `<tr><td><strong>${p.nom}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)}</td>
+                      <td colspan="4" class="cell-sub">${p.message}</td></tr>`;
+            }
+            const urgent = p.jours_stock_restants !== null && p.jours_stock_restants <= 14;
+            return `
+              <tr>
+                <td><strong>${p.nom}</strong>${p.fiable ? '' : ' <span class="badge" title="' + (p.message || '') + '">peu de données</span>'}</td>
+                <td class="mono">${formatNombre(p.stock_bouteilles)} bout.</td>
+                <td class="mono">${p.vitesse_bouteilles_par_jour} /j</td>
+                <td class="mono" style="${urgent ? 'color:var(--danger);font-weight:700' : ''}">
+                  ${p.date_rupture_estimee ? new Date(p.date_rupture_estimee + 'T00:00:00').toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }) + ` (~${p.jours_stock_restants} j)` : '—'}</td>
+                <td class="mono">${p.quantite_a_prevoir_bouteilles > 0
+                    ? `${formatNombre(p.quantite_a_prevoir_bouteilles)} bout.<br><span class="cell-sub">≈ ${p.quantite_a_prevoir_paquets} paquet(s)</span>`
+                    : '<span class="cell-sub">stock suffisant</span>'}</td>
+                <td class="mono">${p.quantite_a_prevoir_bouteilles > 0 ? formatMontant(p.cout_estime) : '—'}</td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table></div>
+    </div>`;
+}
+
+async function afficherAnalyseAnomalies(contenu, jours){
+  const a = await appelApi(`/analyse/anomalies?jours=${jours}`);
+
+  if (a.nombre_anomalies === 0) {
+    contenu.innerHTML = `<div class="empty-state">
+      Aucune anomalie détectée sur les ${a.periode.jours} derniers jours.
+      ${a.note ? `<br><span style="opacity:.75">${a.note}</span>` : ''}
+    </div>`;
+    return;
+  }
+
+  const COULEURS = { haute: 'var(--danger)', moyenne: 'var(--warning, #d97706)', info: 'var(--accent, #0ea5e9)' };
+  const LIBELLES_SEVERITE = { haute: 'À traiter', moyenne: 'À surveiller', info: 'Information' };
+  const LIBELLES_CODE = {
+    chute_ventes: 'Chute des ventes', hausse_ventes: 'Hausse inhabituelle',
+    proche_rupture: 'Proche de la rupture', sortie_rapide: 'Sortie anormalement rapide',
+    stock_dormant: 'Stock sans mouvement', stock_excessif: 'Stock excessif',
+    marge_faible: 'Marge faible', desequilibre_achats_ventes: 'Déséquilibre achats / ventes',
+    evolution_cmp: "Évolution du coût d'achat",
+  };
+
+  contenu.innerHTML = `
+    <div class="subtitle" style="margin-bottom:12px;">
+      ${a.nombre_anomalies} signal(aux) détecté(s) sur les ${a.periode.jours} derniers jours.
+      ${a.note ? `<br>${a.note}` : ''}
+    </div>
+    ${a.anomalies.map(an => `
+      <div class="panel" style="margin-bottom:10px;border-left:3px solid ${COULEURS[an.severite]};">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px;flex-wrap:wrap;">
+          <strong>${LIBELLES_CODE[an.code] || an.code}</strong>
+          <span class="badge" style="color:${COULEURS[an.severite]};border-color:${COULEURS[an.severite]};">${LIBELLES_SEVERITE[an.severite]}</span>
+        </div>
+        <div class="subtitle" style="margin:0;">${an.message}</div>
+      </div>`).join('')}`;
 }
 
 // ============================================================
