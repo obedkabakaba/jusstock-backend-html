@@ -822,10 +822,6 @@
       <section class="view" id="view-charges">
         <div class="toolbar">
           <div><span class="subtitle" id="resumeCharges"></span></div>
-          <button class="btn action-ecriture" onclick="ouvrirModalLoyer()">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5 10v9h14v-9"/><path d="M10 19v-5h4v5"/></svg>
-            Provision loyer
-          </button>
           <button class="btn btn-accent action-ecriture" onclick="ouvrirModalCharge()">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
             Nouvelle charge
@@ -969,6 +965,7 @@
               <div><div class="dg-label">Stock minimum par défaut (bouteilles)</div><div class="dg-value" id="afStockMinBout">—</div></div>
               <div><div class="dg-label">Stock minimum par défaut (paquets)</div><div class="dg-value" id="afStockMinPaq">—</div></div>
               <div><div class="dg-label">Préfixe de numérotation des factures</div><div class="dg-value" id="afPrefixeFacture">—</div></div>
+              <div><div class="dg-label">Loyer quotidien (devise secondaire)</div><div class="dg-value" id="afLoyerQuotidien">—</div></div>
               <div><div class="dg-label">Capital de référence</div><div class="dg-value" id="afCapitalReference">—</div></div>
               <div><div class="dg-label">Date de cet investissement</div><div class="dg-value" id="afCapitalReferenceDate">—</div></div>
             </div>
@@ -991,6 +988,7 @@
                 <div class="form-group"><label>Stock minimum par défaut (bouteilles)</label><input type="number" name="stock_min_bouteille_defaut" id="pStockMinBout"></div>
                 <div class="form-group"><label>Stock minimum par défaut (paquets)</label><input type="number" name="stock_min_paquet_defaut" id="pStockMinPaq"></div>
                 <div class="form-group full"><label>Préfixe de numérotation des factures</label><input type="text" name="numerotation_facture_prefixe" id="pPrefixeFacture"></div>
+                <div class="form-group"><label>Loyer quotidien (devise secondaire)</label><input type="number" step="0.01" min="0" name="loyer_quotidien" id="pLoyerQuotidien"></div>
                 <div class="form-group full" style="margin-top:4px;margin-bottom:-4px;">
                   <label style="font-size:12.5px;color:var(--text);">Capital de référence (suivi du retour sur investissement)</label>
                   <div class="hint">Ce que tu as réellement investi au départ dans l'activité (même avant JusStock). Sert uniquement à afficher ta progression dans le Bilan — n'a aucun impact sur les calculs comptables (qui restent basés sur ta caisse/banque/stock réels d'aujourd'hui).</div>
@@ -3088,113 +3086,62 @@ function ouvrirModalCharge(){
 }
 
 // ------------------------------------------------------------
-// Provision de loyer
+// Loyer quotidien (déduction automatique selon les ventes du jour)
 // ------------------------------------------------------------
-// Le local est payé grâce à une mise de côté quotidienne (5 $ par jour
-// par défaut). Ce n'est pas un mécanisme à part : c'est une charge de
-// catégorie « Loyer », enregistrée via le module Charges existant, donc
-// comptabilisée automatiquement au compte 622 et déduite du bénéfice
-// net comme n'importe quelle autre charge.
-const LOYER_PAR_JOUR_DEVISE_SECONDAIRE = 5;
+// Le montant du loyer vient uniquement de parametres.loyer_quotidien (voir
+// page Paramètres) — jamais codé en dur ici. Dès qu'une journée atteint ce
+// seuil et n'a pas encore de décision, une demande s'affiche au chargement
+// de l'application ; "Oui" crée une charge de catégorie « Loyer » (compte
+// 622) via le module Charges existant, "Non" enregistre juste le refus.
+// Les deux décisions sont persistées côté backend (jamais en local).
+let loyerJoursEnAttenteFile = [];
 
-function premierJourDuMois(){
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
-}
-
-function recalculerProvisionLoyer(){
-  const du = document.getElementById('loyerDu').value;
-  const au = document.getElementById('loyerAu').value;
-  const parJour = Number(document.getElementById('loyerParJour').value) || 0;
-  const taux = Number(document.getElementById('loyerTaux').value) || 0;
-  const apercu = document.getElementById('loyerApercu');
-  const champMontant = document.getElementById('loyerMontant');
-
-  if (!du || !au || new Date(au) < new Date(du)) {
-    apercu.textContent = 'Choisis une période valide (la date de fin doit suivre la date de début).';
-    champMontant.value = '';
-    return;
+async function verifierLoyerQuotidien(){
+  if (!['administrateur', 'gerante'].includes(utilisateurConnecte?.role)) return;
+  try {
+    loyerJoursEnAttenteFile = await appelApi('/loyer-quotidien/a-traiter');
+    afficherProchainLoyerEnAttente();
+  } catch (err) {
+    console.warn('Vérification du loyer quotidien indisponible :', err.message);
   }
-
-  const jours = Math.round((new Date(au) - new Date(du)) / 86400000) + 1;
-  const montantFC = Math.round(jours * parJour * taux);
-  champMontant.value = montantFC;
-  apercu.innerHTML = `<strong>${jours} jour(s)</strong> × ${parJour} ${deviseSecondaireActuelle || 'USD'} × ${formatNombre(taux)}
-    = <strong>${formatNombre(montantFC)} ${devisePrincipaleActuelle || 'FC'}</strong> à enregistrer comme charge de loyer.`;
 }
 
-function ouvrirModalLoyer(){
-  const taux = tauxChangeActuel || 1;
+function afficherProchainLoyerEnAttente(){
+  if (loyerJoursEnAttenteFile.length === 0) return;
+  const jour = loyerJoursEnAttenteFile[0];
+  const deviseSecondaire = deviseSecondaireActuelle || 'USD';
   ouvrirModal(`
     <div class="modal-head">
-      <div><h2>Provision de loyer</h2>
-        <div class="modal-sub">Enregistre la mise de côté quotidienne comme une charge de catégorie « Loyer » (compte 622).</div></div>
-      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+      <div><h2>Loyer quotidien</h2>
+        <div class="modal-sub">${new Date(jour.date_jour).toLocaleDateString('fr-FR')}</div></div>
     </div>
-    <form onsubmit="soumettreProvisionLoyer(event)">
-      <div class="form-grid">
-        <div class="form-group"><label>Du</label>
-          <input type="date" id="loyerDu" value="${premierJourDuMois()}" oninput="recalculerProvisionLoyer()"></div>
-        <div class="form-group"><label>Au</label>
-          <input type="date" id="loyerAu" value="${new Date().toISOString().slice(0,10)}" oninput="recalculerProvisionLoyer()"></div>
-        <div class="form-group"><label>Montant par jour (${deviseSecondaireActuelle || 'USD'})</label>
-          <input type="number" id="loyerParJour" min="0" step="0.01" value="${LOYER_PAR_JOUR_DEVISE_SECONDAIRE}" oninput="recalculerProvisionLoyer()"></div>
-        <div class="form-group"><label>Taux de change (${devisePrincipaleActuelle || 'FC'} pour 1 ${deviseSecondaireActuelle || 'USD'})</label>
-          <input type="number" id="loyerTaux" min="0" step="0.01" value="${taux}" oninput="recalculerProvisionLoyer()"></div>
-        <div class="form-group"><label>Montant total (${devisePrincipaleActuelle || 'FC'})</label>
-          <input type="number" id="loyerMontant" readonly style="font-weight:700;"></div>
-        <div class="form-group">
-          <label>Mode de paiement *</label>
-          <select id="loyerModePaiement" required>
-            <option value="especes">Espèces</option>
-            <option value="mobile_money">Mobile Money</option>
-            <option value="carte">Carte</option>
-          </select>
-        </div>
-        <div class="form-group full"><label>Description</label>
-          <input type="text" id="loyerDescription" placeholder="Laisser vide pour une description automatique"></div>
-      </div>
-      <div class="subtitle" id="loyerApercu" style="margin-bottom:6px;"></div>
-      <div class="modal-actions">
-        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
-        <button type="submit" class="btn btn-accent">Enregistrer la charge de loyer</button>
-      </div>
-    </form>
+    <div class="subtitle" style="margin-bottom:14px;">
+      Les ventes de cette journée s'élèvent à <strong>${formatMontant(jour.montant_ventes)}</strong>.<br>
+      Le loyer quotidien configuré est de <strong>${formatNombre(jour.loyer_configure)} ${deviseSecondaire}</strong>
+      (${formatMontant(jour.montant_loyer)}).<br>
+      Voulez-vous déduire le loyer quotidien pour cette journée ?
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="loyerBtnNon" onclick="repondreLoyerQuotidien('${jour.date_jour}', 'non')">Non</button>
+      <button type="button" class="btn btn-accent" id="loyerBtnOui" onclick="repondreLoyerQuotidien('${jour.date_jour}', 'oui')">Oui, déduire ${formatMontant(jour.montant_loyer)}</button>
+    </div>
   `);
-  recalculerProvisionLoyer();
 }
 
-async function soumettreProvisionLoyer(event){
-  event.preventDefault();
-  const du = document.getElementById('loyerDu').value;
-  const au = document.getElementById('loyerAu').value;
-  const montant = Number(document.getElementById('loyerMontant').value);
-  const parJour = Number(document.getElementById('loyerParJour').value);
-
-  if (!montant || montant <= 0) {
-    afficherToast('Le montant calculé doit être supérieur à zéro.', 'error');
-    return;
-  }
-
-  const bouton = event.target.querySelector('button[type="submit"]');
-  bouton.disabled = true;
+async function repondreLoyerQuotidien(dateJour, decision){
+  document.getElementById('loyerBtnOui').disabled = true;
+  document.getElementById('loyerBtnNon').disabled = true;
   try {
-    await appelApiEcriture('/charges', 'POST', {
-      // La date retenue est la fin de période : la charge est rattachée
-      // au mois où la provision est constatée.
-      date_charge: au,
-      categorie: 'Loyer',
-      montant,
-      mode_paiement: document.getElementById('loyerModePaiement').value,
-      description: document.getElementById('loyerDescription').value
-        || `Provision loyer du ${du} au ${au} (${parJour} ${deviseSecondaireActuelle || 'USD'} par jour)`,
-    });
-    afficherToast('Charge de loyer enregistrée.', 'success');
+    await appelApiEcriture(`/loyer-quotidien/${dateJour}/decision`, 'POST', { decision });
+    afficherToast(decision === 'oui' ? 'Charge de loyer enregistrée.' : 'Décision enregistrée : aucun loyer déduit.', 'success');
+    loyerJoursEnAttenteFile.shift();
     fermerModal();
-    chargerCharges();
+    if (loyerJoursEnAttenteFile.length > 0) afficherProchainLoyerEnAttente();
+    else if (typeof chargerCharges === 'function' && document.getElementById('view-charges')?.classList.contains('active')) chargerCharges();
   } catch (err) {
     afficherToast(err.message, 'error');
-    bouton.disabled = false;
+    document.getElementById('loyerBtnOui').disabled = false;
+    document.getElementById('loyerBtnNon').disabled = false;
   }
 }
 
@@ -3849,6 +3796,7 @@ function afficherParametresStatique(p){
   document.getElementById('afStockMinBout').textContent = p.stock_min_bouteille_defaut ?? '—';
   document.getElementById('afStockMinPaq').textContent = p.stock_min_paquet_defaut ?? '—';
   document.getElementById('afPrefixeFacture').textContent = p.numerotation_facture_prefixe || '—';
+  document.getElementById('afLoyerQuotidien').textContent = (p.loyer_quotidien !== null && p.loyer_quotidien !== undefined) ? `${formatNombre(p.loyer_quotidien)} ${p.devise_secondaire || 'USD'}` : '—';
   document.getElementById('afCapitalReference').textContent = p.capital_reference ? formatMontant(p.capital_reference) : '—';
   document.getElementById('afCapitalReferenceDate').textContent = p.capital_reference_date ? new Date(p.capital_reference_date).toLocaleDateString('fr-FR') : '—';
 }
@@ -3862,6 +3810,7 @@ function remplirFormulaireParametres(p){
   document.getElementById('pStockMinBout').value = p.stock_min_bouteille_defaut ?? '';
   document.getElementById('pStockMinPaq').value = p.stock_min_paquet_defaut ?? '';
   document.getElementById('pPrefixeFacture').value = p.numerotation_facture_prefixe || '';
+  document.getElementById('pLoyerQuotidien').value = p.loyer_quotidien ?? '';
   document.getElementById('pCapitalReference').value = p.capital_reference ?? '';
   document.getElementById('pCapitalReferenceDate').value = p.capital_reference_date ? p.capital_reference_date.slice(0, 10) : '';
 }
@@ -3898,7 +3847,7 @@ async function chargerParametres(){
 async function soumettreParametres(event){
   event.preventDefault();
   const donnees = new FormData(event.target);
-  const champsNumeriques = ['taux_change', 'taux_tva', 'stock_min_bouteille_defaut', 'stock_min_paquet_defaut', 'capital_reference'];
+  const champsNumeriques = ['taux_change', 'taux_tva', 'stock_min_bouteille_defaut', 'stock_min_paquet_defaut', 'capital_reference', 'loyer_quotidien'];
   const champsDate = ['capital_reference_date'];
   const payload = {};
   for (const [cle, valeur] of donnees.entries()) {
@@ -4065,6 +4014,7 @@ function afficherAppApresConnexion(){
   appliquerPermissionsUI();
   chargerParametresDevise();
   afficherVue('dashboard');
+  verifierLoyerQuotidien();
 }
 
 // Récupère juste les infos de devise/taux de change, sans dépendre d'une
