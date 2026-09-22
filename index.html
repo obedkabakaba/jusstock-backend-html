@@ -846,6 +846,12 @@
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="14" r="1.2"/></svg>
             Apport de trésorerie
           </button>
+          <button class="btn action-admin-seul" onclick="ouvrirControleTresorerie()" title="Contrôle caisse réel vs théorique">
+            Contrôle caisse
+          </button>
+          <button class="btn action-admin-seul" onclick="ouvrirControleIntegrite()" title="Vérifier les anomalies stock/comptabilité">
+            Contrôle intégrité
+          </button>
           <button class="btn action-admin-seul" onclick="reconstruireJournal()" style="color:var(--danger);border-color:var(--danger);" title="Réservé à l'administrateur — reconstruit tout le journal depuis les achats/ventes/charges">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
             Reconstruire le journal
@@ -5038,3 +5044,26 @@ initialiserAuthentification();
 </script>
 </body>
 </html>
+
+
+async function ouvrirControleTresorerie(){
+  try{
+    const soldes=await appelApi('/comptabilite/tresorerie-actuelle');
+    const caisse=soldes.find(x=>String(x.code)==='571');
+    const physique=prompt('Montant réellement compté en caisse (FC) :');
+    if(physique===null)return;
+    const n=Number(physique);
+    if(!Number.isFinite(n)||n<0){alert('Montant invalide.');return;}
+    const motif=prompt('Motif de l’écart (ex. vol, achat non enregistré, retrait, inconnu) :')||null;
+    const notes=prompt('Notes complémentaires (optionnel) :')||null;
+    const result=await appelApi('/comptabilite/reconciliations-tresorerie',{method:'POST',body:JSON.stringify({compte:'571',solde_physique:n,motif,notes})});
+    alert('Rapprochement enregistré.\\n\\nThéorique : '+Number(result.solde_theorique).toLocaleString('fr-FR')+' FC\\nRéel : '+Number(result.solde_physique).toLocaleString('fr-FR')+' FC\\nÉcart : '+Number(result.ecart).toLocaleString('fr-FR')+' FC\\nStatut : '+result.statut+'\\n\\nAucune écriture comptable n’a été créée automatiquement.');
+  }catch(err){alert(err.message||'Impossible d’enregistrer le rapprochement.');}
+}
+
+async function ouvrirControleIntegrite(){
+  try{
+    const r=await appelApi('/comptabilite/controle-integrite');
+    alert('CONTRÔLE D’INTÉGRITÉ\\n\\nCaisse théorique : '+Number(r.caisse.solde_theorique).toLocaleString('fr-FR')+' FC\\nStock journal 311 : '+Number(r.stock.valeur_journal_311).toLocaleString('fr-FR')+' FC\\nStock produits : '+Number(r.stock.valeur_produits).toLocaleString('fr-FR')+' FC\\nÉcart stock : '+Number(r.stock.ecart).toLocaleString('fr-FR')+' FC\\nInventaires sans référence : '+r.inventaires.ecritures_orphelines+'\\nAchats annulés encore journalisés : '+r.achats_annules.encore_journalises+'\\n\\n'+(r.alerte?'⚠️ ANOMALIES À EXAMINER':'✅ Aucun de ces contrôles ne signale d’anomalie.'));
+  }catch(err){alert(err.message||'Impossible d’exécuter le contrôle.');}
+}
