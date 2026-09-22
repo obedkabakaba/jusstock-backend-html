@@ -478,6 +478,7 @@
     .filtre-row{gap:8px;}
     .filtre-row .form-group{min-width:120px;flex:1;}
   }
+  .produit-detail-clickable{cursor:pointer}.produit-detail-clickable:hover{background:var(--paper)} .pd-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}.pd-kpis>div{border:1px solid var(--border);padding:12px;border-radius:9px}.pd-kpis b{display:block;font-size:10px;color:var(--text-muted)}.pd-kpis strong{display:block;margin-top:5px}.pd-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}.pd-cols>section, .produit-detail-360>section{border:1px solid var(--border);border-radius:9px;padding:14px;margin-bottom:12px}.pd-mini{display:grid;grid-template-columns:1fr 1fr;gap:10px}.produit-detail-360{max-width:1150px!important;max-height:92vh!important}@media(max-width:800px){.pd-kpis,.pd-cols{grid-template-columns:1fr 1fr}}@media(max-width:560px){.pd-kpis,.pd-cols,.pd-mini{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1476,7 +1477,7 @@ function dessinerTableProduits(produits){
   }
 
   corps.innerHTML = produits.map(p => `
-    <tr>
+    <tr class="produit-detail-clickable" onclick="ouvrirDetailProduit('${p.id}')">
       <td>
         <strong>${p.nom}</strong>
         <div class="cell-sub">${[p.categorie, p.marque, p.contenance].filter(Boolean).join(' · ') || '—'}</div>
@@ -1494,9 +1495,9 @@ function dessinerTableProduits(produits){
       </td>
       <td>${badgeNiveauStock(p.stock_bouteilles, p.stock_min_bouteilles)}</td>
       <td class="cell-actions">
-        <button class="icon-btn action-ecriture" title="Modifier" onclick="ouvrirModalProduit('${p.id}')">${svgIcon('edit')}</button>
-        <button class="icon-btn action-ecriture" title="Archiver" onclick="archiverProduit('${p.id}')">${svgIcon('archive')}</button>
-        <button class="icon-btn danger action-ecriture" title="Supprimer" onclick="supprimerProduit('${p.id}')">${svgIcon('trash')}</button>
+        <button class="icon-btn action-ecriture" title="Modifier" onclick="event.stopPropagation();ouvrirModalProduit('${p.id}')">${svgIcon('edit')}</button>
+        <button class="icon-btn action-ecriture" title="Archiver" onclick="event.stopPropagation();archiverProduit('${p.id}')">${svgIcon('archive')}</button>
+        <button class="icon-btn danger action-ecriture" title="Supprimer" onclick="event.stopPropagation();supprimerProduit('${p.id}')">${svgIcon('trash')}</button>
       </td>
     </tr>
   `).join('');
@@ -1662,6 +1663,39 @@ async function supprimerProduit(id){
   }
 }
 
+// ============================================================
+// MODULE : FICHE PRODUIT 360°
+// Lecture seule : toutes les données viennent de /produits/:id/detail.
+// ============================================================
+function pdEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function pdDate(v){if(!v)return '—';const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleString('fr-FR');}
+function pdMoney(v){return v===null||v===undefined?'Non disponible':formatMontant(v);}
+function pdNum(v){return v===null||v===undefined?'Non disponible':formatNombre(v);}
+function pdPct(v){return v===null||v===undefined?'Non disponible':Number(v).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %';}
+function pdTable(head,rows,empty){if(!rows.length)return '<div class="empty-state">'+empty+'</div>';return '<div style="max-height:300px;overflow:auto"><table class="data-table"><thead><tr>'+head.map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';}
+async function ouvrirDetailProduit(id){
+ if(!['administrateur','gerante','consultant'].includes(utilisateurConnecte?.role)){afficherToast('Accès non autorisé à cette fiche.','error');return;}
+ ouvrirModal('<div class="modal-head"><div><h2>Fiche produit</h2><div class="modal-sub">Chargement…</div></div><button class="modal-close-btn" onclick="fermerModal()">'+svgIcon('close')+'</button></div><div class="empty-state">Chargement des données réelles…</div>');
+ try{
+ const d=await appelApi('/produits/'+encodeURIComponent(id)+'/detail'),p=d.produit||{},v=d.ventes||{},a=d.achats||{},s=d.stock||{},an=d.analyse||{},detail=v.detail||{},gros=v.gros||{};
+ const vr=v.lignes||[],ar=a.lignes||[],mr=s.mouvements||[];
+ const vrows=vr.map(x=>'<tr><td>'+pdDate(x.date_vente)+'</td><td>'+pdEsc(x.reference||'—')+'</td><td>'+pdEsc(x.type_vente||'—')+'</td><td>'+pdNum(x.quantite)+'</td><td>'+pdMoney(x.montant_ligne)+'</td><td>'+pdMoney(x.benefice_ligne)+'</td></tr>');
+ const arows=ar.map(x=>'<tr><td>'+pdDate(x.date_achat)+'</td><td>'+pdEsc(x.reference||'—')+'</td><td>'+pdEsc(x.fournisseur_nom||'—')+'</td><td>'+pdNum(x.quantite_bouteilles)+'</td><td>'+pdMoney(x.cout_par_bouteille)+'</td><td>'+pdMoney(x.montant_paye_ligne)+'</td></tr>');
+ const mrows=mr.map(x=>'<tr><td>'+pdDate(x.created_at)+'</td><td>'+pdEsc(x.type_mouvement||'—')+'</td><td>'+pdNum(x.quantite_bouteilles)+'</td><td>'+pdNum(x.stock_apres)+'</td><td>'+pdEsc(x.notes||'—')+'</td></tr>');
+ const fournisseurs=(a.fournisseurs||[]).map(x=>'<span class="badge ok" style="margin:2px">'+pdEsc(x.nom||'—')+'</span>').join(' ')||'Aucun fournisseur disponible';
+ const cmp=Number(p.prix_achat_moyen),pd=Number(p.prix_detail_conseille),pg=Number(p.prix_gros_conseille),md=pd>0?(pd-cmp)/pd*100:null,mg=pg>0?(pg-cmp*Number(p.bouteilles_par_paquet||0))/pg*100:null;
+ const info=[['Code produit',p.code_produit],['Code-barres',p.code_barre],['Catégorie',p.categorie],['Marque',p.marque],['Contenance',p.contenance],['Bouteilles/paquet',p.bouteilles_par_paquet],['Stock minimum',p.stock_min_bouteilles],['Description',p.description]].map(x=>'<div><div class="cell-sub">'+x[0]+'</div><strong>'+pdEsc(x[1]??'Non disponible')+'</strong></div>').join('');
+ const prix=[['Détail conseillé',pdMoney(p.prix_detail_conseille)],['Marge détail',pdPct(md)],['Gros conseillé',pdMoney(p.prix_gros_conseille)],['Marge gros',pdPct(mg)],['Détail min/max',pdMoney(p.prix_detail_min)+' / '+pdMoney(p.prix_detail_max)],['Gros min/max',pdMoney(p.prix_gros_min)+' / '+pdMoney(p.prix_gros_max)]].map(x=>'<div><div class="cell-sub">'+x[0]+'</div><strong>'+x[1]+'</strong></div>').join('');
+ const analyse=[['Vitesse',an.vitesse_bouteilles_par_jour==null?'Non disponible':Number(an.vitesse_bouteilles_par_jour).toLocaleString('fr-FR',{maximumFractionDigits:2})+' bout./j'],['Jours restants',an.jours_stock_restants==null?'Non disponible':'~'+Number(an.jours_stock_restants).toLocaleString('fr-FR',{maximumFractionDigits:1})+' j'],['Rotation',an.rotation_annualisee==null?'Non disponible':Number(an.rotation_annualisee).toLocaleString('fr-FR',{maximumFractionDigits:2})+' ×/an'],['Évolution CA',an.evolution_ca_pct==null?'Non disponible':Number(an.evolution_ca_pct).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %']].map(x=>'<div><div class="cell-sub">'+x[0]+'</div><strong>'+x[1]+'</strong></div>').join('');
+ document.getElementById('modalPanel').innerHTML='<div style="display:flex;justify-content:space-between;gap:12px"><div><h2>'+pdEsc(p.nom||'Produit')+'</h2><div class="modal-sub">'+[p.categorie,p.marque,p.contenance].filter(Boolean).map(pdEsc).join(' · ')+'</div></div><button class="modal-close-btn" onclick="fermerModal()">'+svgIcon('close')+'</button></div>'
++'<div class="pd-kpis"><div><b>Stock</b><strong>'+pdNum(s.actuel_bouteilles)+' bout.</strong></div><div><b>CMP</b><strong>'+pdMoney(p.prix_achat_moyen)+'</strong></div><div><b>Valeur stock</b><strong>'+pdMoney(s.valeur)+'</strong></div><div><b>CA / bénéfice</b><strong>'+pdMoney(v.chiffre_affaires)+' / '+pdMoney(v.benefice)+'</strong></div></div>'
++'<div class="pd-cols"><section><h3>Informations générales</h3><div class="pd-mini">'+info+'</div></section><section><h3>Prix et marges</h3><div class="pd-mini">'+prix+'</div></section></div>'
++'<section><h3>Ventes — détail vs gros</h3><div class="pd-mini"><div><b>Détail</b><br>'+pdNum(detail.bouteilles)+' bout. · '+pdMoney(detail.ca)+' · bénéfice '+pdMoney(detail.benefice)+'</div><div><b>Gros</b><br>'+pdNum(gros.bouteilles)+' bout. · '+pdMoney(gros.ca)+' · bénéfice '+pdMoney(gros.benefice)+'</div><div><b>Quantité totale</b><br>'+pdNum(v.quantite_bouteilles)+' bout.</div><div><b>Bonus</b><br>'+pdNum(v.bonus_bouteilles)+' bout.</div></div>'+pdTable(['Date','Réf.','Type','Qté','CA','Bénéfice'],vrows,'Aucune vente non annulée disponible.')+'</section>'
++'<div class="pd-cols"><section><h3>Achats et fournisseurs</h3><div class="pd-mini"><div>Achats<br><strong>'+pdNum(a.nombre)+'</strong></div><div>Quantité<br><strong>'+pdNum(a.quantite_bouteilles)+' bout.</strong></div><div>Coût total<br><strong>'+pdMoney(a.cout_total)+'</strong></div><div>Fréquence<br><strong>'+(a.frequence_jours==null?'Non disponible':'tous les '+Number(a.frequence_jours).toLocaleString('fr-FR',{maximumFractionDigits:1})+' j')+'</strong></div></div><p>'+fournisseurs+'</p>'+pdTable(['Date','Réf.','Fournisseur','Qté','Coût/bout.','Total'],arows,'Aucun achat non annulé disponible.')+'</section>'
++'<section><h3>Stock et historique</h3><div class="pd-mini"><div>Valeur<br><strong>'+pdMoney(s.valeur)+'</strong></div><div>Alerte<br><strong>'+(s.alerte?'Oui':'Non')+'</strong></div><div>Mouvements<br><strong>'+pdNum(mr.length)+'</strong></div><div>Dernier mouvement<br><strong>'+pdDate(mr[0]?.created_at)+'</strong></div></div>'+pdTable(['Date','Type','Variation','Stock après','Origine'],mrows,'Aucun mouvement enregistré.')+'</section></div>'
++'<div class="pd-cols"><section><h3>Analyse</h3><div class="pd-mini">'+analyse+'</div><p class="cell-sub">Fenêtre d’analyse : '+pdNum(an.fenetre_jours)+' jours.</p></section><section><h3>Disponibilité / anomalies</h3><p class="cell-sub">Les données indisponibles sont affichées comme telles. Les ventes annulées sont exclues par le backend. Aucun calcul comptable n’est recalculé ici.</p></section></div>';
+ }catch(e){document.getElementById('modalPanel').innerHTML='<h2>Fiche produit</h2><div class="banner">'+pdEsc(e.message)+'</div>';}
+}
 // ============================================================
 // MODULE : STOCK
 // ============================================================
