@@ -1003,6 +1003,52 @@
             </form>
           </div>
         </div>
+
+        <div class="panel" style="max-width:680px;margin-top:16px;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+            <div>
+              <h3 style="margin:0;">Périodes de loyer quotidien</h3>
+              <div class="subtitle" style="margin-top:4px;">Le popup ne peut apparaître que pour les dates d'une période configurée. Le seuil de ventes reste le même.</div>
+            </div>
+          </div>
+
+          <div id="resumePeriodeLoyer" class="form-summary" style="margin-top:14px;">
+            <div class="empty-state" style="padding:8px;">Chargement des périodes…</div>
+          </div>
+
+          <form id="formPeriodeLoyer" class="action-admin-seul" onsubmit="soumettrePeriodeLoyer(event)" style="margin-top:16px;">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Date de début *</label>
+                <input type="date" name="date_debut" id="loyerPeriodeDebut" required onchange="recalculerResumePeriodeLoyer()">
+              </div>
+              <div class="form-group">
+                <label>Date de fin *</label>
+                <input type="date" name="date_fin" id="loyerPeriodeFin" required onchange="recalculerResumePeriodeLoyer()">
+              </div>
+              <div class="form-group full">
+                <label>Loyer quotidien (devise secondaire) *</label>
+                <input type="number" name="loyer_quotidien" id="loyerPeriodeMontant" min="0" step="0.01" required oninput="recalculerResumePeriodeLoyer()">
+                <div class="hint">Le taux de change actuel sera figé pour cette période afin que son total ne change pas rétroactivement.</div>
+              </div>
+            </div>
+
+            <div id="aperçuPeriodeLoyer" class="form-summary">
+              <div class="row"><span>Nombre de jours</span><strong id="loyerPeriodeNbJours">—</strong></div>
+              <div class="row"><span>Total prévu</span><strong id="loyerPeriodeTotalSecondaire">—</strong></div>
+              <div class="row total"><span>Équivalent en devise principale</span><span id="loyerPeriodeTotalPrincipal">—</span></div>
+            </div>
+
+            <div class="modal-actions" style="justify-content:flex-start;">
+              <button type="submit" class="btn btn-accent">Créer la période</button>
+            </div>
+          </form>
+
+          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+            <div class="dg-label" style="margin-bottom:8px;">Périodes déjà configurées</div>
+            <div id="listePeriodesLoyer"><div class="empty-state">Chargement…</div></div>
+          </div>
+        </div>
       </section>
 
     </main>
