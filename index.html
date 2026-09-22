@@ -3885,6 +3885,14 @@ async function chargerParametres(){
     // s'affichait quand même).
     const modifiable = utilisateurConnecte.role === 'administrateur';
     document.querySelectorAll('#formParametres input').forEach((el) => { el.disabled = !modifiable; });
+    const formPeriode = document.getElementById('formPeriodeLoyer');
+    if (formPeriode) {
+      formPeriode.style.display = modifiable ? '' : 'none';
+      const montant = document.getElementById('loyerPeriodeMontant');
+      if (montant && !montant.value) montant.value = p.loyer_quotidien ?? '';
+      recalculerResumePeriodeLoyer();
+    }
+    chargerPeriodesLoyer();
   } catch (err) {
     afficherToast(err.message, 'error');
   }
@@ -3921,6 +3929,112 @@ async function soumettreParametres(event){
   }
   bouton.disabled = false;
 }
+
+async function chargerPeriodesLoyer(){
+  const resume = document.getElementById('resumePeriodeLoyer');
+  const liste = document.getElementById('listePeriodesLoyer');
+  if (!resume || !liste) return;
+
+  try {
+    const periodes = await appelApi('/loyer-quotidien/periodes');
+    const aujourdHui = new Date().toISOString().slice(0, 10);
+    const active = periodes.find(p => p.date_debut <= aujourdHui && p.date_fin >= aujourdHui);
+
+    if (!periodes.length) {
+      resume.innerHTML = '<div class="row"><span>Aucune période active</span><strong>Le popup est désactivé.</strong></div>';
+      liste.innerHTML = '<div class="empty-state" style="padding:12px;">Aucune période configurée. Crée une période pour activer le popup sur les dates voulues.</div>';
+      return;
+    }
+
+    resume.innerHTML = active
+      ? `<div class="row"><span>Période actuelle</span><strong>${new Date(active.date_debut + 'T00:00:00').toLocaleDateString('fr-FR')} → ${new Date(active.date_fin + 'T00:00:00').toLocaleDateString('fr-FR')}</strong></div>
+         <div class="row"><span>Loyer quotidien</span><strong>${formatNombre(active.loyer_quotidien)} ${active.devise_secondaire}</strong></div>
+         <div class="row"><span>Jours</span><strong>${active.nombre_jours}</strong></div>
+         <div class="row total"><span>Total prévu</span><span>${formatNombre(active.montant_total_secondaire)} ${active.devise_secondaire} · ${formatMontant(active.montant_total)}</span></div>`
+      : '<div class="row"><span>Aucune période en cours</span><strong>Le popup reste inactif.</strong></div>';
+
+    liste.innerHTML = periodes.map(p => {
+      const deb = new Date(p.date_debut + 'T00:00:00').toLocaleDateString('fr-FR');
+      const fin = new Date(p.date_fin + 'T00:00:00').toLocaleDateString('fr-FR');
+      const statut = aujourdHui < p.date_debut ? 'À venir' : aujourdHui > p.date_fin ? 'Terminée' : 'En cours';
+      const couleur = statut === 'En cours' ? 'ok' : 'neutral';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <strong>${deb} → ${fin}</strong>
+          <div class="cell-sub">${p.nombre_jours} jour(s) · ${formatNombre(p.loyer_quotidien)} ${p.devise_secondaire}/jour · taux ${formatNombre(p.taux_change)}</div>
+        </div>
+        <div style="text-align:right;white-space:nowrap;">
+          <span class="badge ${couleur}">${statut}</span>
+          <div class="cell-sub" style="margin-top:4px;">Total : ${formatNombre(p.montant_total_secondaire)} ${p.devise_secondaire}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    resume.innerHTML = `<div class="empty-state">Impossible de charger les périodes (${err.message}).</div>`;
+    liste.innerHTML = '';
+  }
+}
+
+function recalculerResumePeriodeLoyer(){
+  const debut = document.getElementById('loyerPeriodeDebut')?.value;
+  const fin = document.getElementById('loyerPeriodeFin')?.value;
+  const montant = Number(document.getElementById('loyerPeriodeMontant')?.value);
+  const nbEl = document.getElementById('loyerPeriodeNbJours');
+  const totalSecEl = document.getElementById('loyerPeriodeTotalSecondaire');
+  const totalPrinEl = document.getElementById('loyerPeriodeTotalPrincipal');
+  if (!nbEl || !totalSecEl || !totalPrinEl) return;
+
+  if (!debut || !fin || !Number.isFinite(montant) || montant < 0) {
+    nbEl.textContent = '—';
+    totalSecEl.textContent = '—';
+    totalPrinEl.textContent = '—';
+    return;
+  }
+
+  const d1 = new Date(debut + 'T00:00:00');
+  const d2 = new Date(fin + 'T00:00:00');
+  const nb = Math.round((d2 - d1) / 86400000) + 1;
+  if (nb <= 0) {
+    nbEl.textContent = 'Dates invalides';
+    totalSecEl.textContent = '—';
+    totalPrinEl.textContent = '—';
+    return;
+  }
+
+  const taux = Number(parametresCache.taux_change) || 0;
+  nbEl.textContent = String(nb);
+  totalSecEl.textContent = `${formatNombre(montant * nb)} ${parametresCache.devise_secondaire || deviseSecondaireActuelle || 'USD'}`;
+  totalPrinEl.textContent = taux > 0 ? formatMontant(Math.round(montant * nb * taux)) : 'Taux de change manquant';
+}
+
+async function soumettrePeriodeLoyer(event){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  const payload = {
+    date_debut: donnees.get('date_debut'),
+    date_fin: donnees.get('date_fin'),
+    loyer_quotidien: Number(donnees.get('loyer_quotidien')),
+  };
+
+  const bouton = event.target.querySelector('button[type="submit"]');
+  bouton.disabled = true;
+  try {
+    const periode = await appelApiEcriture('/loyer-quotidien/periodes', 'POST', payload);
+    afficherToast(
+      `Période créée : ${periode.nombre_jours} jour(s), total ${formatNombre(periode.montant_total_secondaire)} ${periode.devise_secondaire} (${formatMontant(periode.montant_total)}).`,
+      'success'
+    );
+    event.target.reset();
+    document.getElementById('loyerPeriodeMontant').value = parametresCache.loyer_quotidien ?? '';
+    recalculerResumePeriodeLoyer();
+    chargerPeriodesLoyer();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+  } finally {
+    bouton.disabled = false;
+  }
+}
+
 
 // ============================================================
 // MODULE : AUTHENTIFICATION
