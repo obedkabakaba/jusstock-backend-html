@@ -5056,7 +5056,7 @@ async function ouvrirControleTresorerie(){
     if(!Number.isFinite(n)||n<0){alert('Montant invalide.');return;}
     const motif=prompt('Motif de l’écart (ex. vol, achat non enregistré, retrait, inconnu) :')||null;
     const notes=prompt('Notes complémentaires (optionnel) :')||null;
-    const result=await appelApi('/comptabilite/reconciliations-tresorerie',{method:'POST',body:JSON.stringify({compte:'571',solde_physique:n,motif,notes})});
+    const result=await appelApiEcriture('/comptabilite/reconciliations-tresorerie','POST',{compte:'571',solde_physique:n,motif,notes});
     alert('Rapprochement enregistré.\\n\\nThéorique : '+Number(result.solde_theorique).toLocaleString('fr-FR')+' FC\\nRéel : '+Number(result.solde_physique).toLocaleString('fr-FR')+' FC\\nÉcart : '+Number(result.ecart).toLocaleString('fr-FR')+' FC\\nStatut : '+result.statut+'\\n\\nAucune écriture comptable n’a été créée automatiquement.');
   }catch(err){alert(err.message||'Impossible d’enregistrer le rapprochement.');}
 }
