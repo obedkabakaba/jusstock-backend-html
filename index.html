@@ -3408,17 +3408,24 @@ async function rattraperStock(){
 async function afficherTresorerie(du, au, contenu){
   const t = await appelApi(`/comptabilite/flux-tresorerie?du=${du}&au=${au}`);
   contenu.innerHTML = `
+    <div class="subtitle" style="margin-bottom:12px;">
+      La <strong>variation nette</strong> mesure uniquement le mouvement de trésorerie pendant la période.
+      Le <strong>solde final</strong> inclut le solde qui existait avant le début de la période.
+    </div>
+    <div class="kpi-grid" style="margin-bottom:16px;">
+      <div class="kpi-card"><div class="kpi-label">Solde début</div><div class="kpi-value">${formatMontant(t.solde_debut)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Variation nette de la période</div><div class="kpi-value">${formatMontant(t.variation_nette)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">Solde fin</div><div class="kpi-value">${formatMontant(t.solde_fin)}</div></div>
+    </div>
     <div class="kpi-grid" style="margin-bottom:16px;">
       <div class="kpi-card"><div class="kpi-label">Encaissements</div><div class="kpi-value" style="color:var(--fresh)">${formatMontant(t.total_encaissements)}</div></div>
       <div class="kpi-card"><div class="kpi-label">Décaissements</div><div class="kpi-value" style="color:var(--danger)">${formatMontant(t.total_decaissements)}</div></div>
-      <div class="kpi-card"><div class="kpi-label">Variation nette</div><div class="kpi-value">${formatMontant(t.tresorerie_disponible_variation)}</div></div>
     </div>
     <div class="table-panel"><div class="table-scroll"><table class="data-table">
-      <thead><tr><th>Compte</th><th>Encaissements</th><th>Décaissements</th><th>Variation nette</th></tr></thead>
-      <tbody>${t.detail_par_compte.map(c => `<tr><td>${c.code} — ${c.nom}</td><td class="mono">${formatMontant(c.encaissements)}</td><td class="mono">${formatMontant(c.decaissements)}</td><td class="mono">${formatMontant(c.variation_nette)}</td></tr>`).join('')}</tbody>
+      <thead><tr><th>Compte</th><th>Solde début</th><th>Encaissements</th><th>Décaissements</th><th>Variation nette</th><th>Solde fin</th></tr></thead>
+      <tbody>${t.detail_par_compte.map(c => `<tr><td>${c.code} — ${c.nom}</td><td class="mono">${formatMontant(c.solde_debut)}</td><td class="mono">${formatMontant(c.encaissements)}</td><td class="mono">${formatMontant(c.decaissements)}</td><td class="mono">${formatMontant(c.variation_nette)}</td><td class="mono">${formatMontant(c.solde_fin)}</td></tr>`).join('')}</tbody>
     </table></div></div>`;
 }
-
 async function afficherGrandLivre(du, au, contenu){
   const comptes = await appelApi(`/comptabilite/balance?du=${du}&au=${au}`);
   const options = comptes.map(c => `<option value="${c.id}" ${String(c.id) === String(compteGrandLivreSelectionne) ? 'selected' : ''}>${c.code} — ${c.nom}</option>`).join('');
@@ -5041,11 +5048,6 @@ initialiserAuthentification();
 
 
 
-</script>
-</body>
-</html>
-
-
 async function ouvrirControleTresorerie(){
   try{
     const soldes=await appelApi('/comptabilite/tresorerie-actuelle');
@@ -5067,3 +5069,8 @@ async function ouvrirControleIntegrite(){
     alert('CONTRÔLE D’INTÉGRITÉ\\n\\nCaisse théorique : '+Number(r.caisse.solde_theorique).toLocaleString('fr-FR')+' FC\\nStock journal 311 : '+Number(r.stock.valeur_journal_311).toLocaleString('fr-FR')+' FC\\nStock produits : '+Number(r.stock.valeur_produits).toLocaleString('fr-FR')+' FC\\nÉcart stock : '+Number(r.stock.ecart).toLocaleString('fr-FR')+' FC\\nInventaires sans référence : '+r.inventaires.ecritures_orphelines+'\\nAchats annulés encore journalisés : '+r.achats_annules.encore_journalises+'\\n\\n'+(r.alerte?'⚠️ ANOMALIES À EXAMINER':'✅ Aucun de ces contrôles ne signale d’anomalie.'));
   }catch(err){alert(err.message||'Impossible d’exécuter le contrôle.');}
 }
+
+
+</script>
+</body>
+</html>
