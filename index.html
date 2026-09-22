@@ -1676,6 +1676,7 @@ function pdTable(head,rows,empty){if(!rows.length)return '<div class="empty-stat
 async function ouvrirDetailProduit(id){
  if(!['administrateur','gerante','consultant'].includes(utilisateurConnecte?.role)){afficherToast('Accès non autorisé à cette fiche.','error');return;}
  ouvrirModal('<div class="modal-head"><div><h2>Fiche produit</h2><div class="modal-sub">Chargement…</div></div><button class="modal-close-btn" onclick="fermerModal()">'+svgIcon('close')+'</button></div><div class="empty-state">Chargement des données réelles…</div>');
+ document.getElementById('modalPanel').classList.add('produit-detail-360');
  try{
  const d=await appelApi('/produits/'+encodeURIComponent(id)+'/detail'),p=d.produit||{},v=d.ventes||{},a=d.achats||{},s=d.stock||{},an=d.analyse||{},detail=v.detail||{},gros=v.gros||{};
  const vr=v.lignes||[],ar=a.lignes||[],mr=s.mouvements||[];
