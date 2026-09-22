@@ -3155,11 +3155,12 @@ async function verifierLoyerQuotidien(){
 function afficherProchainLoyerEnAttente(){
   if (loyerJoursEnAttenteFile.length === 0) return;
   const jour = loyerJoursEnAttenteFile[0];
+  const dateJourNormalisee = String(jour.date_jour || '').slice(0, 10);
   const deviseSecondaire = deviseSecondaireActuelle || 'USD';
   ouvrirModal(`
     <div class="modal-head">
       <div><h2>Loyer quotidien</h2>
-        <div class="modal-sub">${new Date(jour.date_jour).toLocaleDateString('fr-FR')}</div></div>
+        <div class="modal-sub">${new Date(dateJourNormalisee + 'T00:00:00').toLocaleDateString('fr-FR')}</div></div>
     </div>
     <div class="subtitle" style="margin-bottom:14px;">
       Les ventes de cette journée s'élèvent à <strong>${formatMontant(jour.montant_ventes)}</strong>.<br>
@@ -3168,8 +3169,8 @@ function afficherProchainLoyerEnAttente(){
       Voulez-vous déduire le loyer quotidien pour cette journée ?
     </div>
     <div class="modal-actions">
-      <button type="button" class="btn" id="loyerBtnNon" onclick="repondreLoyerQuotidien('${jour.date_jour}', 'non')">Non</button>
-      <button type="button" class="btn btn-accent" id="loyerBtnOui" onclick="repondreLoyerQuotidien('${jour.date_jour}', 'oui')">Oui, déduire ${formatMontant(jour.montant_loyer)}</button>
+      <button type="button" class="btn" id="loyerBtnNon" onclick="repondreLoyerQuotidien('${dateJourNormalisee}', 'non')">Non</button>
+      <button type="button" class="btn btn-accent" id="loyerBtnOui" onclick="repondreLoyerQuotidien('${dateJourNormalisee}', 'oui')">Oui, déduire ${formatMontant(jour.montant_loyer)}</button>
     </div>
   `);
 }
