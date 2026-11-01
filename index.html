@@ -402,6 +402,14 @@
      évite simplement d'afficher un bouton qui mènerait à une erreur. */
   body.role-consultant .action-ecriture{display:none !important;}
   body:not(.role-administrateur) .action-admin-seul{display:none !important;}
+  /* Supervision : administrateur + manager (contrôle de caisse, intégrité) */
+  body:not(.peut-diriger) .action-direction{display:none !important;}
+  .user-chip{cursor:pointer;border-radius:8px;padding:2px 6px;}
+  .user-chip:hover{background:var(--paper);}
+  .mdp-champ{display:flex;gap:6px;align-items:center;}
+  .mdp-champ input{flex:1;}
+  .identifiants-box{background:var(--paper);border:1px dashed var(--border, #ccc);border-radius:8px;padding:12px 14px;font-size:13.5px;line-height:1.9;}
+  .identifiants-box .mono{font-size:15px;font-weight:700;letter-spacing:.5px;}
   /* Inventaire physique : refléter côté interface les rôles appliqués par
      inventaires.routes.js — saisie pour administrateur/gérante, lecture de
      l'historique en plus pour le consultant. */
@@ -529,7 +537,7 @@
         </div>
       </div>
       <div class="topbar-right">
-        <div class="user-chip">
+        <div class="user-chip" onclick="ouvrirMonCompte()" title="Mon compte — changer mon mot de passe">
           <span class="u-nom" id="utilisateurNomTopbar"></span>
           <span class="u-role" id="utilisateurRoleTopbar"></span>
         </div>
@@ -846,10 +854,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16.5" cy="14" r="1.2"/></svg>
             Apport de trésorerie
           </button>
-          <button class="btn action-admin-seul" onclick="ouvrirControleTresorerie()" title="Contrôle caisse réel vs théorique">
+          <button class="btn action-direction" onclick="ouvrirControleTresorerie()" title="Contrôle caisse réel vs théorique">
             Contrôle caisse
           </button>
-          <button class="btn action-admin-seul" onclick="ouvrirControleIntegrite()" title="Vérifier les anomalies stock/comptabilité">
+          <button class="btn action-direction" onclick="ouvrirControleIntegrite()" title="Vérifier les anomalies stock/comptabilité">
             Contrôle intégrité
           </button>
           <button class="btn action-admin-seul" onclick="reconstruireJournal()" style="color:var(--danger);border-color:var(--danger);" title="Réservé à l'administrateur — reconstruit tout le journal depuis les achats/ventes/charges">
@@ -940,8 +948,8 @@
         <div class="table-panel" style="margin-bottom:18px;">
           <div class="table-scroll">
             <table class="data-table">
-              <thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th></th></tr></thead>
-              <tbody id="corpsTableUtilisateurs"><tr><td colspan="5" class="empty-state">Chargement…</td></tr></tbody>
+              <thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Dernière connexion</th><th></th></tr></thead>
+              <tbody id="corpsTableUtilisateurs"><tr><td colspan="6" class="empty-state">Chargement…</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -1066,7 +1074,7 @@
      MODALE GÉNÉRIQUE — réutilisée par tous les formulaires
      (Produits, correction de stock, et les modules à venir)
      ============================================================ -->
-<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) fermerModal()">
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this && !modaleBloquante) fermerModal()">
   <div class="modal-panel" id="modalPanel"></div>
 </div>
 
@@ -1239,6 +1247,7 @@ async function appelApi(chemin){
   if (reponse.status === 401) { gererExpirationSession(); throw new Error('Session expirée.'); }
   if (!reponse.ok) {
     const corps = await reponse.json().catch(() => ({}));
+    if (corps.details?.code === 'MOT_DE_PASSE_A_CHANGER') ouvrirMonCompte(true);
     throw new Error(corps.erreur || `Erreur HTTP ${reponse.status}`);
   }
   return reponse.json();
@@ -1259,6 +1268,7 @@ async function appelApiEcriture(chemin, methode, corpsRequete){
   if (reponse.status === 401) { gererExpirationSession(); throw new Error('Session expirée.'); }
   const corps = await reponse.json().catch(() => ({}));
   if (!reponse.ok) {
+    if (corps.details?.code === 'MOT_DE_PASSE_A_CHANGER') ouvrirMonCompte(true);
     throw new Error(corps.erreur || `Erreur HTTP ${reponse.status}`);
   }
   return corps;
@@ -1275,16 +1285,20 @@ function afficherToast(message, type){
 }
 
 // ---------- Modale générique ----------
+// Une modale "bloquante" (changement obligatoire du mot de passe provisoire)
+// ne se ferme ni par Échap ni par un clic à côté.
+let modaleBloquante = false;
 function ouvrirModal(html){
   document.getElementById('modalPanel').innerHTML = html;
   document.getElementById('modalOverlay').classList.add('open');
 }
 function fermerModal(){
+  modaleBloquante = false;
   document.getElementById('modalOverlay').classList.remove('open');
   document.getElementById('modalPanel').innerHTML = '';
 }
 // Ferme la modale avec la touche Échap
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fermerModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modaleBloquante) fermerModal(); });
 
 // ---------- Cartes KPI ----------
 function construireKpiCards(donnees){
@@ -1680,7 +1694,7 @@ function pdNum(v){return v===null||v===undefined?'Non disponible':formatNombre(v
 function pdPct(v){return v===null||v===undefined?'Non disponible':Number(v).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %';}
 function pdTable(head,rows,empty){if(!rows.length)return '<div class="empty-state">'+empty+'</div>';return '<div style="max-height:300px;overflow:auto"><table class="data-table"><thead><tr>'+head.map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';}
 async function ouvrirDetailProduit(id){
- if(!['administrateur','gerante','consultant'].includes(utilisateurConnecte?.role)){afficherToast('Accès non autorisé à cette fiche.','error');return;}
+ if(!aGroupe('LECTURE_FINANCIERE')){afficherToast('Accès non autorisé à cette fiche.','error');return;}
  ouvrirModal('<div class="modal-head"><div><h2>Fiche produit</h2><div class="modal-sub">Chargement…</div></div><button class="modal-close-btn" onclick="fermerModal()">'+svgIcon('close')+'</button></div><div class="empty-state">Chargement des données réelles…</div>');
  document.getElementById('modalPanel').classList.add('produit-detail-360');
  try{
@@ -2168,10 +2182,9 @@ function construireFormAchat(preselectionFournisseurId, achatExistant){
         <div class="form-group">
           <label>Payé depuis quel compte ?</label>
           <select name="compte_paiement">
-            <option value="especes">Caisse (espèces)</option>
-            <option value="banque">Banque</option>
-            <option value="mobile_money">Mobile Money</option>
-            <option value="carte">Carte</option>
+            ${[['especes','Caisse (espèces)'],['banque','Banque'],['mobile_money','Mobile Money'],['carte','Carte']].map(([valeur, libelle]) =>
+              `<option value="${valeur}" ${modeEdition && achatExistant.compte_paiement === valeur ? 'selected' : ''}>${libelle}</option>`
+            ).join('')}
           </select>
           <div class="hint">Utilisé seulement si le montant payé ci-dessus est supérieur à 0.</div>
         </div>
@@ -3184,7 +3197,7 @@ function ouvrirModalCharge(){
 let loyerJoursEnAttenteFile = [];
 
 async function verifierLoyerQuotidien(){
-  if (!['administrateur', 'gerante'].includes(utilisateurConnecte?.role)) return;
+  if (!aGroupe('OPERATIONS')) return;
   try {
     loyerJoursEnAttenteFile = await appelApi('/loyer-quotidien/a-traiter');
     afficherProchainLoyerEnAttente();
@@ -4098,8 +4111,28 @@ let authToken = null;
 let utilisateurConnecte = null;
 
 const LIBELLES_ROLES = {
-  administrateur: 'Administrateur', gerante: 'Gérante', consultant: 'Consultant',
+  administrateur: 'Administrateur', manager: 'Manager (délégué)', gerante: 'Gérante', consultant: 'Consultant',
 };
+
+// Miroir de src/config/roles.js côté backend (qui reste seul juge : ces
+// groupes servent uniquement à ne pas afficher un bouton qui mènerait à un 403).
+const GROUPES_ROLES = {
+  OPERATIONS: ['administrateur', 'manager', 'gerante'],
+  LECTURE_FINANCIERE: ['administrateur', 'manager', 'gerante', 'consultant'],
+  DIRECTION: ['administrateur', 'manager'],
+  ADMIN_SEUL: ['administrateur'],
+};
+
+function aGroupe(nomGroupe){
+  return !!utilisateurConnecte && (GROUPES_ROLES[nomGroupe] || []).includes(utilisateurConnecte.role);
+}
+
+// Échappe une valeur avant de l'insérer dans du HTML (noms, emails, notes
+// saisis par les utilisateurs) : évite qu'un nom contenant du HTML/JS soit
+// interprété par le navigateur.
+function echapperHtml(valeur){
+  return String(valeur ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 
 // Vrai pour tous les rôles sauf consultant (lecture seule). Utilisé pour
 // adapter les textes d'état vide ("Clique sur..." n'a pas de sens si le
@@ -4221,14 +4254,17 @@ function afficherAppApresConnexion(){
   document.getElementById('utilisateurNomTopbar').textContent = utilisateurConnecte.nom;
   document.getElementById('utilisateurRoleTopbar').textContent = LIBELLES_ROLES[utilisateurConnecte.role] || utilisateurConnecte.role;
   appliquerPermissionsUI();
+  // Compte créé/réinitialisé par l'administrateur ou le manager : le backend
+  // refuse toute action tant que le mot de passe provisoire n'est pas remplacé.
+  if (utilisateurConnecte.doit_changer_mot_de_passe) {
+    ouvrirMonCompte(true);
+    return;
+  }
   chargerParametresDevise();
   afficherVue('dashboard');
   verifierLoyerQuotidien();
 }
 
-// Récupère juste les infos de devise/taux de change, sans dépendre d'une
-// visite de la page Paramètres — pour que la bascule soit utilisable
-// partout dès la connexion.
 // Récupère juste les infos de devise/taux de change, sans dépendre d'une
 // visite de la page Paramètres — pour que la bascule soit utilisable
 // partout dès la connexion.
@@ -4252,6 +4288,7 @@ function mettreAJourVariablesDevise(p){
 }
 
 function deconnecter(){
+  fermerModal();
   authToken = null;
   utilisateurConnecte = null;
   localStorage.removeItem(CLE_STOCKAGE_JETON);
@@ -4261,6 +4298,7 @@ function deconnecter(){
 }
 
 function gererExpirationSession(){
+  fermerModal();
   authToken = null;
   utilisateurConnecte = null;
   localStorage.removeItem(CLE_STOCKAGE_JETON);
@@ -4276,17 +4314,17 @@ function appliquerPermissionsUI(){
   const role = utilisateurConnecte.role;
   document.body.classList.toggle('role-consultant', role === 'consultant');
   document.body.classList.toggle('role-administrateur', role === 'administrateur');
-  document.body.classList.toggle('peut-inventorier', ['administrateur', 'gerante'].includes(role));
-  document.body.classList.toggle('peut-voir-inventaires', ['administrateur', 'gerante', 'consultant'].includes(role));
+  document.body.classList.toggle('peut-diriger', aGroupe('DIRECTION'));
+  document.body.classList.toggle('peut-inventorier', aGroupe('OPERATIONS'));
+  document.body.classList.toggle('peut-voir-inventaires', aGroupe('LECTURE_FINANCIERE'));
 
   document.querySelectorAll('.nav-item').forEach((btn) => {
     const id = btn.dataset.view;
     let visible = true;
-    if (id === 'utilisateurs') visible = role === 'administrateur';
-    else if (id === 'comptabilite') visible = ['administrateur', 'gerante', 'consultant'].includes(role);
-    // Analyse expose coûts, marges et capital immobilisé : mêmes rôles
-    // que les rapports détaillés côté backend (analyse.routes.js).
-    else if (id === 'analyse') visible = ['administrateur', 'gerante', 'consultant'].includes(role);
+    if (id === 'utilisateurs') visible = aGroupe('DIRECTION');
+    // Comptabilité et Analyse exposent coûts, marges et capital immobilisé :
+    // mêmes rôles que les rapports détaillés côté backend.
+    else if (id === 'comptabilite' || id === 'analyse') visible = aGroupe('LECTURE_FINANCIERE');
     btn.style.display = visible ? '' : 'none';
   });
 }
@@ -4300,14 +4338,10 @@ function appliquerPermissionsUI(){
 
 let produitsInventaire = [];
 
-function aRole(...roles){
-  return !!utilisateurConnecte && roles.includes(utilisateurConnecte.role);
-}
-
 function initialiserInventaire(produits){
   produitsInventaire = produits || [];
 
-  if (aRole('administrateur', 'gerante')) {
+  if (aGroupe('OPERATIONS')) {
     const select = document.getElementById('inventaireProduit');
     const valeurActuelle = select.value;
     select.innerHTML = '<option value="">— Choisir un produit —</option>' +
@@ -4318,7 +4352,7 @@ function initialiserInventaire(produits){
     onChangementProduitInventaire();
   }
 
-  if (aRole('administrateur', 'gerante', 'consultant')) {
+  if (aGroupe('LECTURE_FINANCIERE')) {
     const filtre = document.getElementById('filtreProduitInventaires');
     const valeurFiltre = filtre.value;
     filtre.innerHTML = '<option value="">Tous les produits</option>' +
@@ -4889,8 +4923,107 @@ async function afficherAnalyseAnomalies(contenu, jours){
 }
 
 // ============================================================
-// MODULE : UTILISATEURS (Menu 11, réservé à l'administrateur)
+// MODULE : MON COMPTE (tous les rôles)
 // ============================================================
+// Chacun peut changer son propre mot de passe (ancien mot de passe requis).
+// En mode "obligatoire", c'est la première connexion avec un mot de passe
+// provisoire : la modale ne peut pas être fermée sans le remplacer.
+
+function champMotDePasse(nom, libelle, options = {}){
+  const id = 'mdp_' + nom;
+  return `<div class="form-group full"><label>${libelle}</label>
+    <div class="mdp-champ">
+      <input type="password" name="${nom}" id="${id}" ${options.required === false ? '' : 'required'} minlength="8" maxlength="72" autocomplete="${options.autocomplete || 'new-password'}" value="${echapperHtml(options.valeur || '')}">
+      <button type="button" class="btn" title="Afficher / masquer" onclick="basculerVisibiliteMdp('${id}')">${svgIcon('eye')}</button>
+      ${options.generer ? `<button type="button" class="btn" title="Générer un mot de passe" onclick="remplirMotDePasseGenere('${id}')">Générer</button>` : ''}
+    </div>
+    ${options.hint ? `<div class="hint">${options.hint}</div>` : ''}
+  </div>`;
+}
+
+function basculerVisibiliteMdp(id){
+  const champ = document.getElementById(id);
+  if (champ) champ.type = champ.type === 'password' ? 'text' : 'password';
+}
+
+// Mot de passe lisible (sans 0/O ni 1/l), généré par le navigateur.
+function genererMotDePasse(){
+  const lettres = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ', chiffres = '23456789';
+  const aleatoire = (n) => { const t = new Uint32Array(1); crypto.getRandomValues(t); return t[0] % n; };
+  const bloc = () => lettres[aleatoire(lettres.length)].toUpperCase() + lettres[aleatoire(lettres.length)]
+    + chiffres[aleatoire(chiffres.length)] + lettres[aleatoire(lettres.length)];
+  return `${bloc()}-${bloc()}-${bloc()}`;
+}
+
+function remplirMotDePasseGenere(id){
+  const champ = document.getElementById(id);
+  if (!champ) return;
+  champ.value = genererMotDePasse();
+  champ.type = 'text';
+}
+
+async function copierTexte(texte){
+  try { await navigator.clipboard.writeText(texte); afficherToast('Copié dans le presse-papiers.', 'success'); }
+  catch (_) { afficherToast('Copie impossible : sélectionne le texte et copie-le à la main.', 'error'); }
+}
+
+function ouvrirMonCompte(obligatoire){
+  if (!utilisateurConnecte) return;
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>${obligatoire ? 'Choisis ton mot de passe' : 'Mon compte'}</h2>
+        <div class="modal-sub">${echapperHtml(utilisateurConnecte.nom)} — ${echapperHtml(utilisateurConnecte.email || '')} — ${echapperHtml(LIBELLES_ROLES[utilisateurConnecte.role] || utilisateurConnecte.role)}</div></div>
+      ${obligatoire ? '' : `<button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>`}
+    </div>
+    ${obligatoire ? '<div class="consultant-banner" style="display:flex;">Ton compte a été créé (ou réinitialisé) avec un mot de passe provisoire. Remplace-le par un mot de passe que toi seul connais pour continuer.</div>' : ''}
+    <form onsubmit="soumettreMonMotDePasse(event, ${obligatoire ? 'true' : 'false'})">
+      <div class="form-grid">
+        ${champMotDePasse('ancien_mot_de_passe', obligatoire ? 'Mot de passe provisoire reçu *' : 'Mot de passe actuel *', { autocomplete: 'current-password' })}
+        ${champMotDePasse('nouveau_mot_de_passe', 'Nouveau mot de passe *', { hint: '8 caractères minimum, au moins une lettre et un chiffre.' })}
+        ${champMotDePasse('confirmation', 'Confirme le nouveau mot de passe *')}
+      </div>
+      <div class="modal-actions">
+        ${obligatoire ? '<button type="button" class="btn" onclick="deconnecter()">Se déconnecter</button>' : '<button type="button" class="btn" onclick="fermerModal()">Annuler</button>'}
+        <button type="submit" class="btn btn-accent">Enregistrer mon mot de passe</button>
+      </div>
+    </form>
+  `);
+  modaleBloquante = !!obligatoire;
+}
+
+async function soumettreMonMotDePasse(event, obligatoire){
+  event.preventDefault();
+  const donnees = new FormData(event.target);
+  if (donnees.get('nouveau_mot_de_passe') !== donnees.get('confirmation')) {
+    afficherToast('Les deux nouveaux mots de passe ne correspondent pas.', 'error');
+    return;
+  }
+  const bouton = event.target.querySelector('button[type="submit"]');
+  bouton.disabled = true;
+  try {
+    const corps = await appelApiEcriture('/auth/mot-de-passe', 'POST', {
+      ancien_mot_de_passe: donnees.get('ancien_mot_de_passe'),
+      nouveau_mot_de_passe: donnees.get('nouveau_mot_de_passe'),
+    });
+    // Le changement invalide l'ancien jeton : on garde le nouveau.
+    authToken = corps.token;
+    localStorage.setItem(CLE_STOCKAGE_JETON, corps.token);
+    utilisateurConnecte = { ...utilisateurConnecte, ...corps.utilisateur };
+    fermerModal();
+    afficherToast('Mot de passe modifié.', 'success');
+    if (obligatoire) afficherAppApresConnexion();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    bouton.disabled = false;
+  }
+}
+
+// ============================================================
+// MODULE : UTILISATEURS (Menu 11 — administrateur et manager)
+// ============================================================
+// Le backend applique la hiérarchie : un manager ne gère que les comptes
+// gérante/consultant. Ici on n'affiche que les actions autorisées (champ
+// `gerable` renvoyé par l'API, et roles_attribuables du compte connecté).
 let utilisateursCache = [];
 
 async function chargerUtilisateurs(){
@@ -4901,50 +5034,92 @@ async function chargerUtilisateurs(){
     dessinerTableUtilisateurs(utilisateursCache);
     chargerJournalAudit();
   } catch (err) {
-    corps.innerHTML = `<tr><td colspan="5" class="empty-state">Impossible de charger les utilisateurs (${err.message}).</td></tr>`;
+    corps.innerHTML = `<tr><td colspan="6" class="empty-state">Impossible de charger les utilisateurs (${echapperHtml(err.message)}).</td></tr>`;
   }
+}
+
+function formaterDateHeure(valeur){
+  if (!valeur) return '—';
+  return new Date(valeur).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
 }
 
 function dessinerTableUtilisateurs(utilisateurs){
   const corps = document.getElementById('corpsTableUtilisateurs');
   if (!utilisateurs || utilisateurs.length === 0) {
-    corps.innerHTML = '<tr><td colspan="5" class="empty-state">Aucun utilisateur.</td></tr>';
+    corps.innerHTML = '<tr><td colspan="6" class="empty-state">Aucun utilisateur.</td></tr>';
     return;
   }
-  corps.innerHTML = utilisateurs.map(u => `
+  corps.innerHTML = utilisateurs.map(u => {
+    const estMoi = u.id === utilisateurConnecte.id;
+    const statut = !u.actif
+      ? '<span class="badge alerte">Désactivé</span>'
+      : u.doit_changer_mot_de_passe
+        ? '<span class="badge neutral" title="Doit encore remplacer son mot de passe provisoire">Mot de passe provisoire</span>'
+        : '<span class="badge ok">Actif</span>';
+    const actions = estMoi
+      ? `<button class="icon-btn" title="Mon compte" onclick="ouvrirMonCompte()">${svgIcon('sliders')}</button>`
+      : u.gerable ? `
+        <button class="icon-btn" title="Modifier" onclick="ouvrirModalUtilisateur('${u.id}')">${svgIcon('edit')}</button>
+        <button class="icon-btn" title="Réinitialiser le mot de passe" onclick="ouvrirModalMotDePasse('${u.id}')">${svgIcon('sliders')}</button>
+        ${u.actif ? `<button class="icon-btn danger" title="Désactiver" onclick="desactiverUtilisateur('${u.id}')">${svgIcon('trash')}</button>` : ''}`
+      : '<span class="cell-sub" title="Compte de niveau égal ou supérieur au tien">—</span>';
+    return `
     <tr>
-      <td><strong>${u.nom}</strong>${u.id === utilisateurConnecte.id ? ' <span class="badge neutral">Toi</span>' : ''}</td>
-      <td class="cell-sub">${u.email}</td>
-      <td>${LIBELLES_ROLES[u.role] || u.role}</td>
-      <td>${u.actif ? '<span class="badge ok">Actif</span>' : '<span class="badge alerte">Désactivé</span>'}</td>
-      <td class="cell-actions">
-        <button class="icon-btn action-ecriture" title="Modifier" onclick="ouvrirModalUtilisateur('${u.id}')">${svgIcon('edit')}</button>
-        <button class="icon-btn action-ecriture" title="Réinitialiser le mot de passe" onclick="ouvrirModalMotDePasse('${u.id}')">${svgIcon('sliders')}</button>
-        ${u.id !== utilisateurConnecte.id ? `<button class="icon-btn danger action-ecriture" title="Désactiver" onclick="desactiverUtilisateur('${u.id}')">${svgIcon('trash')}</button>` : ''}
-      </td>
-    </tr>
-  `).join('');
+      <td><strong>${echapperHtml(u.nom)}</strong>${estMoi ? ' <span class="badge neutral">Toi</span>' : ''}${u.telephone ? `<div class="cell-sub">${echapperHtml(u.telephone)}</div>` : ''}</td>
+      <td class="cell-sub">${echapperHtml(u.email)}</td>
+      <td>${echapperHtml(LIBELLES_ROLES[u.role] || u.role)}</td>
+      <td>${statut}</td>
+      <td class="cell-sub">${formaterDateHeure(u.derniere_connexion)}</td>
+      <td class="cell-actions">${actions}</td>
+    </tr>`;
+  }).join('');
+}
+
+function optionsRolesAttribuables(roleSelectionne){
+  const roles = utilisateurConnecte.roles_attribuables && utilisateurConnecte.roles_attribuables.length
+    ? utilisateurConnecte.roles_attribuables
+    : Object.keys(LIBELLES_ROLES);
+  return roles.map(valeur =>
+    `<option value="${valeur}" ${roleSelectionne === valeur ? 'selected' : ''}>${echapperHtml(LIBELLES_ROLES[valeur] || valeur)}</option>`
+  ).join('');
+}
+
+const DESCRIPTION_ROLES = {
+  administrateur: 'Accès total, y compris paramètres, apports de capital et reconstruction du journal.',
+  manager: 'Responsable délégué : tout le travail quotidien, la comptabilité en lecture, le contrôle de caisse et la gestion des comptes gérante/consultant. Ne peut pas toucher aux comptes administrateur ni aux paramètres.',
+  gerante: 'Opérations quotidiennes : ventes, achats, stock, clients, fournisseurs, charges, inventaires.',
+  consultant: 'Lecture seule (comptable externe, audit).',
+};
+
+function afficherDescriptionRole(select){
+  const zone = document.getElementById('descriptionRole');
+  if (zone) zone.textContent = DESCRIPTION_ROLES[select.value] || '';
 }
 
 function ouvrirModalUtilisateur(id){
   const utilisateur = id ? utilisateursCache.find(u => u.id === id) : null;
-  const v = (champ) => utilisateur && utilisateur[champ] ? utilisateur[champ] : '';
-  const optionsRoles = Object.entries(LIBELLES_ROLES).map(([valeur, libelle]) =>
-    `<option value="${valeur}" ${utilisateur?.role === valeur ? 'selected' : ''}>${libelle}</option>`
-  ).join('');
+  const v = (champ) => echapperHtml(utilisateur && utilisateur[champ] ? utilisateur[champ] : '');
+  const roleInitial = utilisateur?.role || (utilisateurConnecte.roles_attribuables || []).slice(-1)[0] || 'gerante';
 
   ouvrirModal(`
     <div class="modal-head">
-      <div><h2>${utilisateur ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur'}</h2><div class="modal-sub">${utilisateur ? utilisateur.nom : ''}</div></div>
+      <div><h2>${utilisateur ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur'}</h2><div class="modal-sub">${utilisateur ? v('nom') : 'Crée l\'accès d\'une personne et donne-lui ses identifiants'}</div></div>
       <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
     </div>
     <form onsubmit="soumettreUtilisateur(event, ${utilisateur ? `'${utilisateur.id}'` : 'null'})">
       <div class="form-grid">
         <div class="form-group full"><label>Nom *</label><input type="text" name="nom" required value="${v('nom')}"></div>
-        <div class="form-group full"><label>Email *</label><input type="email" name="email" required value="${v('email')}"></div>
-        <div class="form-group"><label>Rôle *</label><select name="role" required>${optionsRoles}</select></div>
+        <div class="form-group full"><label>Email (identifiant de connexion) *</label><input type="email" name="email" required value="${v('email')}"></div>
+        <div class="form-group"><label>Rôle *</label><select name="role" required onchange="afficherDescriptionRole(this)">${optionsRolesAttribuables(roleInitial)}</select></div>
         <div class="form-group"><label>Téléphone</label><input type="text" name="telephone" value="${v('telephone')}"></div>
-        ${!utilisateur ? '<div class="form-group full"><label>Mot de passe * (8 caractères min.)</label><input type="password" name="mot_de_passe" minlength="8" required></div>' : ''}
+        <div class="form-group full"><div class="hint" id="descriptionRole">${echapperHtml(DESCRIPTION_ROLES[roleInitial] || '')}</div></div>
+        ${!utilisateur ? champMotDePasse('mot_de_passe', 'Mot de passe *', {
+          generer: true, valeur: genererMotDePasse(),
+          hint: 'Un mot de passe a été généré pour toi (tu peux le changer). Il te sera réaffiché après la création pour que tu le transmettes.',
+        }).replace('type="password"', 'type="text"') : ''}
+        ${!utilisateur ? `<div class="form-group full"><label style="display:flex;gap:8px;align-items:center;font-weight:500;">
+          <input type="checkbox" name="mot_de_passe_provisoire" checked style="width:auto;">
+          La personne devra choisir son propre mot de passe à sa première connexion (recommandé)</label></div>` : ''}
         ${utilisateur ? `<div class="form-group full"><label>Statut</label><select name="actif"><option value="true" ${utilisateur.actif ? 'selected' : ''}>Actif</option><option value="false" ${!utilisateur.actif ? 'selected' : ''}>Désactivé</option></select></div>` : ''}
       </div>
       <div class="modal-actions">
@@ -4955,19 +5130,50 @@ function ouvrirModalUtilisateur(id){
   `);
 }
 
+// Affiche les identifiants à transmettre à la personne (une seule fois :
+// le mot de passe n'est stocké que sous forme chiffrée côté serveur).
+function afficherIdentifiants(titre, email, motDePasse, provisoire){
+  const texte = `JusStock — tes identifiants\nAdresse : ${location.href.split('#')[0]}\nEmail : ${email}\nMot de passe : ${motDePasse}` +
+    (provisoire ? '\n(À la première connexion, il te sera demandé de choisir ton propre mot de passe.)' : '');
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>${echapperHtml(titre)}</h2><div class="modal-sub">Transmets ces identifiants à la personne</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <div class="identifiants-box">
+      Email : <span class="mono">${echapperHtml(email)}</span><br>
+      Mot de passe : <span class="mono">${echapperHtml(motDePasse)}</span>
+    </div>
+    <div class="hint" style="margin-top:10px;">
+      ⚠️ Ce mot de passe ne sera plus jamais réaffiché. Note-le ou copie-le maintenant.
+      ${provisoire ? 'La personne devra le remplacer par son propre mot de passe à sa première connexion.' : ''}
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="btnCopierIdentifiants">Copier les identifiants</button>
+      <button type="button" class="btn btn-accent" onclick="fermerModal()">J'ai noté</button>
+    </div>
+  `);
+  document.getElementById('btnCopierIdentifiants').addEventListener('click', () => copierTexte(texte));
+}
+
 async function soumettreUtilisateur(event, id){
   event.preventDefault();
   const donnees = new FormData(event.target);
   const payload = Object.fromEntries(donnees.entries());
   if (payload.actif !== undefined) payload.actif = payload.actif === 'true';
+  if (!id) payload.mot_de_passe_provisoire = donnees.get('mot_de_passe_provisoire') === 'on';
 
   const bouton = event.target.querySelector('button[type="submit"]');
   bouton.disabled = true;
   try {
-    if (id) await appelApiEcriture(`/utilisateurs/${id}`, 'PUT', payload);
-    else await appelApiEcriture('/utilisateurs', 'POST', payload);
-    afficherToast('Utilisateur enregistré.', 'success');
-    fermerModal();
+    if (id) {
+      await appelApiEcriture(`/utilisateurs/${id}`, 'PUT', payload);
+      afficherToast('Utilisateur enregistré.', 'success');
+      fermerModal();
+    } else {
+      const cree = await appelApiEcriture('/utilisateurs', 'POST', payload);
+      afficherIdentifiants(`Compte créé : ${cree.nom}`, cree.email, cree.mot_de_passe || payload.mot_de_passe, cree.doit_changer_mot_de_passe);
+    }
     chargerUtilisateurs();
   } catch (err) {
     afficherToast(err.message, 'error');
@@ -4976,13 +5182,22 @@ async function soumettreUtilisateur(event, id){
 }
 
 function ouvrirModalMotDePasse(id){
+  const utilisateur = utilisateursCache.find(u => u.id === id);
   ouvrirModal(`
     <div class="modal-head">
-      <div><h2>Réinitialiser le mot de passe</h2></div>
+      <div><h2>Réinitialiser le mot de passe</h2><div class="modal-sub">${echapperHtml(utilisateur?.nom || '')}</div></div>
       <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
     </div>
     <form onsubmit="soumettreMotDePasse(event, '${id}')">
-      <div class="form-group full"><label>Nouveau mot de passe * (8 caractères min.)</label><input type="password" name="mot_de_passe" minlength="8" required></div>
+      <div class="form-grid">
+        ${champMotDePasse('mot_de_passe', 'Nouveau mot de passe *', {
+          generer: true, valeur: genererMotDePasse(),
+          hint: 'Toutes les sessions ouvertes de ce compte seront déconnectées immédiatement.',
+        }).replace('type="password"', 'type="text"')}
+        <div class="form-group full"><label style="display:flex;gap:8px;align-items:center;font-weight:500;">
+          <input type="checkbox" name="mot_de_passe_provisoire" checked style="width:auto;">
+          La personne devra le remplacer à sa prochaine connexion (recommandé)</label></div>
+      </div>
       <div class="modal-actions">
         <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
         <button type="submit" class="btn btn-accent">Réinitialiser</button>
@@ -4997,9 +5212,14 @@ async function soumettreMotDePasse(event, id){
   const bouton = event.target.querySelector('button[type="submit"]');
   bouton.disabled = true;
   try {
-    await appelApiEcriture(`/utilisateurs/${id}/mot-de-passe`, 'POST', { mot_de_passe: donnees.get('mot_de_passe') });
-    afficherToast('Mot de passe réinitialisé.', 'success');
-    fermerModal();
+    const motDePasse = donnees.get('mot_de_passe');
+    const resultat = await appelApiEcriture(`/utilisateurs/${id}/mot-de-passe`, 'POST', {
+      mot_de_passe: motDePasse,
+      mot_de_passe_provisoire: donnees.get('mot_de_passe_provisoire') === 'on',
+    });
+    const utilisateur = utilisateursCache.find(u => u.id === id);
+    afficherIdentifiants('Mot de passe réinitialisé', utilisateur?.email || '', resultat.mot_de_passe || motDePasse, resultat.doit_changer_mot_de_passe);
+    chargerUtilisateurs();
   } catch (err) {
     afficherToast(err.message, 'error');
     bouton.disabled = false;
@@ -5007,7 +5227,8 @@ async function soumettreMotDePasse(event, id){
 }
 
 async function desactiverUtilisateur(id){
-  if (!confirm('Désactiver ce compte ? Il ne pourra plus se connecter.')) return;
+  const utilisateur = utilisateursCache.find(u => u.id === id);
+  if (!confirm(`Désactiver le compte de ${utilisateur?.nom || 'cet utilisateur'} ? Il ne pourra plus se connecter (réactivable via « Modifier »).`)) return;
   try {
     await appelApiEcriture(`/utilisateurs/${id}`, 'DELETE');
     afficherToast('Compte désactivé.', 'success');
@@ -5026,10 +5247,10 @@ async function chargerJournalAudit(){
       <thead><tr><th>Date</th><th>Utilisateur</th><th>Action</th><th>Route</th></tr></thead>
       <tbody>${actions.map(a => `
         <tr>
-          <td class="mono">${new Date(a.created_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</td>
-          <td>${a.utilisateur_nom || '—'}</td>
-          <td><span class="badge neutral">${a.action}</span></td>
-          <td class="cell-sub mono">${a.entite}</td>
+          <td class="mono">${formaterDateHeure(a.created_at)}</td>
+          <td>${echapperHtml(a.utilisateur_nom || '—')}${a.utilisateur_role ? `<div class="cell-sub">${echapperHtml(LIBELLES_ROLES[a.utilisateur_role] || a.utilisateur_role)}</div>` : ''}</td>
+          <td><span class="badge neutral">${echapperHtml(a.action)}</span></td>
+          <td class="cell-sub mono">${echapperHtml(a.entite)}</td>
         </tr>`).join('')}</tbody>
     </table></div>`;
   } catch (err) {
@@ -5059,14 +5280,14 @@ async function ouvrirControleTresorerie(){
     const motif=prompt('Motif de l’écart (ex. vol, achat non enregistré, retrait, inconnu) :')||null;
     const notes=prompt('Notes complémentaires (optionnel) :')||null;
     const result=await appelApiEcriture('/comptabilite/reconciliations-tresorerie','POST',{compte:'571',solde_physique:n,motif,notes});
-    alert('Rapprochement enregistré.\\n\\nThéorique : '+Number(result.solde_theorique).toLocaleString('fr-FR')+' FC\\nRéel : '+Number(result.solde_physique).toLocaleString('fr-FR')+' FC\\nÉcart : '+Number(result.ecart).toLocaleString('fr-FR')+' FC\\nStatut : '+result.statut+'\\n\\nAucune écriture comptable n’a été créée automatiquement.');
+    alert('Rapprochement enregistré.\n\nThéorique : '+Number(result.solde_theorique).toLocaleString('fr-FR')+' FC\nRéel : '+Number(result.solde_physique).toLocaleString('fr-FR')+' FC\nÉcart : '+Number(result.ecart).toLocaleString('fr-FR')+' FC\nStatut : '+result.statut+'\n\nAucune écriture comptable n’a été créée automatiquement.');
   }catch(err){alert(err.message||'Impossible d’enregistrer le rapprochement.');}
 }
 
 async function ouvrirControleIntegrite(){
   try{
     const r=await appelApi('/comptabilite/controle-integrite');
-    alert('CONTRÔLE D’INTÉGRITÉ\\n\\nCaisse théorique : '+Number(r.caisse.solde_theorique).toLocaleString('fr-FR')+' FC\\nStock journal 311 : '+Number(r.stock.valeur_journal_311).toLocaleString('fr-FR')+' FC\\nStock produits : '+Number(r.stock.valeur_produits).toLocaleString('fr-FR')+' FC\\nÉcart stock : '+Number(r.stock.ecart).toLocaleString('fr-FR')+' FC\\nInventaires sans référence : '+r.inventaires.ecritures_orphelines+'\\nAchats annulés encore journalisés : '+r.achats_annules.encore_journalises+'\\n\\n'+(r.alerte?'⚠️ ANOMALIES À EXAMINER':'✅ Aucun de ces contrôles ne signale d’anomalie.'));
+    alert('CONTRÔLE D’INTÉGRITÉ\n\nCaisse théorique : '+Number(r.caisse.solde_theorique).toLocaleString('fr-FR')+' FC\nStock journal 311 : '+Number(r.stock.valeur_journal_311).toLocaleString('fr-FR')+' FC\nStock produits : '+Number(r.stock.valeur_produits).toLocaleString('fr-FR')+' FC\nÉcart stock : '+Number(r.stock.ecart).toLocaleString('fr-FR')+' FC\nÉcritures d’inventaire orphelines : '+r.inventaires.ecritures_orphelines+'\nCorrections manuelles de stock (info) : '+(r.inventaires.corrections_manuelles ?? '—')+'\nAchats annulés encore journalisés : '+r.achats_annules.encore_journalises+'\n\n'+(r.alerte?'⚠️ ANOMALIES À EXAMINER':'✅ Aucun de ces contrôles ne signale d’anomalie.'));
   }catch(err){alert(err.message||'Impossible d’exécuter le contrôle.');}
 }
 
