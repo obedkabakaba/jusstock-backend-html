@@ -642,7 +642,7 @@
           <div><span class="subtitle" id="resumeStock"></span></div>
           <button class="btn btn-accent action-ecriture" onclick="ouvrirModalCorrection()">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M2 14h4M10 8h4M18 12h4"/></svg>
-            Corriger un stock
+            Stock d'ouverture
           </button>
         </div>
 
@@ -1348,7 +1348,7 @@ function construireListeProduits(produits){
   el.innerHTML = produits.map((p, i) => `
     <li>
       <span class="rank">${i + 1}</span>
-      <span class="name">${p.nom}</span>
+      <span class="name">${echapperHtml(p.nom)}</span>
       <span class="value">${formatMontant(p.montant_total)}</span>
     </li>
   `).join('');
@@ -1363,7 +1363,7 @@ function construireListeAlertes(alertes){
   }
   el.innerHTML = alertes.map(p => `
     <li>
-      <span class="name">${p.nom} ${badgeNiveauStock(p.stock_bouteilles, p.stock_min_bouteilles)}</span>
+      <span class="name">${echapperHtml(p.nom)} ${badgeNiveauStock(p.stock_bouteilles, p.stock_min_bouteilles)}</span>
       <span class="value danger">${formatNombre(p.stock_bouteilles)} / ${formatNombre(p.stock_min_bouteilles)} bout.</span>
     </li>
   `).join('');
@@ -1479,7 +1479,7 @@ async function chargerProduits(recherche){
     produitsCache = await appelApi(chemin);
     dessinerTableProduits(produitsCache);
   } catch (err) {
-    corps.innerHTML = `<tr><td colspan="6" class="empty-state">Impossible de charger les produits (${err.message}).</td></tr>`;
+    corps.innerHTML = `<tr><td colspan="6" class="empty-state">Impossible de charger les produits (${echapperHtml(err.message)}).</td></tr>`;
   }
 }
 
@@ -1499,7 +1499,7 @@ function dessinerTableProduits(produits){
   corps.innerHTML = produits.map(p => `
     <tr class="produit-detail-clickable" onclick="ouvrirDetailProduit('${p.id}')">
       <td>
-        <strong>${p.nom}</strong>
+        <strong>${echapperHtml(p.nom)}</strong>
         <div class="cell-sub">${[p.categorie, p.marque, p.contenance].filter(Boolean).join(' · ') || '—'}</div>
       </td>
       <td>
@@ -1525,7 +1525,7 @@ function dessinerTableProduits(produits){
 
 function ouvrirModalProduit(id){
   const produit = id ? produitsCache.find(p => p.id === id) : null;
-  const v = (champ, defaut) => produit && produit[champ] !== null && produit[champ] !== undefined ? produit[champ] : (defaut !== undefined ? defaut : '');
+  const v = (champ, defaut) => echapperHtml(produit && produit[champ] !== null && produit[champ] !== undefined ? produit[champ] : (defaut !== undefined ? defaut : ''));
 
   ouvrirModal(`
     <div class="modal-head">
@@ -1734,7 +1734,7 @@ async function chargerStock(){
     document.getElementById('resumeStock').textContent =
       `${formatNombre(totalBouteilles)} bouteille(s) au total · ${formatMontant(totalValeur)} immobilisés · ${totalAlertes} alerte(s) de stock faible`;
   } catch (err) {
-    corps.innerHTML = `<tr><td colspan="6" class="empty-state">Impossible de charger le stock (${err.message}).</td></tr>`;
+    corps.innerHTML = `<tr><td colspan="6" class="empty-state">Impossible de charger le stock (${echapperHtml(err.message)}).</td></tr>`;
   }
 }
 
@@ -1746,7 +1746,7 @@ function dessinerTableStock(produits){
   }
   corps.innerHTML = produits.map(p => `
     <tr>
-      <td><strong>${p.nom}</strong></td>
+      <td><strong>${echapperHtml(p.nom)}</strong></td>
       <td><span class="unit-chip">${svgIcon('bottle')}${formatNombre(p.stock_bouteilles)} bout.<span class="sep">·</span>${formatNombre(p.stock_paquets_complets)} paq.</span></td>
       <td class="mono">${formatMontant(p.prix_achat_moyen)}</td>
       <td class="mono">${formatMontant(p.valeur_stock)}</td>
@@ -1760,7 +1760,7 @@ function remplirSelectProduitsMouvements(produits){
   const select = document.getElementById('selectProduitMouvements');
   const valeurActuelle = select.value;
   select.innerHTML = '<option value="">— Choisir un produit —</option>' +
-    produits.map(p => `<option value="${p.id}">${p.nom}</option>`).join('');
+    produits.map(p => `<option value="${p.id}">${echapperHtml(p.nom)}</option>`).join('');
   select.value = valeurActuelle;
 }
 
@@ -1790,14 +1790,14 @@ async function chargerMouvements(produitId){
                 <td>${LIBELLES_TYPE[m.type_mouvement] || m.type_mouvement}</td>
                 <td class="mono" style="color:${m.quantite_bouteilles < 0 ? 'var(--danger)' : 'var(--fresh)'}">${m.quantite_bouteilles > 0 ? '+' : ''}${formatNombre(m.quantite_bouteilles)}</td>
                 <td class="mono">${formatNombre(m.stock_apres)}</td>
-                <td class="cell-sub">${m.notes || '—'}</td>
+                <td class="cell-sub">${echapperHtml(m.notes || '—')}</td>
               </tr>
             `).join('')}
           </tbody>
         </table>
       </div>`;
   } catch (err) {
-    wrap.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+    wrap.innerHTML = `<div class="empty-state">Erreur : ${echapperHtml(err.message)}</div>`;
   }
 }
 
@@ -1811,14 +1811,19 @@ async function ouvrirModalCorrection(){
   }
 
   const options = produitsFrais.length
-    ? produitsFrais.map(p => `<option value="${p.id}" data-stock="${p.stock_bouteilles}">${p.nom} (stock actuel : ${formatNombre(p.stock_bouteilles)} bout.)</option>`).join('')
+    ? produitsFrais
+        // Le stock d'ouverture ne concerne que les produits sans coût moyen :
+        // pour les autres, une correction de quantité = inventaire physique.
+        .filter(p => !(Number(p.prix_achat_moyen) > 0))
+        .map(p => `<option value="${p.id}" data-stock="${p.stock_bouteilles}">${echapperHtml(p.nom)} (stock actuel : ${formatNombre(p.stock_bouteilles)} bout.)</option>`).join('')
+      || '<option value="">Tous les produits ont déjà un coût moyen</option>'
     : '<option value="">Crée d\'abord un produit</option>';
 
   ouvrirModal(`
     <div class="modal-head">
       <div>
-        <h2>Corriger un stock</h2>
-        <div class="modal-sub">À utiliser après un inventaire physique, pour ajuster un écart constaté.</div>
+        <h2>Stock d'ouverture</h2>
+        <div class="modal-sub">Premier remplissage d'un produit déjà possédé avant JusStock (quantité + coût). Pour corriger un écart constaté en magasin, utilise « Inventaire physique » plus bas dans cette page : chaque comptage y est historisé.</div>
       </div>
       <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
     </div>
@@ -1832,23 +1837,23 @@ async function ouvrirModalCorrection(){
           </select>
         </div>
         <div class="form-group full">
-          <label>Nouveau stock réel (en bouteilles) *</label>
+          <label>Stock réel (en bouteilles) *</label>
           <input type="number" name="nouveau_stock_bouteilles" min="0" required>
           <div class="hint">Saisis le nombre total de bouteilles réellement compté, pas l'écart.</div>
         </div>
         <div class="form-group full">
-          <label>Coût unitaire par bouteille (FC) — optionnel</label>
-          <input type="number" name="nouveau_prix_achat_moyen" min="0" step="0.01" placeholder="Laisse vide pour une correction normale">
-          <div class="hint">Ne remplis ce champ QUE pour un "stock d'ouverture" (premier remplissage du système avec un stock déjà possédé). Ça fixe le coût moyen (CMP) du produit sans passer par un faux achat. Pour une correction d'inventaire normale, laisse vide.</div>
+          <label>Coût unitaire par bouteille (FC) *</label>
+          <input type="number" name="nouveau_prix_achat_moyen" min="0" step="0.01" required>
+          <div class="hint">Fixe le coût moyen (CMP) du produit sans passer par un faux achat. La valeur du stock est enregistrée comme un apport en capital.</div>
         </div>
         <div class="form-group full">
           <label>Notes</label>
-          <textarea name="notes" placeholder="Ex : Inventaire physique du 09/07/2026"></textarea>
+          <textarea name="notes" placeholder="Ex : Stock existant avant JusStock"></textarea>
         </div>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
-        <button type="submit" class="btn btn-accent">Enregistrer la correction</button>
+        <button type="submit" class="btn btn-accent">Enregistrer le stock d'ouverture</button>
       </div>
     </form>
   `);
@@ -1875,7 +1880,7 @@ async function soumettreCorrection(event){
 
   try {
     const resultat = await appelApiEcriture(`/stock/${produitId}/correction`, 'POST', payload);
-    afficherToast(`Correction enregistrée (écart : ${resultat.ecart > 0 ? '+' : ''}${resultat.ecart} bouteille(s)).`, 'success');
+    afficherToast(`Stock d'ouverture enregistré (${resultat.ecart > 0 ? '+' : ''}${resultat.ecart} bouteille(s)).`, 'success');
     fermerModal();
     chargerStock();
   } catch (err) {
@@ -1898,7 +1903,7 @@ async function chargerAchats(){
     document.getElementById('resumeAchats').textContent = `${achats.length} achat(s) enregistré(s)`;
     dessinerTableAchats(achats);
   } catch (err) {
-    corps.innerHTML = `<tr><td colspan="7" class="empty-state">Impossible de charger les achats (${err.message}).</td></tr>`;
+    corps.innerHTML = `<tr><td colspan="7" class="empty-state">Impossible de charger les achats (${echapperHtml(err.message)}).</td></tr>`;
   }
 }
 
@@ -1914,9 +1919,9 @@ function dessinerTableAchats(achats){
     else if (Number(a.montant_paye) > 0) statut = '<span class="badge info">Partiel</span>';
     return `
       <tr>
-        <td class="mono">${a.reference}</td>
+        <td class="mono">${echapperHtml(a.reference)}</td>
         <td class="mono">${new Date(a.date_achat).toLocaleDateString('fr-FR')}</td>
-        <td>${a.fournisseur_nom || '—'}</td>
+        <td>${echapperHtml(a.fournisseur_nom || '—')}</td>
         <td class="mono">${formatMontant(a.cout_total)}</td>
         <td class="mono">${formatMontant(a.montant_paye)}</td>
         <td>${statut}</td>
@@ -1934,7 +1939,7 @@ async function voirDetailAchat(id){
     const achat = await appelApi(`/achats/${id}`);
     ouvrirModal(`
       <div class="modal-head">
-        <div><h2>Achat ${achat.reference}</h2><div class="modal-sub">${new Date(achat.date_achat).toLocaleDateString('fr-FR')} — ${achat.fournisseur_nom || 'Fournisseur non renseigné'}</div></div>
+        <div><h2>Achat ${echapperHtml(achat.reference)}</h2><div class="modal-sub">${new Date(achat.date_achat).toLocaleDateString('fr-FR')} — ${echapperHtml(achat.fournisseur_nom || 'Fournisseur non renseigné')}</div></div>
         <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
       </div>
       <div class="detail-grid">
@@ -1949,7 +1954,7 @@ async function voirDetailAchat(id){
           <tbody>
             ${achat.lignes.map(l => `
               <tr>
-                <td>${l.produit_nom}</td>
+                <td>${echapperHtml(l.produit_nom)}</td>
                 <td class="mono">${formatNombre(l.nombre_paquets)}</td>
                 <td class="mono">${formatNombre(l.nombre_bouteilles_isolees)}</td>
                 <td class="mono">${formatMontant(l.cout_par_paquet)}</td>
@@ -1959,7 +1964,7 @@ async function voirDetailAchat(id){
           </tbody>
         </table>
       </div>
-      ${achat.notes ? `<div class="hint" style="margin-top:12px;">Notes : ${achat.notes}</div>` : ''}
+      ${achat.notes ? `<div class="hint" style="margin-top:12px;">Notes : ${echapperHtml(achat.notes)}</div>` : ''}
     `);
   } catch (err) {
     afficherToast(err.message, 'error');
@@ -2003,7 +2008,7 @@ function optionsProduitsHtml(produitSelectionne){
        data-prix-detail="${p.prix_detail_conseille || ''}"
        data-prix-gros="${p.prix_gros_conseille || ''}"
        data-bonus-seuil="${p.bonus_seuil_paquets || ''}"
-       data-bonus-offert="${p.bonus_offert_paquets || ''}">${p.nom}</option>`
+       data-bonus-offert="${p.bonus_offert_paquets || ''}">${echapperHtml(p.nom)}</option>`
   ).join('');
 }
 
@@ -2128,7 +2133,7 @@ function construireFormAchat(preselectionFournisseurId, achatExistant){
   const fournisseurSelectionne = modeEdition ? achatExistant.fournisseur_id : preselectionFournisseurId;
 
   const optionsFournisseurs = fournisseursPourFormulaire.map(f =>
-    `<option value="${f.id}" ${f.id === fournisseurSelectionne ? 'selected' : ''}>${f.nom}</option>`
+    `<option value="${f.id}" ${f.id === fournisseurSelectionne ? 'selected' : ''}>${echapperHtml(f.nom)}</option>`
   ).join('');
 
   const dateParDefaut = modeEdition ? new Date(achatExistant.date_achat).toISOString().slice(0,10) : new Date().toISOString().slice(0,10);
@@ -2142,7 +2147,7 @@ function construireFormAchat(preselectionFournisseurId, achatExistant){
   ouvrirModal(`
     <div class="modal-head">
       <div>
-        <h2>${modeEdition ? `Modifier l'achat ${achatExistant.reference}` : 'Nouvel achat'}</h2>
+        <h2>${modeEdition ? `Modifier l'achat ${echapperHtml(achatExistant.reference)}` : 'Nouvel achat'}</h2>
         <div class="modal-sub">${modeEdition ? "La référence ne change pas. Le stock de l'ancienne version est retiré puis les nouvelles lignes réappliquées." : 'Le coût par paquet/bouteille et le CMP du produit sont recalculés automatiquement à partir du "Coût de cette ligne".'}</div>
       </div>
       <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
@@ -2214,7 +2219,7 @@ function construireFormAchat(preselectionFournisseurId, achatExistant){
 
       <div class="form-group full" style="margin-top:14px;">
         <label>Notes</label>
-        <textarea name="notes">${modeEdition ? (achatExistant.notes || '') : ''}</textarea>
+        <textarea name="notes">${modeEdition ? echapperHtml(achatExistant.notes || '') : ''}</textarea>
       </div>
 
       <div class="modal-actions">
@@ -2356,11 +2361,11 @@ async function chargerVentes(){
     document.getElementById('resumeVentes').textContent = `${ventes.length} vente(s) enregistrée(s)`;
     dessinerTableVentes(ventes);
   } catch (err) {
-    corps.innerHTML = `<tr><td colspan="7" class="empty-state">Impossible de charger les ventes (${err.message}).</td></tr>`;
+    corps.innerHTML = `<tr><td colspan="7" class="empty-state">Impossible de charger les ventes (${echapperHtml(err.message)}).</td></tr>`;
   }
 }
 
-const LIBELLES_PAIEMENT = { especes: 'Espèces', mobile_money: 'Mobile Money', carte: 'Carte', credit: 'Crédit' };
+const LIBELLES_PAIEMENT = { especes: 'Espèces', banque: 'Banque', mobile_money: 'Mobile Money', carte: 'Carte', credit: 'Crédit' };
 
 function dessinerTableVentes(ventes){
   const corps = document.getElementById('corpsTableVentes');
@@ -2370,9 +2375,9 @@ function dessinerTableVentes(ventes){
   }
   corps.innerHTML = ventes.map(v => `
     <tr>
-      <td class="mono">${v.reference}</td>
+      <td class="mono">${echapperHtml(v.reference)}</td>
       <td class="mono">${new Date(v.date_vente).toLocaleDateString('fr-FR')}</td>
-      <td>${v.client_nom || 'Client de passage'}</td>
+      <td>${echapperHtml(v.client_nom || 'Client de passage')}</td>
       <td>${v.mode_paiement === 'credit' ? '<span class="badge alerte">Crédit</span>' : `<span class="badge neutral">${LIBELLES_PAIEMENT[v.mode_paiement] || v.mode_paiement}</span>`}</td>
       <td class="mono">${formatMontant(v.total)}</td>
       <td class="mono" style="color:var(--fresh)">${formatMontant(v.benefice_total)}</td>
@@ -2390,7 +2395,7 @@ async function voirDetailVente(id){
     const vente = await appelApi(`/ventes/${id}`);
     ouvrirModal(`
       <div class="modal-head">
-        <div><h2>Vente ${vente.reference}</h2><div class="modal-sub">${new Date(vente.date_vente).toLocaleDateString('fr-FR')} — ${vente.client_nom || 'Client de passage'}</div></div>
+        <div><h2>Vente ${echapperHtml(vente.reference)}</h2><div class="modal-sub">${new Date(vente.date_vente).toLocaleDateString('fr-FR')} — ${echapperHtml(vente.client_nom || 'Client de passage')}</div></div>
         <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
       </div>
       <div class="detail-grid">
@@ -2405,7 +2410,7 @@ async function voirDetailVente(id){
           <tbody>
             ${vente.lignes.map(l => `
               <tr>
-                <td>${l.produit_nom}</td>
+                <td>${echapperHtml(l.produit_nom)}</td>
                 <td>${l.type_vente === 'gros' ? 'Gros' : 'Détail'}</td>
                 <td class="mono">${formatNombre(l.quantite)}</td>
                 <td class="mono">${formatNombre(l.bonus_quantite)}</td>
@@ -2416,7 +2421,7 @@ async function voirDetailVente(id){
           </tbody>
         </table>
       </div>
-      ${vente.notes ? `<div class="hint" style="margin-top:12px;">Notes : ${vente.notes}</div>` : ''}
+      ${vente.notes ? `<div class="hint" style="margin-top:12px;">Notes : ${echapperHtml(vente.notes)}</div>` : ''}
     `);
   } catch (err) {
     afficherToast(err.message, 'error');
@@ -2536,7 +2541,7 @@ function construireFormVente(preselectionClientId, venteExistante){
   const clientSelectionne = modeEdition ? venteExistante.client_id : preselectionClientId;
 
   const optionsClients = clientsPourFormulaire.map(c =>
-    `<option value="${c.id}" ${c.id === clientSelectionne ? 'selected' : ''}>${c.nom}${c.telephone ? ' — ' + c.telephone : ''}</option>`
+    `<option value="${c.id}" ${c.id === clientSelectionne ? 'selected' : ''}>${echapperHtml(c.nom)}${c.telephone ? ' — ' + echapperHtml(c.telephone) : ''}</option>`
   ).join('');
 
   const dateParDefaut = modeEdition ? new Date(venteExistante.date_vente) : new Date();
@@ -2550,7 +2555,7 @@ function construireFormVente(preselectionClientId, venteExistante){
   ouvrirModal(`
     <div class="modal-head">
       <div>
-        <h2>${modeEdition ? `Modifier la vente ${venteExistante.reference}` : 'Nouvelle vente'}</h2>
+        <h2>${modeEdition ? `Modifier la vente ${echapperHtml(venteExistante.reference)}` : 'Nouvelle vente'}</h2>
         <div class="modal-sub">${modeEdition ? "La référence ne change pas. L'ancien stock et les anciennes écritures sont annulés puis recalculés avec les nouvelles valeurs." : "Le bonus sort du stock mais n'entre pas dans le chiffre d'affaires."}</div>
       </div>
       <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
@@ -2571,6 +2576,7 @@ function construireFormVente(preselectionClientId, venteExistante){
           <label>Mode de paiement *</label>
           <select name="mode_paiement" required>
             <option value="especes" ${modeEdition && venteExistante.mode_paiement === 'especes' ? 'selected' : ''}>Espèces</option>
+            <option value="banque" ${modeEdition && venteExistante.mode_paiement === 'banque' ? 'selected' : ''}>Banque</option>
             <option value="mobile_money" ${modeEdition && venteExistante.mode_paiement === 'mobile_money' ? 'selected' : ''}>Mobile Money</option>
             <option value="carte" ${modeEdition && venteExistante.mode_paiement === 'carte' ? 'selected' : ''}>Carte</option>
             <option value="credit" ${modeEdition && venteExistante.mode_paiement === 'credit' ? 'selected' : ''}>Crédit (client enregistré uniquement)</option>
@@ -2599,7 +2605,7 @@ function construireFormVente(preselectionClientId, venteExistante){
 
       <div class="form-group full" style="margin-top:14px;">
         <label>Notes</label>
-        <textarea name="notes">${modeEdition ? (venteExistante.notes || '') : ''}</textarea>
+        <textarea name="notes">${modeEdition ? echapperHtml(venteExistante.notes || '') : ''}</textarea>
       </div>
 
       <div class="form-summary">
@@ -2756,7 +2762,7 @@ async function chargerClients(recherche){
     dessinerTableClients(clientsCache);
     chargerTopClients();
   } catch (err) {
-    corps.innerHTML = `<tr><td colspan="5" class="empty-state">Impossible de charger les clients (${err.message}).</td></tr>`;
+    corps.innerHTML = `<tr><td colspan="5" class="empty-state">Impossible de charger les clients (${echapperHtml(err.message)}).</td></tr>`;
   }
 }
 
@@ -2774,7 +2780,7 @@ function dessinerTableClients(clients){
   }
   corps.innerHTML = clients.map(c => `
     <tr>
-      <td><strong>${c.nom}</strong><div class="cell-sub">${c.telephone || '—'}</div></td>
+      <td><strong>${echapperHtml(c.nom)}</strong><div class="cell-sub">${echapperHtml(c.telephone || '—')}</div></td>
       <td class="mono">${formatNombre(c.nombre_visites)}</td>
       <td class="mono">${formatMontant(c.montant_total_depense)}</td>
       <td class="mono" style="${Number(c.dette_actuelle) > 0 ? 'color:var(--danger)' : ''}">${formatMontant(c.dette_actuelle)}</td>
@@ -2793,16 +2799,16 @@ async function chargerTopClients(){
     const top = await appelApi('/clients/classement?limite=5');
     if (top.length === 0) { el.innerHTML = '<div class="empty-row">Pas encore assez de ventes pour établir un classement.</div>'; return; }
     el.innerHTML = top.map((c, i) => `
-      <li><span class="rank">${i + 1}</span><span class="name">${c.nom}</span><span class="value">${formatMontant(c.montant_total_depense)}</span></li>
+      <li><span class="rank">${i + 1}</span><span class="name">${echapperHtml(c.nom)}</span><span class="value">${formatMontant(c.montant_total_depense)}</span></li>
     `).join('');
   } catch (err) {
-    el.innerHTML = `<div class="empty-row">Erreur : ${err.message}</div>`;
+    el.innerHTML = `<div class="empty-row">Erreur : ${echapperHtml(err.message)}</div>`;
   }
 }
 
 function ouvrirModalClientPage(id){
   const client = id ? clientsCache.find(c => c.id === id) : null;
-  const v = (champ) => client && client[champ] ? client[champ] : '';
+  const v = (champ) => echapperHtml(client && client[champ] ? client[champ] : '');
 
   ouvrirModal(`
     <div class="modal-head">
@@ -2859,7 +2865,7 @@ async function voirDetailClientPage(id){
     const client = await appelApi(`/clients/${id}`);
     ouvrirModal(`
       <div class="modal-head">
-        <div><h2>${client.nom}</h2><div class="modal-sub">${client.telephone || 'Téléphone non renseigné'} — ${client.adresse || 'Adresse non renseignée'}</div></div>
+        <div><h2>${echapperHtml(client.nom)}</h2><div class="modal-sub">${echapperHtml(client.telephone || 'Téléphone non renseigné')} — ${echapperHtml(client.adresse || 'Adresse non renseignée')}</div></div>
         <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
       </div>
       <div class="detail-grid">
@@ -2874,7 +2880,7 @@ async function voirDetailClientPage(id){
           <thead><tr><th>Référence</th><th>Date</th><th>Paiement</th><th>Total</th></tr></thead>
           <tbody>
             ${client.historique_ventes.length === 0 ? '<tr><td colspan="4" class="empty-state">Aucune vente.</td></tr>' :
-              client.historique_ventes.map(v => `<tr><td class="mono">${v.reference}</td><td class="mono">${new Date(v.date_vente).toLocaleDateString('fr-FR')}</td><td>${LIBELLES_PAIEMENT[v.mode_paiement] || v.mode_paiement}</td><td class="mono">${formatMontant(v.total)}</td></tr>`).join('')}
+              client.historique_ventes.map(v => `<tr><td class="mono">${echapperHtml(v.reference)}</td><td class="mono">${new Date(v.date_vente).toLocaleDateString('fr-FR')}</td><td>${LIBELLES_PAIEMENT[v.mode_paiement] || v.mode_paiement}</td><td class="mono">${formatMontant(v.total)}</td></tr>`).join('')}
           </tbody>
         </table>
       </div>
@@ -2906,6 +2912,7 @@ function ouvrirModalPaiementClient(clientId, detteActuelle){
         <div class="form-group"><label>Mode de paiement *</label>
           <select name="mode_paiement" required>
             <option value="especes">Espèces</option>
+            <option value="banque">Banque</option>
             <option value="mobile_money">Mobile Money</option>
             <option value="carte">Carte</option>
           </select>
@@ -2951,7 +2958,7 @@ async function chargerFournisseurs(recherche){
     fournisseursListCache = await appelApi(chemin);
     dessinerTableFournisseurs(fournisseursListCache);
   } catch (err) {
-    corps.innerHTML = `<tr><td colspan="5" class="empty-state">Impossible de charger les fournisseurs (${err.message}).</td></tr>`;
+    corps.innerHTML = `<tr><td colspan="5" class="empty-state">Impossible de charger les fournisseurs (${echapperHtml(err.message)}).</td></tr>`;
   }
 }
 
@@ -2969,7 +2976,7 @@ function dessinerTableFournisseurs(fournisseurs){
   }
   corps.innerHTML = fournisseurs.map(f => `
     <tr>
-      <td><strong>${f.nom}</strong><div class="cell-sub">${f.telephone || '—'}</div></td>
+      <td><strong>${echapperHtml(f.nom)}</strong><div class="cell-sub">${echapperHtml(f.telephone || '—')}</div></td>
       <td class="mono">${formatNombre(f.nombre_achats)}</td>
       <td class="mono">${formatMontant(f.montant_total_achete)}</td>
       <td class="mono" style="${Number(f.dette_actuelle) > 0 ? 'color:var(--danger)' : ''}">${formatMontant(f.dette_actuelle)}</td>
@@ -2984,7 +2991,7 @@ function dessinerTableFournisseurs(fournisseurs){
 
 function ouvrirModalFournisseurPage(id){
   const fournisseur = id ? fournisseursListCache.find(f => f.id === id) : null;
-  const v = (champ) => fournisseur && fournisseur[champ] ? fournisseur[champ] : '';
+  const v = (champ) => echapperHtml(fournisseur && fournisseur[champ] ? fournisseur[champ] : '');
 
   ouvrirModal(`
     <div class="modal-head">
@@ -3040,7 +3047,7 @@ async function voirDetailFournisseurPage(id){
     const fournisseur = await appelApi(`/fournisseurs/${id}`);
     ouvrirModal(`
       <div class="modal-head">
-        <div><h2>${fournisseur.nom}</h2><div class="modal-sub">${fournisseur.telephone || 'Téléphone non renseigné'}</div></div>
+        <div><h2>${echapperHtml(fournisseur.nom)}</h2><div class="modal-sub">${echapperHtml(fournisseur.telephone || 'Téléphone non renseigné')}</div></div>
         <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
       </div>
       <div class="detail-grid">
@@ -3054,7 +3061,7 @@ async function voirDetailFournisseurPage(id){
           <thead><tr><th>Référence</th><th>Date</th><th>Coût total</th><th>Payé</th></tr></thead>
           <tbody>
             ${fournisseur.historique_achats.length === 0 ? '<tr><td colspan="4" class="empty-state">Aucun achat.</td></tr>' :
-              fournisseur.historique_achats.map(a => `<tr><td class="mono">${a.reference}</td><td class="mono">${new Date(a.date_achat).toLocaleDateString('fr-FR')}</td><td class="mono">${formatMontant(a.cout_total)}</td><td class="mono">${formatMontant(a.montant_paye)}</td></tr>`).join('')}
+              fournisseur.historique_achats.map(a => `<tr><td class="mono">${echapperHtml(a.reference)}</td><td class="mono">${new Date(a.date_achat).toLocaleDateString('fr-FR')}</td><td class="mono">${formatMontant(a.cout_total)}</td><td class="mono">${formatMontant(a.montant_paye)}</td></tr>`).join('')}
           </tbody>
         </table>
       </div>
@@ -3086,6 +3093,7 @@ function ouvrirModalPaiementFournisseur(fournisseurId, detteActuelle){
         <div class="form-group"><label>Mode de paiement *</label>
           <select name="mode_paiement" required>
             <option value="especes">Espèces</option>
+            <option value="banque">Banque</option>
             <option value="mobile_money">Mobile Money</option>
             <option value="carte">Carte</option>
           </select>
@@ -3130,7 +3138,7 @@ async function chargerCharges(){
     document.getElementById('resumeCharges').textContent = `${charges.length} charge(s) — total ${formatMontant(total)}`;
     dessinerTableCharges(charges);
   } catch (err) {
-    corps.innerHTML = `<tr><td colspan="6" class="empty-state">Impossible de charger les charges (${err.message}).</td></tr>`;
+    corps.innerHTML = `<tr><td colspan="6" class="empty-state">Impossible de charger les charges (${echapperHtml(err.message)}).</td></tr>`;
   }
 }
 
@@ -3143,8 +3151,8 @@ function dessinerTableCharges(charges){
   corps.innerHTML = charges.map(c => `
     <tr>
       <td class="mono">${new Date(c.date_charge).toLocaleDateString('fr-FR')}</td>
-      <td>${c.categorie}</td>
-      <td class="cell-sub">${c.description || '—'}</td>
+      <td>${echapperHtml(c.categorie)}</td>
+      <td class="cell-sub">${echapperHtml(c.description || '—')}</td>
       <td class="mono">${formatMontant(c.montant)}</td>
       <td><span class="badge neutral">${LIBELLES_PAIEMENT[c.mode_paiement] || c.mode_paiement}</span></td>
       <td class="cell-actions"><button class="icon-btn danger action-ecriture" title="Supprimer" onclick="supprimerCharge('${c.id}')">${svgIcon('trash')}</button></td>
@@ -3171,6 +3179,7 @@ function ouvrirModalCharge(){
           <label>Mode de paiement *</label>
           <select name="mode_paiement" required>
             <option value="especes">Espèces</option>
+            <option value="banque">Banque</option>
             <option value="mobile_money">Mobile Money</option>
             <option value="carte">Carte</option>
           </select>
@@ -3312,7 +3321,7 @@ async function rafraichirCompta(){
     else if (ongletComptaActif === 'tresorerie') await afficherTresorerie(du, au, contenu);
     else if (ongletComptaActif === 'grandlivre') await afficherGrandLivre(du, au, contenu);
   } catch (err) {
-    contenu.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+    contenu.innerHTML = `<div class="empty-state">Erreur : ${echapperHtml(err.message)}</div>`;
   }
 }
 
@@ -3324,10 +3333,10 @@ async function afficherJournal(du, au, contenu){
     <tbody>${lignes.map(l => `
       <tr>
         <td class="mono">${new Date(l.date_ecriture).toLocaleDateString('fr-FR')}</td>
-        <td>${l.compte_code} — ${l.compte_nom}</td>
+        <td>${l.compte_code} — ${echapperHtml(l.compte_nom)}</td>
         <td>${l.sens === 'debit' ? 'Débit' : 'Crédit'}</td>
         <td class="mono">${formatMontant(l.montant)}</td>
-        <td class="cell-sub">${l.libelle}</td>
+        <td class="cell-sub">${echapperHtml(l.libelle)}</td>
       </tr>`).join('')}</tbody>
   </table></div></div>`;
 }
@@ -3340,7 +3349,7 @@ async function afficherBalance(du, au, contenu){
     <thead><tr><th>Compte</th><th>Type</th><th>Total débit</th><th>Total crédit</th><th>Solde</th></tr></thead>
     <tbody>${comptes.map(c => `
       <tr>
-        <td>${c.code} — ${c.nom}</td>
+        <td>${c.code} — ${echapperHtml(c.nom)}</td>
         <td class="cell-sub">${c.type}</td>
         <td class="mono">${formatMontant(c.total_debit)}</td>
         <td class="mono">${formatMontant(c.total_credit)}</td>
@@ -3358,8 +3367,8 @@ async function afficherResultat(du, au, contenu){
       <div class="kpi-card"><div class="kpi-label">Résultat net</div><div class="kpi-value" style="color:${r.resultat_net >= 0 ? 'var(--fresh)' : 'var(--danger)'}">${formatMontant(r.resultat_net)}</div></div>
     </div>
     <div class="panel-grid">
-      <div class="panel"><h3>Produits</h3><div class="table-scroll"><table class="data-table"><tbody>${r.produits.map(p => `<tr><td>${p.nom}</td><td class="mono">${formatMontant(p.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucun</td></tr>'}</tbody></table></div></div>
-      <div class="panel"><h3>Charges</h3><div class="table-scroll"><table class="data-table"><tbody>${r.charges.map(c => `<tr><td>${c.nom}</td><td class="mono">${formatMontant(c.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucune</td></tr>'}</tbody></table></div></div>
+      <div class="panel"><h3>Produits</h3><div class="table-scroll"><table class="data-table"><tbody>${r.produits.map(p => `<tr><td>${echapperHtml(p.nom)}</td><td class="mono">${formatMontant(p.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucun</td></tr>'}</tbody></table></div></div>
+      <div class="panel"><h3>Charges</h3><div class="table-scroll"><table class="data-table"><tbody>${r.charges.map(c => `<tr><td>${echapperHtml(c.nom)}</td><td class="mono">${formatMontant(c.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucune</td></tr>'}</tbody></table></div></div>
     </div>`;
 }
 
@@ -3394,13 +3403,13 @@ async function afficherBilan(au, contenu){
       <div class="panel">
         <h3>Actif <span class="legend">${formatMontant(b.actif.total)}</span></h3>
         <div class="table-scroll"><table class="data-table"><tbody>
-          ${b.actif.comptes.map(c => `<tr><td>${c.code} — ${c.nom}</td><td class="mono">${formatMontant(c.solde)}</td></tr>`).join('')}
+          ${b.actif.comptes.map(c => `<tr><td>${c.code} — ${echapperHtml(c.nom)}</td><td class="mono">${formatMontant(c.solde)}</td></tr>`).join('')}
         </tbody></table></div>
       </div>
       <div class="panel">
         <h3>Passif &amp; Capitaux <span class="legend">${formatMontant(b.passif_capitaux.total)}</span></h3>
         <div class="table-scroll"><table class="data-table"><tbody>
-          ${b.passif_capitaux.comptes.map(c => `<tr><td>${c.code} — ${c.nom}</td><td class="mono">${formatMontant(c.solde)}</td></tr>`).join('')}
+          ${b.passif_capitaux.comptes.map(c => `<tr><td>${c.code} — ${echapperHtml(c.nom)}</td><td class="mono">${formatMontant(c.solde)}</td></tr>`).join('')}
           <tr><td><strong>Résultat net cumulé</strong></td><td class="mono">${formatMontant(b.passif_capitaux.resultat_net_cumule)}</td></tr>
         </tbody></table></div>
       </div>
@@ -3436,12 +3445,12 @@ async function afficherTresorerie(du, au, contenu){
     </div>
     <div class="table-panel"><div class="table-scroll"><table class="data-table">
       <thead><tr><th>Compte</th><th>Solde début</th><th>Encaissements</th><th>Décaissements</th><th>Variation nette</th><th>Solde fin</th></tr></thead>
-      <tbody>${t.detail_par_compte.map(c => `<tr><td>${c.code} — ${c.nom}</td><td class="mono">${formatMontant(c.solde_debut)}</td><td class="mono">${formatMontant(c.encaissements)}</td><td class="mono">${formatMontant(c.decaissements)}</td><td class="mono">${formatMontant(c.variation_nette)}</td><td class="mono">${formatMontant(c.solde_fin)}</td></tr>`).join('')}</tbody>
+      <tbody>${t.detail_par_compte.map(c => `<tr><td>${c.code} — ${echapperHtml(c.nom)}</td><td class="mono">${formatMontant(c.solde_debut)}</td><td class="mono">${formatMontant(c.encaissements)}</td><td class="mono">${formatMontant(c.decaissements)}</td><td class="mono">${formatMontant(c.variation_nette)}</td><td class="mono">${formatMontant(c.solde_fin)}</td></tr>`).join('')}</tbody>
     </table></div></div>`;
 }
 async function afficherGrandLivre(du, au, contenu){
   const comptes = await appelApi(`/comptabilite/balance?du=${du}&au=${au}`);
-  const options = comptes.map(c => `<option value="${c.id}" ${String(c.id) === String(compteGrandLivreSelectionne) ? 'selected' : ''}>${c.code} — ${c.nom}</option>`).join('');
+  const options = comptes.map(c => `<option value="${c.id}" ${String(c.id) === String(compteGrandLivreSelectionne) ? 'selected' : ''}>${c.code} — ${echapperHtml(c.nom)}</option>`).join('');
   contenu.innerHTML = `
     <div class="form-group" style="max-width:340px;margin-bottom:14px;">
       <label>Compte</label>
@@ -3475,11 +3484,11 @@ async function afficherDetailGrandLivre(){
     }
     wrap.innerHTML = `${soldeInitialHtml}<div class="table-panel"><div class="table-scroll"><table class="data-table">
         <thead><tr><th>Date</th><th>Sens</th><th>Montant</th><th>Libellé</th><th>Solde progressif</th></tr></thead>
-        <tbody>${data.ecritures.map(e => `<tr><td class="mono">${new Date(e.date_ecriture).toLocaleDateString('fr-FR')}</td><td>${e.sens === 'debit' ? 'Débit' : 'Crédit'}</td><td class="mono">${formatMontant(e.montant)}</td><td class="cell-sub">${e.libelle}</td><td class="mono" style="font-weight:700;">${formatMontant(e.solde_progressif)}</td></tr>`).join('')}</tbody>
+        <tbody>${data.ecritures.map(e => `<tr><td class="mono">${new Date(e.date_ecriture).toLocaleDateString('fr-FR')}</td><td>${e.sens === 'debit' ? 'Débit' : 'Crédit'}</td><td class="mono">${formatMontant(e.montant)}</td><td class="cell-sub">${echapperHtml(e.libelle)}</td><td class="mono" style="font-weight:700;">${formatMontant(e.solde_progressif)}</td></tr>`).join('')}</tbody>
       </table></div></div>
       <div class="form-summary"><div class="row total"><span>Solde final</span><span>${formatMontant(data.solde_final)}</span></div></div>`;
   } catch (err) {
-    wrap.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+    wrap.innerHTML = `<div class="empty-state">Erreur : ${echapperHtml(err.message)}</div>`;
   }
 }
 
@@ -3645,7 +3654,7 @@ async function rafraichirRapports(){
     else if (ongletRapportActif === 'achats') await afficherRapportAchats(q, contenu);
     else await afficherRapportCharges(q, contenu);
   } catch (err) {
-    contenu.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+    contenu.innerHTML = `<div class="empty-state">Erreur : ${echapperHtml(err.message)}</div>`;
   }
 }
 
@@ -3659,7 +3668,7 @@ async function afficherRapportVentes(q, contenu){
     </div>
     <div class="panel-grid">
       <div class="panel"><h3>Répartition détail / gros</h3><div class="table-scroll"><table class="data-table"><tbody>${r.repartition_detail_gros.map(x => `<tr><td>${x.type_vente === 'gros' ? 'Gros' : 'Détail'}</td><td class="mono">${formatMontant(x.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucune donnée</td></tr>'}</tbody></table></div></div>
-      <div class="panel"><h3>Produits les plus vendus</h3><ul class="row-list">${r.produits_plus_vendus.map((p, i) => `<li><span class="rank">${i + 1}</span><span class="name">${p.nom}</span><span class="value">${formatMontant(p.montant_total)}</span></li>`).join('') || '<div class="empty-row">Aucune donnée</div>'}</ul></div>
+      <div class="panel"><h3>Produits les plus vendus</h3><ul class="row-list">${r.produits_plus_vendus.map((p, i) => `<li><span class="rank">${i + 1}</span><span class="name">${echapperHtml(p.nom)}</span><span class="value">${formatMontant(p.montant_total)}</span></li>`).join('') || '<div class="empty-row">Aucune donnée</div>'}</ul></div>
     </div>`;
 }
 
@@ -3672,7 +3681,7 @@ async function afficherRapportAchats(q, contenu){
     </div>
     <div class="panel"><h3>Par fournisseur</h3><div class="table-scroll"><table class="data-table">
       <thead><tr><th>Fournisseur</th><th>Achats</th><th>Montant</th></tr></thead>
-      <tbody>${r.par_fournisseur.map(f => `<tr><td>${f.nom}</td><td class="mono">${formatNombre(f.nombre_achats)}</td><td class="mono">${formatMontant(f.montant_total)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty-state">Aucune donnée</td></tr>'}</tbody>
+      <tbody>${r.par_fournisseur.map(f => `<tr><td>${echapperHtml(f.nom)}</td><td class="mono">${formatNombre(f.nombre_achats)}</td><td class="mono">${formatMontant(f.montant_total)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty-state">Aucune donnée</td></tr>'}</tbody>
     </table></div></div>`;
 }
 
@@ -3685,7 +3694,7 @@ async function afficherRapportCharges(q, contenu){
     </div>
     <div class="panel"><h3>Par catégorie</h3><div class="table-scroll"><table class="data-table">
       <thead><tr><th>Catégorie</th><th>Nombre</th><th>Montant</th></tr></thead>
-      <tbody>${r.par_categorie.map(c => `<tr><td>${c.categorie}</td><td class="mono">${formatNombre(c.nombre)}</td><td class="mono">${formatMontant(c.montant_total)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty-state">Aucune donnée</td></tr>'}</tbody>
+      <tbody>${r.par_categorie.map(c => `<tr><td>${echapperHtml(c.categorie)}</td><td class="mono">${formatNombre(c.nombre)}</td><td class="mono">${formatMontant(c.montant_total)}</td></tr>`).join('') || '<tr><td colspan="3" class="empty-state">Aucune donnée</td></tr>'}</tbody>
     </table></div></div>`;
 }
 
@@ -3735,17 +3744,17 @@ async function imprimerRapportPeriode(){
 
       <h3>Produits les plus vendus</h3>
       <table class="impression-table">
-        ${rVentes.produits_plus_vendus.map((p, i) => `<tr><td>${i + 1}. ${p.nom}</td><td>${formatMontant(p.montant_total)}</td></tr>`).join('') || '<tr><td colspan="2">Aucune donnée</td></tr>'}
+        ${rVentes.produits_plus_vendus.map((p, i) => `<tr><td>${i + 1}. ${echapperHtml(p.nom)}</td><td>${formatMontant(p.montant_total)}</td></tr>`).join('') || '<tr><td colspan="2">Aucune donnée</td></tr>'}
       </table>
 
       <h3>Achats par fournisseur</h3>
       <table class="impression-table">
-        ${rAchats.par_fournisseur.map(f => `<tr><td>${f.nom} (${formatNombre(f.nombre_achats)} achat(s))</td><td>${formatMontant(f.montant_total)}</td></tr>`).join('') || '<tr><td colspan="2">Aucun achat sur cette période</td></tr>'}
+        ${rAchats.par_fournisseur.map(f => `<tr><td>${echapperHtml(f.nom)} (${formatNombre(f.nombre_achats)} achat(s))</td><td>${formatMontant(f.montant_total)}</td></tr>`).join('') || '<tr><td colspan="2">Aucun achat sur cette période</td></tr>'}
       </table>
 
       <h3>Charges par catégorie</h3>
       <table class="impression-table">
-        ${rCharges.par_categorie.map(c => `<tr><td>${c.categorie} (${formatNombre(c.nombre)})</td><td>${formatMontant(c.montant_total)}</td></tr>`).join('') || '<tr><td colspan="2">Aucune charge sur cette période</td></tr>'}
+        ${rCharges.par_categorie.map(c => `<tr><td>${echapperHtml(c.categorie)} (${formatNombre(c.nombre)})</td><td>${formatMontant(c.montant_total)}</td></tr>`).join('') || '<tr><td colspan="2">Aucune charge sur cette période</td></tr>'}
       </table>
     `;
 
@@ -4032,7 +4041,7 @@ async function chargerPeriodesLoyer(){
       </div>`;
     }).join('');
   } catch (err) {
-    resume.innerHTML = `<div class="empty-state">Impossible de charger les périodes (${err.message}).</div>`;
+    resume.innerHTML = `<div class="empty-state">Impossible de charger les périodes (${echapperHtml(err.message)}).</div>`;
     liste.innerHTML = '';
   }
 }
@@ -4346,7 +4355,7 @@ function initialiserInventaire(produits){
     const valeurActuelle = select.value;
     select.innerHTML = '<option value="">— Choisir un produit —</option>' +
       produitsInventaire.map(p =>
-        `<option value="${p.id}" data-stock="${p.stock_bouteilles}" data-cmp="${p.prix_achat_moyen || 0}">${p.nom}</option>`
+        `<option value="${p.id}" data-stock="${p.stock_bouteilles}" data-cmp="${p.prix_achat_moyen || 0}">${echapperHtml(p.nom)}</option>`
       ).join('');
     select.value = valeurActuelle;
     onChangementProduitInventaire();
@@ -4356,7 +4365,7 @@ function initialiserInventaire(produits){
     const filtre = document.getElementById('filtreProduitInventaires');
     const valeurFiltre = filtre.value;
     filtre.innerHTML = '<option value="">Tous les produits</option>' +
-      produitsInventaire.map(p => `<option value="${p.id}">${p.nom}</option>`).join('');
+      produitsInventaire.map(p => `<option value="${p.id}">${echapperHtml(p.nom)}</option>`).join('');
     filtre.value = valeurFiltre;
     chargerResumeInventaires();
     chargerHistoriqueInventaires();
@@ -4474,7 +4483,7 @@ async function chargerResumeInventaires(){
           <div class="kpi-sub">produit(s) actif(s) sans aucun comptage</div></div>
       </div>`;
   } catch (err) {
-    zone.innerHTML = `<div class="empty-state">Résumé indisponible (${err.message}).</div>`;
+    zone.innerHTML = `<div class="empty-state">Résumé indisponible (${echapperHtml(err.message)}).</div>`;
   }
 }
 
@@ -4503,13 +4512,13 @@ async function chargerHistoriqueInventaires(){
               return `
               <tr>
                 <td class="mono">${new Date(i.created_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</td>
-                <td><strong>${i.produit_nom}</strong></td>
+                <td><strong>${echapperHtml(i.produit_nom)}</strong></td>
                 <td class="mono">${formatNombre(i.stock_theorique)}</td>
                 <td class="mono">${formatNombre(i.stock_physique)}</td>
                 <td class="mono" style="font-weight:700;color:${ecart === 0 ? 'inherit' : (ecart < 0 ? 'var(--danger)' : 'var(--fresh)')}">${ecart > 0 ? '+' : ''}${formatNombre(ecart)}</td>
                 <td class="mono" style="color:${impact < 0 ? 'var(--danger)' : 'inherit'}">${impact === 0 ? '—' : (impact > 0 ? '+' : '') + formatMontant(impact)}</td>
-                <td class="cell-sub">${i.motif || '—'}${i.notes ? `<br><span style="opacity:.7">${i.notes}</span>` : ''}</td>
-                <td class="cell-sub">${i.utilisateur_nom || '—'}</td>
+                <td class="cell-sub">${echapperHtml(i.motif || '—')}${i.notes ? `<br><span style="opacity:.7">${echapperHtml(i.notes)}</span>` : ''}</td>
+                <td class="cell-sub">${echapperHtml(i.utilisateur_nom || '—')}</td>
                 <td>${i.correction_appliquee
                       ? '<span class="badge ok">Appliquée</span>'
                       : '<span class="badge">Sans écart</span>'}</td>
@@ -4519,7 +4528,7 @@ async function chargerHistoriqueInventaires(){
         </table>
       </div>`;
   } catch (err) {
-    wrap.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+    wrap.innerHTML = `<div class="empty-state">Erreur : ${echapperHtml(err.message)}</div>`;
   }
 }
 
@@ -4583,7 +4592,7 @@ async function rafraichirAnalyse(){
     else if (ongletAnalyseActif === 'previsions') await afficherAnalysePrevisions(contenu, jours);
     else                                          await afficherAnalyseAnomalies(contenu, jours);
   } catch (err) {
-    contenu.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+    contenu.innerHTML = `<div class="empty-state">Erreur : ${echapperHtml(err.message)}</div>`;
   }
 }
 
@@ -4639,15 +4648,15 @@ async function afficherAnalyseSynthese(contenu){
 
     <div class="grid-2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;">
       ${listeProduits('Produits à forte rotation', a.forte_rotation,
-        p => `<tr><td><strong>${p.nom}</strong></td><td class="mono">${formatNombre(p.quantite_vendue)} bout.</td><td class="mono">${p.taux_rotation_annualise}× / an</td></tr>`,
+        p => `<tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${formatNombre(p.quantite_vendue)} bout.</td><td class="mono">${p.taux_rotation_annualise}× / an</td></tr>`,
         'Aucun produit ne dépasse encore le seuil de forte rotation sur la période.')}
 
       ${listeProduits('Produits à faible rotation', a.faible_rotation,
-        p => `<tr><td><strong>${p.nom}</strong></td><td>${LIBELLES_ROTATION[p.niveau_rotation]}</td><td class="mono">${formatMontant(p.valeur_stock)} immobilisés</td></tr>`,
+        p => `<tr><td><strong>${echapperHtml(p.nom)}</strong></td><td>${LIBELLES_ROTATION[p.niveau_rotation]}</td><td class="mono">${formatMontant(p.valeur_stock)} immobilisés</td></tr>`,
         'Aucun produit en faible rotation — le stock tourne correctement.')}
 
       ${listeProduits('Proches de la rupture', a.proches_rupture,
-        p => `<tr><td><strong>${p.nom}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)} bout.</td><td class="mono" style="color:var(--danger)">~${p.jours_stock_restants} j restants</td></tr>`,
+        p => `<tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)} bout.</td><td class="mono" style="color:var(--danger)">~${p.jours_stock_restants} j restants</td></tr>`,
         "Aucun produit sous les 14 jours d'autonomie estimée.")}
     </div>`;
 }
@@ -4674,7 +4683,7 @@ async function afficherAnalyseRythme(contenu, jours){
     <div class="panel" style="margin-bottom:16px;">
       <h3>Accélération ou ralentissement</h3>
       ${!acc.fiable
-        ? `<div class="empty-state">${acc.message}</div>`
+        ? `<div class="empty-state">${echapperHtml(acc.message)}</div>`
         : `<div style="font-size:20px;font-weight:700;margin-bottom:4px;">
              ${acc.sens === 'acceleration' ? 'Accélération' : acc.sens === 'ralentissement' ? 'Ralentissement' : 'Rythme stable'}
            </div>
@@ -4717,19 +4726,19 @@ async function afficherAnalyseRythme(contenu, jours){
       <div class="panel"><h3>Produits qui partent vite</h3>
         ${a.produits_rapides.length === 0 ? `<div class="empty-state">${a.note || 'Pas encore assez de ventes par produit pour classer.'}</div>` : `
         <div class="table-scroll"><table class="data-table"><tbody>
-          ${a.produits_rapides.map(p => `<tr><td><strong>${p.nom}</strong></td><td class="mono">${p.vitesse_bouteilles_par_jour} bout./jour</td><td class="cell-sub">${formatNombre(p.quantite_vendue)} vendues</td></tr>`).join('')}
+          ${a.produits_rapides.map(p => `<tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${p.vitesse_bouteilles_par_jour} bout./jour</td><td class="cell-sub">${formatNombre(p.quantite_vendue)} vendues</td></tr>`).join('')}
         </tbody></table></div>`}
       </div>
       <div class="panel"><h3>Produits qui partent lentement</h3>
         ${a.produits_lents.length === 0 ? `<div class="empty-state">${a.note || 'Pas encore assez de ventes par produit pour classer.'}</div>` : `
         <div class="table-scroll"><table class="data-table"><tbody>
-          ${a.produits_lents.map(p => `<tr><td><strong>${p.nom}</strong></td><td class="mono">${p.vitesse_bouteilles_par_jour} bout./jour</td><td class="cell-sub">${formatNombre(p.quantite_vendue)} vendues</td></tr>`).join('')}
+          ${a.produits_lents.map(p => `<tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${p.vitesse_bouteilles_par_jour} bout./jour</td><td class="cell-sub">${formatNombre(p.quantite_vendue)} vendues</td></tr>`).join('')}
         </tbody></table></div>`}
       </div>
       <div class="panel"><h3>Produits qui stagnent</h3>
         ${a.produits_stagnants.length === 0 ? '<div class="empty-state">Aucun produit sans aucune vente sur la période.</div>' : `
         <div class="table-scroll"><table class="data-table"><tbody>
-          ${a.produits_stagnants.map(p => `<tr><td><strong>${p.nom}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)} bout.</td><td class="mono">${formatMontant(p.valeur_stock)}</td></tr>`).join('')}
+          ${a.produits_stagnants.map(p => `<tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)} bout.</td><td class="mono">${formatMontant(p.valeur_stock)}</td></tr>`).join('')}
         </tbody></table></div>`}
       </div>
     </div>`;
@@ -4773,7 +4782,7 @@ async function afficherAnalyseRotation(contenu, jours){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Produit</th><th>Stock</th><th>Valeur</th><th>Part</th><th>Rotation</th></tr></thead>
           <tbody>${a.plus_gros_capital_immobilise.map(p => `
-            <tr><td><strong>${p.nom}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)}</td>
+            <tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)}</td>
                 <td class="mono">${formatMontant(p.valeur_stock)}</td><td class="mono">${p.part_pct === null ? '—' : p.part_pct + ' %'}</td>
                 <td class="cell-sub">${LIBELLES_ROTATION[p.niveau_rotation]}</td></tr>`).join('')}
           </tbody></table></div>
@@ -4785,7 +4794,7 @@ async function afficherAnalyseRotation(contenu, jours){
           : `<div class="table-scroll"><table class="data-table">
               <thead><tr><th>Produit</th><th>Achats</th><th>Fréquence</th></tr></thead>
               <tbody>${a.reapprovisionnements_frequents.map(p => `
-                <tr><td><strong>${p.nom}</strong></td><td class="mono">${p.nombre_achats}</td>
+                <tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${p.nombre_achats}</td>
                     <td class="mono">tous les ${p.frequence_achats_jours} j</td></tr>`).join('')}
               </tbody></table></div>`}
       </div>
@@ -4813,7 +4822,7 @@ async function afficherAnalyseProduits(contenu, jours){
         <tbody>
           ${a.produits.map(p => `
             <tr>
-              <td><strong>${p.nom}</strong>${p.fiable ? '' : ` <span class="badge" title="${p.message}">peu de données</span>`}</td>
+              <td><strong>${echapperHtml(p.nom)}</strong>${p.fiable ? '' : ` <span class="badge" title="${echapperHtml(p.message)}">peu de données</span>`}</td>
               <td class="mono">${formatNombre(p.quantite_vendue)} bout.<br><span class="cell-sub">${p.nombre_ventes} vente(s)</span></td>
               <td class="mono">${formatMontant(p.chiffre_affaires)}</td>
               <td class="mono" style="color:${p.benefice >= 0 ? 'var(--fresh)' : 'var(--danger)'}">${formatMontant(p.benefice)}</td>
@@ -4842,7 +4851,7 @@ async function afficherAnalysePrevisions(contenu, jours){
       <div>${a.avertissement}</div>
     </div>
 
-    ${!a.historique_suffisant ? `<div class="empty-state" style="margin-bottom:16px;">${a.message}</div>` : `
+    ${!a.historique_suffisant ? `<div class="empty-state" style="margin-bottom:16px;">${echapperHtml(a.message)}</div>` : `
       <div class="kpi-grid" style="margin-bottom:16px;">
         <div class="kpi-card"><div class="kpi-label">CA estimé — prochaine semaine</div><div class="kpi-value">${formatMontant(ca.prochaine_semaine)}</div>
           <div class="kpi-sub">méthode : ${METHODES[ca.methode] || ca.methode}</div></div>
@@ -4864,13 +4873,13 @@ async function afficherAnalysePrevisions(contenu, jours){
         <tbody>
           ${a.estimation_stock_necessaire.map(p => {
             if (p.fiable === false && p.vitesse_bouteilles_par_jour === undefined) {
-              return `<tr><td><strong>${p.nom}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)}</td>
-                      <td colspan="4" class="cell-sub">${p.message}</td></tr>`;
+              return `<tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)}</td>
+                      <td colspan="4" class="cell-sub">${echapperHtml(p.message)}</td></tr>`;
             }
             const urgent = p.jours_stock_restants !== null && p.jours_stock_restants <= 14;
             return `
               <tr>
-                <td><strong>${p.nom}</strong>${p.fiable ? '' : ' <span class="badge" title="' + (p.message || '') + '">peu de données</span>'}</td>
+                <td><strong>${echapperHtml(p.nom)}</strong>${p.fiable ? '' : ' <span class="badge" title="' + echapperHtml(p.message || '') + '">peu de données</span>'}</td>
                 <td class="mono">${formatNombre(p.stock_bouteilles)} bout.</td>
                 <td class="mono">${p.vitesse_bouteilles_par_jour} /j</td>
                 <td class="mono" style="${urgent ? 'color:var(--danger);font-weight:700' : ''}">
@@ -4918,7 +4927,7 @@ async function afficherAnalyseAnomalies(contenu, jours){
           <strong>${LIBELLES_CODE[an.code] || an.code}</strong>
           <span class="badge" style="color:${COULEURS[an.severite]};border-color:${COULEURS[an.severite]};">${LIBELLES_SEVERITE[an.severite]}</span>
         </div>
-        <div class="subtitle" style="margin:0;">${an.message}</div>
+        <div class="subtitle" style="margin:0;">${echapperHtml(an.message)}</div>
       </div>`).join('')}`;
 }
 
@@ -5254,7 +5263,7 @@ async function chargerJournalAudit(){
         </tr>`).join('')}</tbody>
     </table></div>`;
   } catch (err) {
-    wrap.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+    wrap.innerHTML = `<div class="empty-state">Erreur : ${echapperHtml(err.message)}</div>`;
   }
 }
 
