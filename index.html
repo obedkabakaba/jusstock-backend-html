@@ -439,6 +439,10 @@
   .login-brand .name{font-family:var(--font-display);font-weight:700;font-size:18px;}
   .login-title{font-family:var(--font-display);font-size:19px;font-weight:700;text-align:center;margin-bottom:4px;}
   .login-sub{font-size:12.5px;color:var(--text-muted);text-align:center;margin-bottom:22px;}
+  .login-souvenir{display:flex;align-items:flex-start;gap:10px;margin:2px 0 12px;cursor:pointer;font-size:13px;}
+  .login-souvenir input{width:18px;height:18px;margin-top:1px;accent-color:var(--accent);flex:0 0 auto;}
+  .login-souvenir span{display:flex;flex-direction:column;font-weight:600;color:var(--text);}
+  .login-souvenir em{font-style:normal;font-weight:400;font-size:11.5px;color:var(--text-muted);}
   .login-error{background:var(--danger-soft);color:#8A332A;padding:10px 14px;border-radius:8px;font-size:12.5px;margin-bottom:16px;display:none;}
   .login-error.show{display:block;}
   .login-field{margin-bottom:14px;}
@@ -4979,6 +4983,27 @@ async function repondreLoyerQuotidien(dateJour, decision){
 // est toujours valide via /auth/moi avant de faire confiance à la session
 // (utile si le compte a été désactivé ou son rôle changé entre-temps).
 const CLE_STOCKAGE_JETON = 'jusstock_auth_token';
+// « Se souvenir de moi » : jeton de 30 jours gardé dans localStorage (survit
+// à la fermeture de l'application). Sinon : jeton de 12 h dans
+// sessionStorage, effacé dès qu'on ferme l'application ou l'onglet.
+const CLE_SE_SOUVENIR = 'jusstock_se_souvenir';
+const CLE_DERNIER_EMAIL = 'jusstock_dernier_email';
+
+function lireJetonSauvegarde(){
+  try { return localStorage.getItem(CLE_STOCKAGE_JETON) || sessionStorage.getItem(CLE_STOCKAGE_JETON); }
+  catch (e) { return null; }
+}
+function enregistrerJeton(token, seSouvenir){
+  try {
+    const garder = seSouvenir === undefined ? !!localStorage.getItem(CLE_STOCKAGE_JETON) : seSouvenir;
+    localStorage.removeItem(CLE_STOCKAGE_JETON);
+    sessionStorage.removeItem(CLE_STOCKAGE_JETON);
+    (garder ? localStorage : sessionStorage).setItem(CLE_STOCKAGE_JETON, token);
+  } catch (e) { /* stockage indisponible (navigation privée) : session en mémoire seulement */ }
+}
+function effacerJeton(){
+  try { localStorage.removeItem(CLE_STOCKAGE_JETON); sessionStorage.removeItem(CLE_STOCKAGE_JETON); } catch (e) {}
+}
 let authToken = null;
 let utilisateurConnecte = null;
 
@@ -5014,7 +5039,7 @@ function peutEcrire(){
 }
 
 async function initialiserAuthentification(){
-  const jetonSauvegarde = localStorage.getItem(CLE_STOCKAGE_JETON);
+  const jetonSauvegarde = lireJetonSauvegarde();
 
   if (jetonSauvegarde) {
     authToken = jetonSauvegarde;
@@ -5025,7 +5050,7 @@ async function initialiserAuthentification(){
       return;
     } catch (err) {
       // Jeton expiré, invalide, ou compte désactivé entre-temps
-      localStorage.removeItem(CLE_STOCKAGE_JETON);
+      effacerJeton();
       authToken = null;
     }
   }
@@ -5041,6 +5066,11 @@ async function initialiserAuthentification(){
 }
 
 function afficherEcranLogin(messageErreur){
+  let emailMemorise = '', seSouvenirPrecedent = false;
+  try {
+    seSouvenirPrecedent = localStorage.getItem(CLE_SE_SOUVENIR) === '1';
+    if (seSouvenirPrecedent) emailMemorise = localStorage.getItem(CLE_DERNIER_EMAIL) || '';
+  } catch (e) {}
   document.getElementById('loginCard').innerHTML = `
     <div class="login-brand">
       <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8l1 5.2a6 6 0 0 1-1.5 5.1L14 14v5a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-5l-1.5-1.7A6 6 0 0 1 7 7.2L8 2Z"/><path d="M7.3 9h9.4"/></svg></div>
@@ -5048,10 +5078,12 @@ function afficherEcranLogin(messageErreur){
     </div>
     <div class="login-title">Connexion</div>
     <div class="login-sub">Accède à ta plateforme de gestion</div>
-    <div class="login-error ${messageErreur ? 'show' : ''}">${messageErreur || ''}</div>
+    <div class="login-error ${messageErreur ? 'show' : ''}">${echapperHtml(messageErreur || '')}</div>
     <form onsubmit="soumettreLogin(event)">
-      <div class="login-field"><label>Email</label><input type="email" name="email" required autofocus></div>
-      <div class="login-field"><label>Mot de passe</label><input type="password" name="mot_de_passe" required></div>
+      <div class="login-field"><label>Email</label><input type="email" name="email" autocomplete="username" required value="${echapperHtml(emailMemorise)}" ${emailMemorise ? '' : 'autofocus'}></div>
+      <div class="login-field"><label>Mot de passe</label><input type="password" name="mot_de_passe" autocomplete="current-password" required ${emailMemorise ? 'autofocus' : ''}></div>
+      <label class="login-souvenir"><input type="checkbox" name="se_souvenir" ${seSouvenirPrecedent ? 'checked' : ''}>
+        <span>Se souvenir de moi<em>Rester connecté 30 jours sur cet appareil</em></span></label>
       <button type="submit" class="btn btn-accent" style="width:100%;justify-content:center;margin-top:6px;">Se connecter</button>
     </form>`;
 }
@@ -5076,17 +5108,27 @@ function afficherEcranBootstrap(messageErreur){
 async function soumettreLogin(event){
   event.preventDefault();
   const donnees = new FormData(event.target);
+  const seSouvenir = donnees.get('se_souvenir') === 'on';
   const bouton = event.target.querySelector('button[type="submit"]');
   bouton.disabled = true;
   try {
     const reponse = await fetch(CONFIG.API_BASE_URL + '/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(Object.fromEntries(donnees.entries())),
+      body: JSON.stringify({
+        email: donnees.get('email'),
+        mot_de_passe: donnees.get('mot_de_passe'),
+        se_souvenir: seSouvenir,
+      }),
     });
     const corps = await reponse.json();
     if (!reponse.ok) throw new Error(corps.erreur || 'Erreur de connexion.');
-    connecterUtilisateur(corps.token, corps.utilisateur);
+    try {
+      localStorage.setItem(CLE_SE_SOUVENIR, seSouvenir ? '1' : '0');
+      if (seSouvenir) localStorage.setItem(CLE_DERNIER_EMAIL, String(donnees.get('email') || '').trim());
+      else localStorage.removeItem(CLE_DERNIER_EMAIL);
+    } catch (e) {}
+    connecterUtilisateur(corps.token, corps.utilisateur, seSouvenir);
   } catch (err) {
     afficherEcranLogin(err.message);
   }
@@ -5105,16 +5147,16 @@ async function soumettreBootstrap(event){
     });
     const corps = await reponse.json();
     if (!reponse.ok) throw new Error(corps.erreur || 'Erreur.');
-    connecterUtilisateur(corps.token, corps.utilisateur);
+    connecterUtilisateur(corps.token, corps.utilisateur, false);
   } catch (err) {
     afficherEcranBootstrap(err.message);
   }
 }
 
-function connecterUtilisateur(token, utilisateur){
+function connecterUtilisateur(token, utilisateur, seSouvenir){
   authToken = token;
   utilisateurConnecte = utilisateur;
-  localStorage.setItem(CLE_STOCKAGE_JETON, token);
+  enregistrerJeton(token, seSouvenir);
   afficherAppApresConnexion();
 }
 
@@ -5167,7 +5209,7 @@ function deconnecter(){
   fermerModal();
   authToken = null;
   utilisateurConnecte = null;
-  localStorage.removeItem(CLE_STOCKAGE_JETON);
+  effacerJeton();
   document.getElementById('appRoot').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   initialiserAuthentification();
@@ -5177,7 +5219,7 @@ function gererExpirationSession(){
   fermerModal();
   authToken = null;
   utilisateurConnecte = null;
-  localStorage.removeItem(CLE_STOCKAGE_JETON);
+  effacerJeton();
   document.getElementById('appRoot').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   afficherEcranLogin('Ta session a expiré. Merci de te reconnecter.');
@@ -5883,7 +5925,7 @@ async function soumettreMonMotDePasse(event, obligatoire){
     });
     // Le changement invalide l'ancien jeton : on garde le nouveau.
     authToken = corps.token;
-    localStorage.setItem(CLE_STOCKAGE_JETON, corps.token);
+    enregistrerJeton(corps.token); // même type de session qu'avant
     utilisateurConnecte = { ...utilisateurConnecte, ...corps.utilisateur };
     fermerModal();
     afficherToast('Mot de passe modifié.', 'success');
