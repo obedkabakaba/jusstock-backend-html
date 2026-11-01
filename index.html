@@ -486,7 +486,129 @@
     .filtre-row{gap:8px;}
     .filtre-row .form-group{min-width:120px;flex:1;}
   }
-  .produit-detail-clickable{cursor:pointer}.produit-detail-clickable:hover{background:var(--paper)} .pd-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}.pd-kpis>div{border:1px solid var(--border);padding:12px;border-radius:9px}.pd-kpis b{display:block;font-size:10px;color:var(--text-muted)}.pd-kpis strong{display:block;margin-top:5px}.pd-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}.pd-cols>section, .produit-detail-360>section{border:1px solid var(--border);border-radius:9px;padding:14px;margin-bottom:12px}.pd-mini{display:grid;grid-template-columns:1fr 1fr;gap:10px}.produit-detail-360{max-width:1150px!important;max-height:92vh!important}@media(max-width:800px){.pd-kpis,.pd-cols{grid-template-columns:1fr 1fr}}@media(max-width:560px){.pd-kpis,.pd-cols,.pd-mini{grid-template-columns:1fr}}
+  /* ---------- RAPPORT DE PERFORMANCE ---------- */
+  .rp-entete{font-size:12.5px;color:var(--text-muted);margin-bottom:12px;}
+  .rp-grille-kpi{grid-template-columns:repeat(4,1fr);margin-bottom:16px;}
+  .rp-kpi .kpi-value{font-size:21px;}
+  .rp-kpi.negatif{border-color:var(--danger);background:var(--danger-soft);}
+  .rp-evo{font-weight:600;} .rp-evo.hausse{color:var(--fresh);} .rp-evo.baisse{color:var(--danger);} .rp-evo.neutre{color:var(--text-muted);font-weight:400;}
+  .rp-constats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+  .rp-constats li{display:flex;gap:10px;align-items:flex-start;font-size:13px;padding:9px 12px;border-radius:8px;background:var(--paper);}
+  .rp-constats li span{flex:0 0 20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;background:var(--text-muted);}
+  .rp-constats li.ok{background:var(--fresh-soft);} .rp-constats li.ok span{background:var(--fresh);}
+  .rp-constats li.attention{background:var(--accent-soft);} .rp-constats li.attention span{background:var(--accent);}
+  .rp-constats li.alerte{background:var(--danger-soft);} .rp-constats li.alerte span{background:var(--danger);}
+  .rp-jauge{height:14px;border-radius:7px;background:var(--paper);overflow:hidden;margin:4px 0 12px;}
+  .rp-jauge div{height:100%;} .rp-jauge div.ok{background:var(--fresh);} .rp-jauge div.encours{background:var(--accent);}
+  .rp-ligne{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:12.5px;}
+  .rp-ligne span{color:var(--text-muted);} .rp-ligne.total{border-bottom:none;border-top:1px solid var(--border);margin-top:4px;padding-top:8px;}
+  .rp-ligne .positif{color:var(--fresh);} .rp-ligne .negatif{color:var(--danger);}
+  .rp-trois{grid-template-columns:repeat(3,1fr);}
+  .rp-semaine{height:112px;}
+  .rp-note{font-size:12px;color:var(--text-muted);margin-top:8px;line-height:1.45;}
+  #view-rapports .panel{margin-bottom:16px;}
+  @media(max-width:980px){.rp-grille-kpi{grid-template-columns:repeat(2,1fr);} .rp-trois{grid-template-columns:1fr;}}
+  /* ---------- LOYER QUOTIDIEN ---------- */
+  .modal-panel.modal-large{max-width:920px;}
+  .btn-mini{padding:4px 10px;font-size:11.5px;}
+  .loyer-panel{max-width:980px;}
+  .loyer-entete{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  .loyer-vide{padding:12px 14px;background:var(--paper);border-radius:8px;font-size:13px;color:var(--text-muted);}
+  .loyer-actif{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;padding:12px 14px;background:var(--fresh-soft);border-radius:10px;}
+  .loyer-chiffres{display:flex;gap:18px;}
+  .loyer-chiffres div{display:flex;flex-direction:column;text-align:right;} .loyer-chiffres span{font-size:11px;color:var(--text-muted);}
+  .loyer-chiffres strong{font-family:var(--font-display);font-size:16px;} .loyer-chiffres .alerte strong{color:var(--danger);}
+  .loyer-periode{border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;}
+  .loyer-periode-tete .cell-sub{margin-top:3px;}
+  .loyer-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0;}
+  .loyer-stats div{background:var(--paper);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;}
+  .loyer-stats span{font-size:10.5px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.3px;}
+  .loyer-stats strong{font-size:14px;margin-top:2px;} .loyer-stats em{font-style:normal;font-size:11px;color:var(--text-muted);}
+  .loyer-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .loyer-jours{display:flex;gap:6px;flex-wrap:wrap;}
+  .loyer-jours label{display:flex;align-items:center;cursor:pointer;}
+  .loyer-jours input{display:none;}
+  .loyer-jours span{padding:7px 12px;border:1px solid var(--border);border-radius:999px;font-size:12.5px;font-weight:600;color:var(--text-muted);}
+  .loyer-jours input:checked + span{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .loyer-choix{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-top:6px;cursor:pointer;font-weight:400;}
+  .loyer-choix input{width:auto;margin-top:3px;}
+  .loyer-choix span{display:flex;flex-direction:column;font-size:13px;color:var(--text);} .loyer-choix em{font-style:normal;font-size:11.5px;color:var(--text-muted);}
+  .loyer-choix:has(input:checked){border-color:var(--accent);background:var(--accent-soft);}
+  .loyer-statut{display:inline-block;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:var(--paper);color:var(--text-muted);}
+  .loyer-statut.paye{background:var(--fresh-soft);color:#3f6b17;} .loyer-statut.en_attente{background:var(--accent-soft);color:var(--accent-dark);}
+  .loyer-statut.reporte{background:var(--danger-soft);color:var(--danger);} .loyer-statut.refuse{background:#ECEFF1;color:#455A64;}
+  tr.loyer-jour.non_applicable td{opacity:.55;}
+  @media(max-width:760px){.loyer-stats{grid-template-columns:repeat(2,1fr);} .loyer-chiffres{width:100%;justify-content:space-between;}}
+  /* ---------- FICHE PRODUIT ---------- */
+  .lien-produit{color:inherit;text-decoration:none;border-bottom:1px dashed rgba(91,107,103,.55);cursor:pointer;}
+  .lien-produit:hover{color:var(--accent-dark);border-bottom-color:var(--accent);}
+  [data-produit-id]:not(.lien-produit){cursor:pointer;}
+  .produit-detail-clickable:hover, tr[data-produit-id]:hover{background:var(--paper);}
+  .modal-panel.fiche-produit{max-width:1120px;padding:0;max-height:92vh;}
+  .fp-chargement{display:flex;align-items:center;gap:12px;justify-content:center;padding:60px 20px;color:var(--text-muted);}
+  .fp-spinner{width:20px;height:20px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:fp-tourne .8s linear infinite;}
+  @keyframes fp-tourne{to{transform:rotate(360deg)}}
+  .fp-hero{position:relative;display:flex;gap:20px;align-items:center;padding:24px 28px;background:linear-gradient(120deg,var(--ink) 0%,var(--ink-lighter) 100%);color:#fff;border-radius:12px 12px 0 0;}
+  .fp-visuel{flex:0 0 96px;height:96px;border-radius:14px;overflow:hidden;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.25);}
+  .fp-visuel img{width:100%;height:100%;object-fit:cover;background:#fff;}
+  .fp-monogramme{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:34px;font-weight:700;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-dark) 100%);color:#fff;}
+  .fp-titre{flex:1;min-width:0;}
+  .fp-titre h2{margin:6px 0 8px;font-family:var(--font-display);font-size:24px;line-height:1.15;color:#fff;}
+  .fp-tags{display:flex;flex-wrap:wrap;gap:6px;}
+  .fp-tag{display:inline-block;font-size:11px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.12);color:inherit;}
+  .fp-contenu .fp-tag{background:var(--paper);border:1px solid var(--border);color:var(--text);}
+  .fp-statuts{display:flex;flex-wrap:wrap;gap:6px;}
+  .fp-pastille{font-size:11px;font-weight:600;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.14);}
+  .fp-pastille.ok{background:var(--fresh);} .fp-pastille.faible{background:var(--accent);} .fp-pastille.rupture{background:var(--danger);}
+  .fp-hero-chiffres{display:flex;gap:22px;}
+  .fp-hero-chiffres div{display:flex;flex-direction:column;text-align:right;}
+  .fp-hero-chiffres span{font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:.5px;}
+  .fp-hero-chiffres strong{font-family:var(--font-display);font-size:20px;margin-top:2px;}
+  .fp-hero-chiffres em{font-style:normal;font-size:11.5px;opacity:.75;}
+  .fp-fermer{position:absolute;top:10px;right:10px;}
+  .fp-fermer svg{stroke:#fff !important;}
+  .fp-kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:16px 28px 4px;}
+  .fp-kpis.petit{padding:0 0 14px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));}
+  .fp-stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow);}
+  .fp-stat.alerte{border-color:var(--danger);background:var(--danger-soft);}
+  .fp-stat.attention{border-color:var(--accent);background:var(--accent-soft);}
+  .fp-stat-label{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
+  .fp-stat-valeur{font-family:var(--font-display);font-size:18px;font-weight:700;margin-top:4px;}
+  .fp-stat-sous{font-size:11.5px;color:var(--text-muted);margin-top:3px;}
+  .fp-evo{font-weight:600;font-size:11.5px;} .fp-evo.hausse{color:var(--fresh);} .fp-evo.baisse{color:var(--danger);} .fp-evo.neutre{color:var(--text-muted);font-weight:400;}
+  .fp-onglets{display:flex;gap:4px;padding:14px 28px 0;border-bottom:1px solid var(--border);overflow-x:auto;}
+  .fp-onglets button{background:none;border:none;padding:10px 14px;font:inherit;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;border-bottom:2.5px solid transparent;white-space:nowrap;}
+  .fp-onglets button.actif{color:var(--ink);border-bottom-color:var(--accent);}
+  .fp-contenu{padding:18px 28px;}
+  .fp-grille{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .fp-carte{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px;}
+  .fp-grille .fp-carte{margin-bottom:0;}
+  .fp-carte.large{grid-column:span 2;}
+  .fp-carte h4{margin:0 0 10px;font-size:13px;font-family:var(--font-display);display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+  .fp-legende-titre{font-size:11px;font-weight:400;color:var(--text-muted);font-family:var(--font-body);}
+  .fp-info{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:12.5px;}
+  .fp-info:last-child{border-bottom:none;} .fp-info span{color:var(--text-muted);} .fp-info strong{text-align:right;}
+  .fp-description{font-size:12.5px;color:var(--text-muted);margin:8px 0 0;line-height:1.5;}
+  .fp-svg{width:100%;height:150px;display:block;}
+  .fp-axe{font-size:10px;fill:var(--text-muted);}
+  .fp-reappro{border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12.5px;background:var(--fresh-soft);}
+  .fp-reappro.urgent{background:var(--danger-soft);} .fp-reappro.neutre{background:var(--paper);color:var(--text-muted);}
+  .fp-split{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--paper);margin:6px 0 10px;}
+  .fp-split .detail, .fp-legende i.detail{background:var(--accent);} .fp-split .gros, .fp-legende i.gros{background:var(--ink-lighter);}
+  .fp-legende{display:flex;flex-direction:column;gap:6px;font-size:12px;}
+  .fp-legende i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px;}
+  .fp-semaine{display:flex;align-items:flex-end;justify-content:space-between;height:92px;gap:6px;}
+  .fp-semaine div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+  .fp-semaine .barre{width:100%;max-width:26px;background:var(--accent);border-radius:4px 4px 0 0;}
+  .fp-semaine span{font-size:10.5px;color:var(--text-muted);margin-top:4px;}
+  .fp-jauge{position:relative;height:14px;border-radius:7px;background:var(--paper);overflow:visible;margin:6px 0 8px;}
+  .fp-jauge div{height:100%;border-radius:7px;} .fp-jauge div.ok{background:var(--fresh);} .fp-jauge div.faible{background:var(--accent);} .fp-jauge div.rupture{background:var(--danger);}
+  .fp-jauge span{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink);}
+  .fp-table{max-height:320px;overflow:auto;}
+  .fp-actions{display:flex;justify-content:flex-end;gap:10px;padding:0 28px 22px;}
+  @media(max-width:980px){.fp-kpis{grid-template-columns:repeat(3,1fr);} .fp-grille{grid-template-columns:1fr 1fr;} .fp-hero-chiffres{display:none;}}
+  @media(max-width:620px){.fp-kpis{grid-template-columns:1fr 1fr;padding:12px 16px 0;} .fp-grille{grid-template-columns:1fr;} .fp-carte.large{grid-column:auto;}
+    .fp-hero{padding:18px 16px;gap:12px;} .fp-visuel{flex-basis:64px;height:64px;} .fp-titre h2{font-size:19px;} .fp-contenu{padding:14px 16px;} .fp-onglets{padding:10px 12px 0;}}
 </style>
 </head>
 <body>
@@ -901,7 +1023,8 @@
           </button>
         </div>
         <div class="tabs-row">
-          <button class="tab-btn active" data-tab="ventes" onclick="changerOngletRapport('ventes')">Ventes</button>
+          <button class="tab-btn active" data-tab="performance" onclick="changerOngletRapport('performance')">Performance</button>
+          <button class="tab-btn" data-tab="ventes" onclick="changerOngletRapport('ventes')">Ventes</button>
           <button class="tab-btn" data-tab="achats" onclick="changerOngletRapport('achats')">Achats</button>
           <button class="tab-btn" data-tab="charges" onclick="changerOngletRapport('charges')">Charges</button>
         </div>
@@ -1019,50 +1142,16 @@
           </div>
         </div>
 
-        <div class="panel" style="max-width:680px;margin-top:16px;">
-          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+        <div class="panel loyer-panel" style="margin-top:16px;">
+          <div class="loyer-entete">
             <div>
-              <h3 style="margin:0;">Périodes de loyer quotidien</h3>
-              <div class="subtitle" style="margin-top:4px;">Le popup ne peut apparaître que pour les dates d'une période configurée. Le seuil de ventes reste le même.</div>
+              <h3 style="margin:0;">Loyer quotidien</h3>
+              <div class="cell-sub" style="margin-top:4px;">Montant journalier, jours concernés, seuil de ventes, report des jours faibles en arriéré, validation manuelle ou automatique.</div>
             </div>
+            <button class="btn btn-accent action-admin-seul" onclick="ouvrirModalPeriodeLoyer()">+ Nouvelle période</button>
           </div>
-
-          <div id="resumePeriodeLoyer" class="form-summary" style="margin-top:14px;">
-            <div class="empty-state" style="padding:8px;">Chargement des périodes…</div>
-          </div>
-
-          <form id="formPeriodeLoyer" class="action-admin-seul" onsubmit="soumettrePeriodeLoyer(event)" style="margin-top:16px;">
-            <div class="form-grid">
-              <div class="form-group">
-                <label>Date de début *</label>
-                <input type="date" name="date_debut" id="loyerPeriodeDebut" required onchange="recalculerResumePeriodeLoyer()">
-              </div>
-              <div class="form-group">
-                <label>Date de fin *</label>
-                <input type="date" name="date_fin" id="loyerPeriodeFin" required onchange="recalculerResumePeriodeLoyer()">
-              </div>
-              <div class="form-group full">
-                <label>Loyer quotidien (devise secondaire) *</label>
-                <input type="number" name="loyer_quotidien" id="loyerPeriodeMontant" min="0" step="0.01" required oninput="recalculerResumePeriodeLoyer()">
-                <div class="hint">Le taux de change actuel sera figé pour cette période afin que son total ne change pas rétroactivement.</div>
-              </div>
-            </div>
-
-            <div id="aperçuPeriodeLoyer" class="form-summary">
-              <div class="row"><span>Nombre de jours</span><strong id="loyerPeriodeNbJours">—</strong></div>
-              <div class="row"><span>Total prévu</span><strong id="loyerPeriodeTotalSecondaire">—</strong></div>
-              <div class="row total"><span>Équivalent en devise principale</span><span id="loyerPeriodeTotalPrincipal">—</span></div>
-            </div>
-
-            <div class="modal-actions" style="justify-content:flex-start;">
-              <button type="submit" class="btn btn-accent">Créer la période</button>
-            </div>
-          </form>
-
-          <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
-            <div class="dg-label" style="margin-bottom:8px;">Périodes déjà configurées</div>
-            <div id="listePeriodesLoyer"><div class="empty-state">Chargement…</div></div>
-          </div>
+          <div id="resumePeriodeLoyer" style="margin-top:14px;"><div class="empty-state" style="padding:8px;">Chargement…</div></div>
+          <div id="listePeriodesLoyer" style="margin-top:14px;"></div>
         </div>
       </section>
 
@@ -1289,6 +1378,8 @@ function afficherToast(message, type){
 // ne se ferme ni par Échap ni par un clic à côté.
 let modaleBloquante = false;
 function ouvrirModal(html){
+  // Une modale « large » (fiche produit) ne doit pas déteindre sur la suivante.
+  document.getElementById('modalPanel').classList.remove('fiche-produit', 'produit-detail-360', 'modal-large');
   document.getElementById('modalPanel').innerHTML = html;
   document.getElementById('modalOverlay').classList.add('open');
 }
@@ -1348,7 +1439,7 @@ function construireListeProduits(produits){
   el.innerHTML = produits.map((p, i) => `
     <li>
       <span class="rank">${i + 1}</span>
-      <span class="name">${echapperHtml(p.nom)}</span>
+      <span class="name">${lienProduit(p.id, p.nom)}</span>
       <span class="value">${formatMontant(p.montant_total)}</span>
     </li>
   `).join('');
@@ -1363,7 +1454,7 @@ function construireListeAlertes(alertes){
   }
   el.innerHTML = alertes.map(p => `
     <li>
-      <span class="name">${echapperHtml(p.nom)} ${badgeNiveauStock(p.stock_bouteilles, p.stock_min_bouteilles)}</span>
+      <span class="name">${lienProduit(p.id, p.nom)} ${badgeNiveauStock(p.stock_bouteilles, p.stock_min_bouteilles)}</span>
       <span class="value danger">${formatNombre(p.stock_bouteilles)} / ${formatNombre(p.stock_min_bouteilles)} bout.</span>
     </li>
   `).join('');
@@ -1687,36 +1778,366 @@ async function supprimerProduit(id){
 // MODULE : FICHE PRODUIT 360°
 // Lecture seule : toutes les données viennent de /produits/:id/detail.
 // ============================================================
-function pdEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function pdDate(v){if(!v)return '—';const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleString('fr-FR');}
-function pdMoney(v){return v===null||v===undefined?'Non disponible':formatMontant(v);}
-function pdNum(v){return v===null||v===undefined?'Non disponible':formatNombre(v);}
-function pdPct(v){return v===null||v===undefined?'Non disponible':Number(v).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %';}
-function pdTable(head,rows,empty){if(!rows.length)return '<div class="empty-state">'+empty+'</div>';return '<div style="max-height:300px;overflow:auto"><table class="data-table"><thead><tr>'+head.map(x=>'<th>'+x+'</th>').join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>';}
-async function ouvrirDetailProduit(id){
- if(!aGroupe('LECTURE_FINANCIERE')){afficherToast('Accès non autorisé à cette fiche.','error');return;}
- ouvrirModal('<div class="modal-head"><div><h2>Fiche produit</h2><div class="modal-sub">Chargement…</div></div><button class="modal-close-btn" onclick="fermerModal()">'+svgIcon('close')+'</button></div><div class="empty-state">Chargement des données réelles…</div>');
- document.getElementById('modalPanel').classList.add('produit-detail-360');
- try{
- const d=await appelApi('/produits/'+encodeURIComponent(id)+'/detail'),p=d.produit||{},v=d.ventes||{},a=d.achats||{},s=d.stock||{},an=d.analyse||{},detail=v.detail||{},gros=v.gros||{};
- const vr=v.lignes||[],ar=a.lignes||[],mr=s.mouvements||[];
- const vrows=vr.map(x=>{const unite=x.type_vente==='gros'?Number(p.bouteilles_par_paquet||0):1;const q=Number(x.quantite||0)*unite;const b=Number(x.bonus_quantite||0)*unite;return '<tr><td>'+pdDate(x.date_vente)+'</td><td>'+pdEsc(x.reference||'—')+'</td><td>'+pdEsc(x.type_vente||'—')+'</td><td>'+pdNum(x.quantite)+'</td><td>'+pdNum(x.bonus_quantite||0)+'</td><td>'+pdNum(q+b)+'</td><td>'+pdMoney(x.montant_ligne)+'</td><td>'+pdMoney(x.benefice_ligne)+'</td></tr>';});
- const arows=ar.map(x=>'<tr><td>'+pdDate(x.date_achat)+'</td><td>'+pdEsc(x.reference||'—')+'</td><td>'+pdEsc(x.fournisseur_nom||'—')+'</td><td>'+pdNum(x.quantite_bouteilles)+'</td><td>'+pdMoney(x.cout_par_bouteille)+'</td><td>'+pdMoney(x.montant_paye_ligne)+'</td></tr>');
- const mrows=mr.map(x=>'<tr><td>'+pdDate(x.created_at)+'</td><td>'+pdEsc(x.type_mouvement||'—')+'</td><td>'+pdNum(x.quantite_bouteilles)+'</td><td>'+pdNum(x.stock_apres)+'</td><td>'+pdEsc(x.notes||'—')+'</td></tr>');
- const fournisseurs=(a.fournisseurs||[]).map(x=>'<span class="badge ok" style="margin:2px">'+pdEsc(x.nom||'—')+'</span>').join(' ')||'Aucun fournisseur disponible';
- const cmp=Number(p.prix_achat_moyen),pd=Number(p.prix_detail_conseille),pg=Number(p.prix_gros_conseille),md=pd>0?(pd-cmp)/pd*100:null,mg=pg>0?(pg-cmp*Number(p.bouteilles_par_paquet||0))/pg*100:null;
- const info=[['Code produit',p.code_produit],['Code-barres',p.code_barre],['Catégorie',p.categorie],['Marque',p.marque],['Contenance',p.contenance],['Bouteilles/paquet',p.bouteilles_par_paquet],['Stock minimum',p.stock_min_bouteilles],['Description',p.description]].map(x=>'<div><div class="cell-sub">'+x[0]+'</div><strong>'+pdEsc(x[1]??'Non disponible')+'</strong></div>').join('');
- const prix=[['Détail conseillé',pdMoney(p.prix_detail_conseille)],['Marge détail',pdPct(md)],['Gros conseillé',pdMoney(p.prix_gros_conseille)],['Marge gros',pdPct(mg)],['Détail min/max',pdMoney(p.prix_detail_min)+' / '+pdMoney(p.prix_detail_max)],['Gros min/max',pdMoney(p.prix_gros_min)+' / '+pdMoney(p.prix_gros_max)]].map(x=>'<div><div class="cell-sub">'+x[0]+'</div><strong>'+x[1]+'</strong></div>').join('');
- const analyse=[['Vitesse',an.vitesse_bouteilles_par_jour==null?'Non disponible':Number(an.vitesse_bouteilles_par_jour).toLocaleString('fr-FR',{maximumFractionDigits:2})+' bout./j'],['Jours restants',an.jours_stock_restants==null?'Non disponible':'~'+Number(an.jours_stock_restants).toLocaleString('fr-FR',{maximumFractionDigits:1})+' j'],['Rotation',an.rotation_annualisee==null?'Non disponible':Number(an.rotation_annualisee).toLocaleString('fr-FR',{maximumFractionDigits:2})+' ×/an'],['Évolution CA',an.evolution_ca_pct==null?'Non disponible':Number(an.evolution_ca_pct).toLocaleString('fr-FR',{maximumFractionDigits:1})+' %']].map(x=>'<div><div class="cell-sub">'+x[0]+'</div><strong>'+x[1]+'</strong></div>').join('');
- document.getElementById('modalPanel').innerHTML='<div style="display:flex;justify-content:space-between;gap:12px"><div><h2>'+pdEsc(p.nom||'Produit')+'</h2><div class="modal-sub">'+[p.categorie,p.marque,p.contenance].filter(Boolean).map(pdEsc).join(' · ')+'</div></div><button class="modal-close-btn" onclick="fermerModal()">'+svgIcon('close')+'</button></div>'
-+'<div class="pd-kpis"><div><b>Stock</b><strong>'+pdNum(s.actuel_bouteilles)+' bout.</strong></div><div><b>CMP</b><strong>'+pdMoney(p.prix_achat_moyen)+'</strong></div><div><b>Valeur stock</b><strong>'+pdMoney(s.valeur)+'</strong></div><div><b>CA / bénéfice</b><strong>'+pdMoney(v.chiffre_affaires)+' / '+pdMoney(v.benefice)+'</strong></div></div>'
-+'<div class="pd-cols"><section><h3>Informations générales</h3><div class="pd-mini">'+info+'</div></section><section><h3>Prix et marges</h3><div class="pd-mini">'+prix+'</div></section></div>'
-+'<section><h3>Ventes — détail vs gros</h3><div class="pd-mini"><div><b>Détail</b><br>'+pdNum(detail.bouteilles)+' bout. · '+pdMoney(detail.ca)+' · bénéfice '+pdMoney(detail.benefice)+'</div><div><b>Gros</b><br>'+pdNum(gros.bouteilles)+' bout. · '+pdMoney(gros.ca)+' · bénéfice '+pdMoney(gros.benefice)+'</div><div><b>Quantité vendue</b><br>'+pdNum(v.quantite_bouteilles)+' bout.</div><div><b>Bonus offert</b><br>'+pdNum(v.bonus_bouteilles)+' bout.</div><div><b>Sortie totale de stock</b><br>'+pdNum(Number(v.quantite_bouteilles||0)+Number(v.bonus_bouteilles||0))+' bout.</div></div>'+pdTable(['Date','Réf.','Type','Qté vendue','Bonus','Sortie stock','CA','Bénéfice'],vrows,'Aucune vente non annulée disponible.')+'</section>'
-+'<div class="pd-cols"><section><h3>Achats et fournisseurs</h3><div class="pd-mini"><div>Achats<br><strong>'+pdNum(a.nombre)+'</strong></div><div>Quantité<br><strong>'+pdNum(a.quantite_bouteilles)+' bout.</strong></div><div>Coût total<br><strong>'+pdMoney(a.cout_total)+'</strong></div><div>Fréquence<br><strong>'+(a.frequence_jours==null?'Non disponible':'tous les '+Number(a.frequence_jours).toLocaleString('fr-FR',{maximumFractionDigits:1})+' j')+'</strong></div></div><p>'+fournisseurs+'</p>'+pdTable(['Date','Réf.','Fournisseur','Qté','Coût/bout.','Total'],arows,'Aucun achat non annulé disponible.')+'</section>'
-+'<section><h3>Stock et historique</h3><div class="pd-mini"><div>Valeur<br><strong>'+pdMoney(s.valeur)+'</strong></div><div>Alerte<br><strong>'+(s.alerte?'Oui':'Non')+'</strong></div><div>Mouvements<br><strong>'+pdNum(mr.length)+'</strong></div><div>Dernier mouvement<br><strong>'+pdDate(mr[0]?.created_at)+'</strong></div></div>'+pdTable(['Date','Type','Variation','Stock après','Origine'],mrows,'Aucun mouvement enregistré.')+'</section></div>'
-+'<div class="pd-cols"><section><h3>Analyse</h3><div class="pd-mini">'+analyse+'</div><p class="cell-sub">Fenêtre d’analyse : '+pdNum(an.fenetre_jours)+' jours.</p></section><section><h3>Disponibilité / anomalies</h3><p class="cell-sub">Les données indisponibles sont affichées comme telles. Les ventes annulées sont exclues par le backend. Aucun calcul comptable n’est recalculé ici.</p></section></div>';
- }catch(e){document.getElementById('modalPanel').innerHTML='<h2>Fiche produit</h2><div class="banner">'+pdEsc(e.message)+'</div>';}
+// ------------------------------------------------------------
+// Fiche produit : accessible depuis n'importe quel nom de produit de
+// l'application (élément portant data-produit-id, voir lienProduit()).
+// Graphiques dessinés en SVG intégré : aucune bibliothèque externe requise.
+// ------------------------------------------------------------
+function pdEsc(v){ return echapperHtml(v); }
+function pdDate(v, avecHeure){
+  if (!v) return '—';
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return '—';
+  return avecHeure ? d.toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : d.toLocaleDateString('fr-FR');
 }
+function pdMoney(v){ return v === null || v === undefined ? '—' : formatMontant(v); }
+function pdNum(v, dec){ return v === null || v === undefined || !Number.isFinite(Number(v)) ? '—' : Number(v).toLocaleString('fr-FR', { maximumFractionDigits: dec ?? 0 }); }
+function pdPct(v){ return v === null || v === undefined || !Number.isFinite(Number(v)) ? '—' : Number(v).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %'; }
+function pdEvolution(v){
+  if (v === null || v === undefined || !Number.isFinite(Number(v))) return '<span class="fp-evo neutre">pas de référence</span>';
+  const n = Number(v);
+  return `<span class="fp-evo ${n >= 0 ? 'hausse' : 'baisse'}">${n >= 0 ? '▲' : '▼'} ${Math.abs(n).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} %</span>`;
+}
+function pdTable(entetes, lignes, vide){
+  if (!lignes.length) return `<div class="empty-state">${vide}</div>`;
+  return `<div class="fp-table"><table class="data-table"><thead><tr>${entetes.map(e => `<th>${e}</th>`).join('')}</tr></thead><tbody>${lignes.join('')}</tbody></table></div>`;
+}
+
+/** Lien cliquable vers la fiche d'un produit (utilisable partout). */
+function lienProduit(id, nom){
+  if (!id) return echapperHtml(nom || '—');
+  return `<a href="#" class="lien-produit" data-produit-id="${echapperHtml(id)}" title="Voir la fiche produit">${echapperHtml(nom || '—')}</a>`;
+}
+
+// Un seul écouteur pour toute l'application : tout élément portant
+// data-produit-id ouvre la fiche, sauf si l'on clique sur un bouton ou un
+// champ à l'intérieur (ex. boutons Modifier/Archiver d'une ligne).
+document.addEventListener('click', (e) => {
+  const cible = e.target.closest('[data-produit-id]');
+  if (!cible) return;
+  const controle = e.target.closest('button, input, select, textarea, label, a:not(.lien-produit)');
+  if (controle && controle !== cible && cible.contains(controle)) return;
+  e.preventDefault();
+  ouvrirDetailProduit(cible.dataset.produitId);
+});
+
+/** Histogramme SVG (une barre par point). */
+function svgBarres(points, options = {}){
+  const largeur = 640, hauteur = options.hauteur || 150, marge = 4;
+  if (!points.length) return '<div class="empty-state">Aucune donnée sur la période.</div>';
+  const max = Math.max(...points.map(p => Number(p.valeur) || 0), 1);
+  const pas = (largeur - marge * 2) / points.length;
+  const barre = Math.max(2, pas * 0.72);
+  const rects = points.map((p, i) => {
+    const h = Math.max(1, ((Number(p.valeur) || 0) / max) * (hauteur - 22));
+    const x = marge + i * pas + (pas - barre) / 2;
+    return `<rect x="${x.toFixed(1)}" y="${(hauteur - 16 - h).toFixed(1)}" width="${barre.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${options.couleur || 'var(--accent)'}" opacity="${Number(p.valeur) > 0 ? 1 : 0.25}"><title>${echapperHtml(p.titre || '')}</title></rect>`;
+  }).join('');
+  const etiquettes = (options.etiquettes || []).map(e => `<text x="${(marge + e.index * pas + pas / 2).toFixed(1)}" y="${hauteur - 3}" text-anchor="middle" class="fp-axe">${echapperHtml(e.texte)}</text>`).join('');
+  return `<svg viewBox="0 0 ${largeur} ${hauteur}" class="fp-svg" preserveAspectRatio="none" role="img">${rects}${etiquettes}</svg>`;
+}
+
+/** Courbe SVG simple (évolution d'une valeur). */
+function svgCourbe(points, options = {}){
+  const largeur = 640, hauteur = options.hauteur || 130, m = 14;
+  if (points.length < 2) return `<div class="empty-state">${options.vide || 'Pas assez de points pour tracer une évolution.'}</div>`;
+  const vals = points.map(p => Number(p.valeur) || 0);
+  const min = Math.min(...vals), max = Math.max(...vals), ecart = max - min || 1;
+  const xy = points.map((p, i) => [m + (i / (points.length - 1)) * (largeur - 2 * m), m + (1 - ((Number(p.valeur) || 0) - min) / ecart) * (hauteur - 2 * m - 12)]);
+  const chemin = xy.map((c, i) => `${i ? 'L' : 'M'}${c[0].toFixed(1)},${c[1].toFixed(1)}`).join(' ');
+  const pts = xy.map((c, i) => `<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="3.5" fill="var(--surface)" stroke="${options.couleur || 'var(--ink)'}" stroke-width="2"><title>${echapperHtml(points[i].titre || '')}</title></circle>`).join('');
+  return `<svg viewBox="0 0 ${largeur} ${hauteur}" class="fp-svg" preserveAspectRatio="none" role="img">
+    <path d="${chemin}" fill="none" stroke="${options.couleur || 'var(--ink)'}" stroke-width="2.2"/>${pts}
+    <text x="${m}" y="${hauteur - 2}" class="fp-axe">${echapperHtml(options.gauche || '')}</text>
+    <text x="${largeur - m}" y="${hauteur - 2}" text-anchor="end" class="fp-axe">${echapperHtml(options.droite || '')}</text>
+  </svg>`;
+}
+
+function fpStat(libelle, valeur, sous, classe){
+  return `<div class="fp-stat ${classe || ''}"><div class="fp-stat-label">${libelle}</div><div class="fp-stat-valeur">${valeur}</div>${sous ? `<div class="fp-stat-sous">${sous}</div>` : ''}</div>`;
+}
+function fpInfo(libelle, valeur){
+  return `<div class="fp-info"><span>${libelle}</span><strong>${valeur}</strong></div>`;
+}
+
+let ficheProduitCourante = null;
+
+async function ouvrirDetailProduit(id){
+  if (!id) return;
+  if (!aGroupe('LECTURE_FINANCIERE')) { afficherToast('Accès non autorisé à cette fiche.', 'error'); return; }
+  ouvrirModal(`<div class="fp-chargement"><div class="fp-spinner"></div>Chargement de la fiche produit…</div>`);
+  document.getElementById('modalPanel').classList.add('fiche-produit');
+  try {
+    const d = await appelApi('/produits/' + encodeURIComponent(id) + '/detail');
+    ficheProduitCourante = d;
+    dessinerFicheProduit(d, 'apercu');
+  } catch (e) {
+    document.getElementById('modalPanel').innerHTML = `<div class="modal-head"><div><h2>Fiche produit</h2></div><button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button></div><div class="empty-state">${pdEsc(e.message)}</div>`;
+  }
+}
+
+// Le formulaire de modification lit produitsCache, qui n'est rempli qu'en
+// visitant le menu Produits : on y ajoute le produit de la fiche si besoin.
+function modifierProduitDepuisFiche(){
+  const p = ficheProduitCourante?.produit;
+  if (!p) return;
+  if (!produitsCache.some(x => x.id === p.id)) produitsCache.push(p);
+  fermerModal();
+  ouvrirModalProduit(p.id);
+}
+
+function changerOngletFiche(onglet){
+  if (ficheProduitCourante) dessinerFicheProduit(ficheProduitCourante, onglet);
+}
+
+function dessinerFicheProduit(d, onglet){
+  const p = d.produit || {}, v = d.ventes || {}, a = d.achats || {}, s = d.stock || {}, an = d.analyse || {}, pr = d.prix || {};
+  const bpp = Number(p.bouteilles_par_paquet) || 1;
+  const stock = Number(s.actuel_bouteilles) || 0;
+  const etatStock = stock === 0 ? ['rupture', 'Rupture de stock'] : s.alerte ? ['faible', 'Stock faible'] : ['ok', 'Stock correct'];
+  const initiales = String(p.nom || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(m => m[0]).join('').toUpperCase();
+  // Si l'image ne charge pas, on affiche les initiales du produit.
+  const image = p.image_url
+    ? `<img src="${pdEsc(p.image_url)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="fp-monogramme" style="display:none">${pdEsc(initiales)}</div>`
+    : `<div class="fp-monogramme">${pdEsc(initiales)}</div>`;
+  const etiquettes = [p.categorie, p.marque, p.contenance, p.code_produit ? 'Réf. ' + p.code_produit : null].filter(Boolean)
+    .map(x => `<span class="fp-tag">${pdEsc(x)}</span>`).join('');
+
+  const entete = `
+    <div class="fp-hero">
+      <div class="fp-visuel">${image}</div>
+      <div class="fp-titre">
+        <div class="fp-tags">${etiquettes}</div>
+        <h2>${pdEsc(p.nom || 'Produit')}</h2>
+        <div class="fp-statuts">
+          <span class="fp-pastille ${etatStock[0]}">${etatStock[1]}</span>
+          ${p.archive ? '<span class="fp-pastille neutre">Archivé</span>' : ''}
+          ${an.rang_ca ? `<span class="fp-pastille neutre">N° ${an.rang_ca} des ventes sur ${an.nombre_produits_vendus}</span>` : ''}
+          ${an.reappro?.urgent ? '<span class="fp-pastille rupture">À recommander vite</span>' : ''}
+        </div>
+      </div>
+      <div class="fp-hero-chiffres">
+        <div><span>En stock</span><strong>${pdNum(stock)} bout.</strong><em>${pdNum(s.paquets_complets)} paquet(s) + ${pdNum(s.bouteilles_isolees)}</em></div>
+        <div><span>Valeur du stock</span><strong>${pdMoney(s.valeur)}</strong><em>CMP ${pdMoney(p.prix_achat_moyen)}/bout.</em></div>
+      </div>
+      <button class="modal-close-btn fp-fermer" onclick="fermerModal()" title="Fermer">${svgIcon('close')}</button>
+    </div>
+    <div class="fp-kpis">
+      ${fpStat('Chiffre d\'affaires · 60 j', pdMoney(an.chiffre_affaires_60j), pdEvolution(an.evolution_ca_pct) + ' vs 60 j précédents')}
+      ${fpStat('Bénéfice · 60 j', pdMoney(an.benefice_60j), 'marge ' + pdPct(an.chiffre_affaires_60j > 0 ? an.benefice_60j / an.chiffre_affaires_60j * 100 : null))}
+      ${fpStat('Vitesse de vente', pdNum(an.vitesse_bouteilles_par_jour, 1) + ' bout./j', pdNum(an.bouteilles_60j) + ' bout. en 60 j')}
+      ${fpStat('Couverture du stock', an.jours_stock_restants == null ? '—' : '≈ ' + pdNum(an.jours_stock_restants, 0) + ' j', an.date_rupture_estimee ? 'rupture vers le ' + pdDate(an.date_rupture_estimee) : 'pas de vente récente', an.jours_stock_restants != null && an.jours_stock_restants < 7 ? 'alerte' : '')}
+      ${fpStat('Rotation', an.rotation_annualisee == null ? '—' : pdNum(an.rotation_annualisee, 1) + ' ×/an', an.rotation_annualisee ? 'stock renouvelé tous les ' + pdNum(365 / an.rotation_annualisee, 0) + ' j' : '')}
+      ${fpStat('Part du CA', pdPct(an.part_ca_pct), 'part de la marge ' + pdPct(an.part_marge_pct))}
+    </div>`;
+
+  const onglets = [['apercu', 'Aperçu'], ['ventes', 'Ventes'], ['achats', 'Achats & coûts'], ['stock', 'Stock & inventaires'], ['prix', 'Prix & marges']];
+  const barreOnglets = `<div class="fp-onglets">${onglets.map(([cle, lib]) => `<button class="${cle === onglet ? 'actif' : ''}" onclick="changerOngletFiche('${cle}')">${lib}</button>`).join('')}</div>`;
+
+  let contenu = '';
+  if (onglet === 'apercu') contenu = ficheApercu(d, bpp);
+  else if (onglet === 'ventes') contenu = ficheVentes(d, bpp);
+  else if (onglet === 'achats') contenu = ficheAchats(d);
+  else if (onglet === 'stock') contenu = ficheStock(d);
+  else contenu = fichePrix(d, bpp);
+
+  const actions = aGroupe('OPERATIONS')
+    ? `<div class="fp-actions"><button class="btn" onclick="modifierProduitDepuisFiche()">${svgIcon('edit')} Modifier le produit</button></div>`
+    : '';
+
+  document.getElementById('modalPanel').innerHTML = entete + barreOnglets + `<div class="fp-contenu">${contenu}</div>` + actions;
+}
+
+function ficheApercu(d, bpp){
+  const p = d.produit, v = d.ventes, an = d.analyse, s = d.stock;
+  const serie = completerSerie60(an.serie_quotidienne || []);
+  const etiquettes = serie.map((j, i) => ({ index: i, texte: i % 10 === 0 ? new Date(j.jour + 'T00:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '' })).filter(e => e.texte);
+  const graphique = svgBarres(serie.map(j => ({ valeur: j.bouteilles, titre: `${new Date(j.jour + 'T00:00:00').toLocaleDateString('fr-FR')} : ${pdNum(j.bouteilles)} bout. · ${pdMoney(j.ca)}` })), { etiquettes });
+
+  const r = an.reappro || {};
+  const reappro = an.vitesse_bouteilles_par_jour > 0
+    ? (r.bouteilles_conseillees > 0
+      ? `<div class="fp-reappro ${r.urgent ? 'urgent' : ''}"><div><strong>Recommander ${pdNum(r.paquets_conseilles)} paquet(s)</strong> (${pdNum(r.bouteilles_conseillees)} bout.) pour couvrir ${pdNum(r.cible_jours)} jours de ventes.</div><div class="fp-stat-sous">Coût estimé : ${pdMoney(r.cout_estime)} au dernier prix d'achat.</div></div>`
+      : `<div class="fp-reappro ok"><strong>Stock suffisant</strong> pour les ${pdNum(r.cible_jours)} prochains jours au rythme actuel.</div>`)
+    : '<div class="fp-reappro neutre">Aucune vente sur 60 jours : pas de réapprovisionnement conseillé.</div>';
+
+  const detailCa = Number(v.detail?.ca) || 0, grosCa = Number(v.gros?.ca) || 0, totalCa = detailCa + grosCa;
+  const partDetail = totalCa > 0 ? detailCa / totalCa * 100 : 0;
+  const repartition = totalCa > 0
+    ? `<div class="fp-split"><div style="width:${partDetail.toFixed(1)}%" class="detail"></div><div style="width:${(100 - partDetail).toFixed(1)}%" class="gros"></div></div>
+       <div class="fp-legende"><span><i class="detail"></i>Détail ${pdPct(partDetail)} · ${pdMoney(detailCa)}</span><span><i class="gros"></i>Gros ${pdPct(100 - partDetail)} · ${pdMoney(grosCa)}</span></div>`
+    : '<div class="empty-state">Aucune vente enregistrée.</div>';
+
+  const sem = v.par_jour_semaine || [];
+  const maxSem = Math.max(...sem.map(j => j.bouteilles), 1);
+  const jours = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  const semaine = `<div class="fp-semaine">${jours.map((lib, i) => {
+    const j = sem.find(x => x.jour_semaine === i + 1);
+    const h = j ? Math.max(4, j.bouteilles / maxSem * 70) : 2;
+    return `<div><div class="barre" style="height:${h}px" title="${j ? pdNum(j.bouteilles) + ' bout. · ' + pdMoney(j.ca) : 'aucune vente'}"></div><span>${lib}</span></div>`;
+  }).join('')}</div>`;
+
+  const clients = (v.meilleurs_clients || []).map(c => `<li><span class="name">${pdEsc(c.nom)}</span><span class="value">${pdMoney(c.ca)} · ${pdNum(c.achats)} achat(s)</span></li>`).join('');
+
+  return `
+    <div class="fp-grille">
+      <section class="fp-carte large"><h4>Ventes des 60 derniers jours <span class="fp-legende-titre">bouteilles par jour</span></h4>${graphique}</section>
+      <section class="fp-carte"><h4>Réapprovisionnement</h4>${reappro}
+        ${fpInfo('Dernier achat', pdDate(d.achats.dernier_achat))}
+        ${fpInfo('Fréquence d\'achat', d.achats.frequence_jours == null ? '—' : 'tous les ' + pdNum(d.achats.frequence_jours, 0) + ' j')}
+        ${fpInfo('Dernière vente', v.derniere_vente ? pdDate(v.derniere_vente) + (v.jours_sans_vente > 0 ? ` (il y a ${pdNum(v.jours_sans_vente)} j)` : '') : '—')}
+      </section>
+      <section class="fp-carte"><h4>Détail ou gros ?</h4>${repartition}</section>
+      <section class="fp-carte"><h4>Jours les plus forts <span class="fp-legende-titre">90 derniers jours</span></h4>${semaine}
+        ${v.meilleur_jour_semaine ? `<div class="fp-stat-sous" style="margin-top:6px;">Le ${pdEsc(v.meilleur_jour_semaine.libelle.toLowerCase())} est le jour où ce produit se vend le plus.</div>` : ''}</section>
+      <section class="fp-carte"><h4>Meilleurs clients</h4>${clients ? `<ul class="row-list">${clients}</ul>` : '<div class="empty-state">Ventes uniquement à des clients de passage.</div>'}</section>
+      <section class="fp-carte"><h4>Identité du produit</h4>
+        ${fpInfo('Code produit', pdEsc(p.code_produit || '—'))}
+        ${fpInfo('Code-barres', pdEsc(p.code_barre || '—'))}
+        ${fpInfo('Conditionnement', pdNum(bpp) + ' bouteilles / paquet')}
+        ${fpInfo('Stock minimum', pdNum(s.seuil_min) + ' bout.')}
+        ${fpInfo('Créé le', pdDate(p.created_at))}
+        ${p.description ? `<p class="fp-description">${pdEsc(p.description)}</p>` : ''}
+      </section>
+    </div>`;
+}
+
+function completerSerie60(serie){
+  const parJour = new Map(serie.map(j => [String(j.jour).slice(0, 10), j]));
+  const res = [];
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - 59);
+  for (let i = 0; i < 60; i++) {
+    const cle = d.toISOString().slice(0, 10);
+    const j = parJour.get(cle);
+    res.push({ jour: cle, bouteilles: j ? Number(j.bouteilles) : 0, ca: j ? Number(j.chiffre_affaires) : 0 });
+    d.setDate(d.getDate() + 1);
+  }
+  return res;
+}
+
+function ficheVentes(d, bpp){
+  const v = d.ventes, p = d.produit;
+  const lignes = (v.lignes || []).map(x => {
+    const u = x.type_vente === 'gros' ? bpp : 1;
+    return `<tr><td>${pdDate(x.date_vente)}</td><td class="mono">${pdEsc(x.reference || '—')}</td><td>${pdEsc(x.client_nom || 'Passage')}</td><td>${x.type_vente === 'gros' ? 'Gros' : 'Détail'}</td>
+      <td class="mono">${pdNum(x.quantite)}${Number(x.bonus_quantite) ? ` <span class="badge neutral">+${pdNum(x.bonus_quantite)} offert</span>` : ''}</td>
+      <td class="mono">${pdMoney(x.prix_unitaire)}</td><td class="mono">${pdNum((Number(x.quantite) + Number(x.bonus_quantite || 0)) * u)}</td>
+      <td class="mono">${pdMoney(x.montant_ligne)}</td><td class="mono" style="color:${Number(x.benefice_ligne) < 0 ? 'var(--danger)' : 'var(--fresh)'}">${pdMoney(x.benefice_ligne)}</td></tr>`;
+  });
+  const ligneType = (lib, t, conseille) => `<tr><td><strong>${lib}</strong></td><td class="mono">${pdNum(t.nombre)}</td><td class="mono">${pdNum(t.quantite)}</td><td class="mono">${pdNum(t.bouteilles)}</td>
+    <td class="mono">${pdMoney(t.prix_moyen)}</td><td class="mono">${pdMoney(conseille)}</td><td class="mono">${pdMoney(t.ca)}</td><td class="mono">${pdMoney(t.benefice)}</td><td class="mono">${pdPct(t.marge_pct)}</td></tr>`;
+  return `
+    <div class="fp-kpis petit">
+      ${fpStat('Ventes', pdNum(v.nombre), 'depuis le début')}
+      ${fpStat('Bouteilles vendues', pdNum(v.quantite_bouteilles), '+ ' + pdNum(v.bonus_bouteilles) + ' offertes')}
+      ${fpStat('Chiffre d\'affaires', pdMoney(v.chiffre_affaires), 'coût ' + pdMoney(v.cout))}
+      ${fpStat('Bénéfice', pdMoney(v.benefice), 'marge ' + pdPct(v.marge_pct))}
+      ${fpStat('Bénéfice par bouteille', pdMoney(v.marge_par_bouteille), 'moyenne réalisée')}
+      ${fpStat('Coût des bonus', pdMoney(v.cout_bonus), 'bouteilles offertes, au coût')}
+    </div>
+    <section class="fp-carte"><h4>Détail et gros : prix réellement pratiqués</h4>
+      ${pdTable(['Type', 'Ventes', 'Quantité', 'Bouteilles', 'Prix moyen', 'Prix conseillé', 'CA', 'Bénéfice', 'Marge'],
+        [ligneType('Détail (bouteille)', v.detail || {}, p.prix_detail_conseille), ligneType('Gros (paquet)', v.gros || {}, p.prix_gros_conseille)], '')}
+    </section>
+    <section class="fp-carte"><h4>Historique des ventes <span class="fp-legende-titre">${pdNum(lignes.length)} ligne(s), annulées exclues</span></h4>
+      ${pdTable(['Date', 'Facture', 'Client', 'Type', 'Quantité', 'Prix unit.', 'Sortie (bout.)', 'Montant', 'Bénéfice'], lignes, 'Aucune vente enregistrée pour ce produit.')}
+    </section>`;
+}
+
+function ficheAchats(d){
+  const a = d.achats;
+  const couts = (a.historique_couts || []).map(c => ({ valeur: c.cout, titre: `${pdDate(c.date)} : ${pdMoney(c.cout)}/bout.` }));
+  const lignes = (a.lignes || []).map(x => `<tr><td>${pdDate(x.date_achat)}</td><td class="mono">${pdEsc(x.reference || '—')}</td><td>${pdEsc(x.fournisseur_nom || '—')}</td>
+    <td class="mono">${pdNum(x.nombre_paquets)} paq.${Number(x.nombre_bouteilles_isolees) ? ' + ' + pdNum(x.nombre_bouteilles_isolees) : ''}</td><td class="mono">${pdNum(x.quantite_bouteilles)}</td>
+    <td class="mono">${pdMoney(x.cout_par_paquet)}</td><td class="mono">${pdMoney(x.cout_par_bouteille)}</td><td class="mono">${pdMoney(x.montant_paye_ligne)}</td></tr>`);
+  const fournisseurs = (a.fournisseurs || []).map(f => `<span class="fp-tag">${pdEsc(f.nom || '—')}</span>`).join(' ') || '<span class="cell-sub">Aucun fournisseur renseigné sur les achats.</span>';
+  return `
+    <div class="fp-kpis petit">
+      ${fpStat('Achats', pdNum(a.nombre), 'depuis le début')}
+      ${fpStat('Bouteilles achetées', pdNum(a.quantite_bouteilles), '')}
+      ${fpStat('Montant total', pdMoney(a.cout_total), '')}
+      ${fpStat('Dernier coût', a.dernier_cout_bouteille == null ? '—' : pdMoney(a.dernier_cout_bouteille) + '/bout.', a.variation_dernier_cout_pct == null ? '' : pdEvolution(a.variation_dernier_cout_pct) + ' vs achat précédent', a.variation_dernier_cout_pct > 0 ? 'attention' : '')}
+      ${fpStat('Fréquence', a.frequence_jours == null ? '—' : 'tous les ' + pdNum(a.frequence_jours, 0) + ' j', 'dernier achat ' + pdDate(a.dernier_achat))}
+    </div>
+    <section class="fp-carte"><h4>Évolution du coût d'achat par bouteille</h4>
+      ${svgCourbe(couts, { gauche: couts.length ? pdDate(a.historique_couts[0].date) : '', droite: couts.length ? pdDate(a.historique_couts[a.historique_couts.length - 1].date) : '', vide: 'Il faut au moins deux achats pour voir l\'évolution du coût.' })}
+    </section>
+    <section class="fp-carte"><h4>Fournisseurs</h4><div class="fp-tags">${fournisseurs}</div></section>
+    <section class="fp-carte"><h4>Historique des achats</h4>
+      ${pdTable(['Date', 'Réf.', 'Fournisseur', 'Quantité', 'Bouteilles', 'Coût/paquet', 'Coût/bout.', 'Total'], lignes, 'Aucun achat enregistré pour ce produit.')}
+    </section>`;
+}
+
+function ficheStock(d){
+  const s = d.stock, p = d.produit;
+  const libellesMvt = { achat: 'Achat', vente: 'Vente', bonus: 'Bonus offert', correction: 'Correction', inventaire: 'Inventaire', transfert: 'Transfert' };
+  const mouvements = (s.mouvements || []).map(x => `<tr><td>${pdDate(x.created_at, true)}</td><td>${libellesMvt[x.type_mouvement] || pdEsc(x.type_mouvement)}</td>
+    <td class="mono" style="color:${Number(x.quantite_bouteilles) < 0 ? 'var(--danger)' : 'var(--fresh)'}">${Number(x.quantite_bouteilles) > 0 ? '+' : ''}${pdNum(x.quantite_bouteilles)}</td>
+    <td class="mono">${pdNum(x.stock_apres)}</td><td class="cell-sub">${pdEsc(x.notes || '—')}</td><td class="cell-sub">${pdEsc(x.cree_par_nom || '—')}</td></tr>`);
+  const inventaires = (s.inventaires || []).map(i => `<tr><td>${pdDate(i.created_at, true)}</td><td class="mono">${pdNum(i.stock_theorique)}</td><td class="mono">${pdNum(i.stock_physique)}</td>
+    <td class="mono" style="color:${Number(i.ecart) < 0 ? 'var(--danger)' : Number(i.ecart) > 0 ? 'var(--fresh)' : 'inherit'}">${Number(i.ecart) > 0 ? '+' : ''}${pdNum(i.ecart)}</td>
+    <td class="mono">${pdMoney(i.delta_valeur)}</td><td class="cell-sub">${pdEsc(i.motif || '—')}</td><td class="cell-sub">${pdEsc(i.utilisateur_nom || '—')}</td></tr>`);
+  const seuil = Number(s.seuil_min) || 0, stock = Number(s.actuel_bouteilles) || 0;
+  const remplissage = Math.min(100, seuil > 0 ? stock / (seuil * 3) * 100 : (stock > 0 ? 100 : 0));
+  return `
+    <div class="fp-kpis petit">
+      ${fpStat('Stock actuel', pdNum(stock) + ' bout.', pdNum(s.paquets_complets) + ' paquet(s) + ' + pdNum(s.bouteilles_isolees) + ' bout.')}
+      ${fpStat('Seuil minimum', pdNum(seuil) + ' bout.', stock <= seuil ? 'atteint ou dépassé' : 'marge de ' + pdNum(stock - seuil) + ' bout.', stock <= seuil ? 'alerte' : '')}
+      ${fpStat('Valeur', pdMoney(s.valeur), 'au coût moyen ' + pdMoney(p.prix_achat_moyen))}
+      ${fpStat('Écart d\'inventaire cumulé', (s.ecart_inventaires_cumule > 0 ? '+' : '') + pdNum(s.ecart_inventaires_cumule) + ' bout.', pdNum((s.inventaires || []).length) + ' comptage(s)', s.ecart_inventaires_cumule < 0 ? 'attention' : '')}
+    </div>
+    <section class="fp-carte"><h4>Niveau de stock</h4>
+      <div class="fp-jauge"><div style="width:${remplissage.toFixed(0)}%" class="${stock === 0 ? 'rupture' : stock <= seuil ? 'faible' : 'ok'}"></div><span style="left:${seuil > 0 ? Math.min(100, 100 / 3).toFixed(0) : 0}%" title="Seuil minimum"></span></div>
+      <div class="fp-stat-sous">Le trait marque le seuil minimum (${pdNum(seuil)} bout.) ; la jauge pleine correspond à 3 fois ce seuil.</div>
+    </section>
+    <section class="fp-carte"><h4>Inventaires physiques</h4>
+      ${pdTable(['Date', 'Théorique', 'Compté', 'Écart', 'Valeur', 'Motif', 'Par'], inventaires, 'Ce produit n\'a encore jamais été compté.')}
+    </section>
+    <section class="fp-carte"><h4>Mouvements de stock <span class="fp-legende-titre">200 derniers</span></h4>
+      ${pdTable(['Date', 'Type', 'Variation', 'Stock après', 'Origine', 'Par'], mouvements, 'Aucun mouvement enregistré.')}
+    </section>`;
+}
+
+function fichePrix(d, bpp){
+  const p = d.produit, pr = d.prix || {}, v = d.ventes || {};
+  const cmp = Number(p.prix_achat_moyen) || 0;
+  const ecartPrix = (reel, conseille) => reel && conseille ? pdEvolution((reel - conseille) / conseille * 100) : '<span class="fp-evo neutre">—</span>';
+  return `
+    <div class="fp-grille">
+      <section class="fp-carte"><h4>Détail — à la bouteille</h4>
+        ${fpInfo('Prix conseillé', pdMoney(p.prix_detail_conseille))}
+        ${fpInfo('Fourchette autorisée', pdMoney(p.prix_detail_min) + ' → ' + pdMoney(p.prix_detail_max))}
+        ${fpInfo('Coût de revient', pdMoney(cmp))}
+        ${fpInfo('Marge unitaire', pdMoney(pr.marge_unitaire_detail))}
+        ${fpInfo('Taux de marge', pdPct(pr.marge_detail_conseillee_pct))}
+        ${fpInfo('Prix moyen réellement pratiqué', pdMoney(v.detail?.prix_moyen) + ' ' + ecartPrix(v.detail?.prix_moyen, Number(p.prix_detail_conseille)))}
+      </section>
+      <section class="fp-carte"><h4>Gros — au paquet de ${pdNum(bpp)}</h4>
+        ${fpInfo('Prix conseillé', pdMoney(p.prix_gros_conseille))}
+        ${fpInfo('Fourchette autorisée', pdMoney(p.prix_gros_min) + ' → ' + pdMoney(p.prix_gros_max))}
+        ${fpInfo('Coût de revient', pdMoney(cmp * bpp))}
+        ${fpInfo('Marge unitaire', pdMoney(pr.marge_unitaire_gros))}
+        ${fpInfo('Taux de marge', pdPct(pr.marge_gros_conseillee_pct))}
+        ${fpInfo('Prix moyen réellement pratiqué', pdMoney(v.gros?.prix_moyen) + ' ' + ecartPrix(v.gros?.prix_moyen, Number(p.prix_gros_conseille)))}
+      </section>
+      <section class="fp-carte"><h4>Remise de gros</h4>
+        ${fpInfo('Prix de ' + pdNum(bpp) + ' bouteilles au détail', pdMoney(Number(p.prix_detail_conseille) * bpp || null))}
+        ${fpInfo('Prix du paquet en gros', pdMoney(p.prix_gros_conseille))}
+        ${fpInfo('Remise accordée en gros', pdPct(pr.remise_gros_pct))}
+      </section>
+      <section class="fp-carte"><h4>Bonus</h4>
+        ${p.bonus_seuil_paquets && p.bonus_offert_paquets
+          ? fpInfo('Règle', pdNum(p.bonus_offert_paquets) + ' paquet(s) offert(s) tous les ' + pdNum(p.bonus_seuil_paquets) + ' achetés')
+          : fpInfo('Règle', 'aucun bonus automatique')}
+        ${fpInfo('Bouteilles offertes', pdNum(v.bonus_bouteilles))}
+        ${fpInfo('Coût des bonus', pdMoney(v.cout_bonus))}
+        ${fpInfo('Poids sur le bénéfice', pdPct(Number(v.benefice) > 0 ? Number(v.cout_bonus) / Number(v.benefice) * 100 : null))}
+      </section>
+    </div>`;
+}
+
 // ============================================================
 // MODULE : STOCK
 // ============================================================
@@ -1745,7 +2166,7 @@ function dessinerTableStock(produits){
     return;
   }
   corps.innerHTML = produits.map(p => `
-    <tr>
+    <tr data-produit-id="${p.id}" title="Voir la fiche produit">
       <td><strong>${echapperHtml(p.nom)}</strong></td>
       <td><span class="unit-chip">${svgIcon('bottle')}${formatNombre(p.stock_bouteilles)} bout.<span class="sep">·</span>${formatNombre(p.stock_paquets_complets)} paq.</span></td>
       <td class="mono">${formatMontant(p.prix_achat_moyen)}</td>
@@ -1954,7 +2375,7 @@ async function voirDetailAchat(id){
           <tbody>
             ${achat.lignes.map(l => `
               <tr>
-                <td>${echapperHtml(l.produit_nom)}</td>
+                <td>${lienProduit(l.produit_id, l.produit_nom)}</td>
                 <td class="mono">${formatNombre(l.nombre_paquets)}</td>
                 <td class="mono">${formatNombre(l.nombre_bouteilles_isolees)}</td>
                 <td class="mono">${formatMontant(l.cout_par_paquet)}</td>
@@ -2410,7 +2831,7 @@ async function voirDetailVente(id){
           <tbody>
             ${vente.lignes.map(l => `
               <tr>
-                <td>${echapperHtml(l.produit_nom)}</td>
+                <td>${lienProduit(l.produit_id, l.produit_nom)}</td>
                 <td>${l.type_vente === 'gros' ? 'Gros' : 'Détail'}</td>
                 <td class="mono">${formatNombre(l.quantite)}</td>
                 <td class="mono">${formatNombre(l.bonus_quantite)}</td>
@@ -3194,67 +3615,6 @@ function ouvrirModalCharge(){
   `);
 }
 
-// ------------------------------------------------------------
-// Loyer quotidien (déduction automatique selon les ventes du jour)
-// ------------------------------------------------------------
-// Le montant du loyer vient uniquement de parametres.loyer_quotidien (voir
-// page Paramètres) — jamais codé en dur ici. Dès qu'une journée atteint ce
-// seuil et n'a pas encore de décision, une demande s'affiche au chargement
-// de l'application ; "Oui" crée une charge de catégorie « Loyer » (compte
-// 622) via le module Charges existant, "Non" enregistre juste le refus.
-// Les deux décisions sont persistées côté backend (jamais en local).
-let loyerJoursEnAttenteFile = [];
-
-async function verifierLoyerQuotidien(){
-  if (!aGroupe('OPERATIONS')) return;
-  try {
-    loyerJoursEnAttenteFile = await appelApi('/loyer-quotidien/a-traiter');
-    afficherProchainLoyerEnAttente();
-  } catch (err) {
-    console.warn('Vérification du loyer quotidien indisponible :', err.message);
-  }
-}
-
-function afficherProchainLoyerEnAttente(){
-  if (loyerJoursEnAttenteFile.length === 0) return;
-  const jour = loyerJoursEnAttenteFile[0];
-  const dateJourNormalisee = String(jour.date_jour || '').slice(0, 10);
-  const deviseSecondaire = deviseSecondaireActuelle || 'USD';
-  ouvrirModal(`
-    <div class="modal-head">
-      <div><h2>Loyer quotidien</h2>
-        <div class="modal-sub">${new Date(dateJourNormalisee + 'T00:00:00').toLocaleDateString('fr-FR')}</div></div>
-    </div>
-    <div class="subtitle" style="margin-bottom:14px;">
-      Les ventes de cette journée s'élèvent à <strong>${formatMontant(jour.montant_ventes)}</strong>.<br>
-      Le loyer quotidien configuré est de <strong>${formatNombre(jour.loyer_configure)} ${deviseSecondaire}</strong>
-      (${formatMontant(jour.montant_loyer)}).<br>
-      Voulez-vous déduire le loyer quotidien pour cette journée ?
-    </div>
-    <div class="modal-actions">
-      <button type="button" class="btn" id="loyerBtnNon" onclick="repondreLoyerQuotidien('${dateJourNormalisee}', 'non')">Non</button>
-      <button type="button" class="btn btn-accent" id="loyerBtnOui" onclick="repondreLoyerQuotidien('${dateJourNormalisee}', 'oui')">Oui, déduire ${formatMontant(jour.montant_loyer)}</button>
-    </div>
-  `);
-}
-
-async function repondreLoyerQuotidien(dateJour, decision){
-  document.getElementById('loyerBtnOui').disabled = true;
-  document.getElementById('loyerBtnNon').disabled = true;
-  try {
-    await appelApiEcriture(`/loyer-quotidien/${dateJour}/decision`, 'POST', { decision });
-    afficherToast(decision === 'oui' ? 'Charge de loyer enregistrée.' : 'Décision enregistrée : aucun loyer déduit.', 'success');
-    loyerJoursEnAttenteFile.shift();
-    fermerModal();
-    if (loyerJoursEnAttenteFile.length > 0) afficherProchainLoyerEnAttente();
-    else if (typeof chargerCharges === 'function' && document.getElementById('view-charges')?.classList.contains('active')) chargerCharges();
-  } catch (err) {
-    afficherToast(err.message, 'error');
-    document.getElementById('loyerBtnOui').disabled = false;
-    document.getElementById('loyerBtnNon').disabled = false;
-  }
-}
-
 async function soumettreCharge(event){
   event.preventDefault();
   const donnees = new FormData(event.target);
@@ -3618,7 +3978,7 @@ async function reconstruireJournal(){
 // ============================================================
 // MODULE : RAPPORTS
 // ============================================================
-let ongletRapportActif = 'ventes';
+let ongletRapportActif = 'performance';
 
 function onChangementPeriodeRapports(){
   const perso = document.getElementById('periodeRapports').value === 'personnalisee';
@@ -3640,7 +4000,10 @@ function construireQueryPeriode(){
   const periode = document.getElementById('periodeRapports').value;
   let q = `periode=${periode}`;
   if (periode === 'personnalisee') {
-    q += `&du=${document.getElementById('rapportDu').value}&au=${document.getElementById('rapportAu').value}`;
+    const du = document.getElementById('rapportDu').value, au = document.getElementById('rapportAu').value;
+    if (!du || !au) throw new Error('Choisis les dates « Du » et « Au » de la période personnalisée.');
+    if (du > au) throw new Error('La date « Du » doit précéder la date « Au ».');
+    q += `&du=${du}&au=${au}`;
   }
   return q;
 }
@@ -3650,12 +4013,136 @@ async function rafraichirRapports(){
   contenu.innerHTML = '<div class="empty-state">Chargement…</div>';
   try {
     const q = construireQueryPeriode();
-    if (ongletRapportActif === 'ventes') await afficherRapportVentes(q, contenu);
+    if (ongletRapportActif === 'performance') await afficherRapportPerformance(q, contenu);
+    else if (ongletRapportActif === 'ventes') await afficherRapportVentes(q, contenu);
     else if (ongletRapportActif === 'achats') await afficherRapportAchats(q, contenu);
     else await afficherRapportCharges(q, contenu);
   } catch (err) {
     contenu.innerHTML = `<div class="empty-state">Erreur : ${echapperHtml(err.message)}</div>`;
   }
+}
+
+// ---------- Rapport de performance (onglet par défaut) ----------
+function rpEvolution(v){
+  if (v === null || v === undefined) return '<span class="rp-evo neutre">— vs période préc.</span>';
+  const n = Number(v);
+  return `<span class="rp-evo ${n >= 0 ? 'hausse' : 'baisse'}">${n >= 0 ? '▲' : '▼'} ${Math.abs(n).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} %</span> <span class="rp-evo neutre">vs période préc.</span>`;
+}
+function rpPct(v){ return v === null || v === undefined ? '—' : Number(v).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' %'; }
+function rpNb(v, dec){ return v === null || v === undefined ? '—' : Number(v).toLocaleString('fr-FR', { maximumFractionDigits: dec ?? 1 }); }
+function rpCarte(libelle, valeur, sous, classe){
+  return `<div class="kpi-card rp-kpi ${classe || ''}"><div class="kpi-label">${libelle}</div><div class="kpi-value">${valeur}</div><div class="kpi-sub">${sous || ''}</div></div>`;
+}
+
+/** Indicateurs clés sous forme [libellé, valeur] (impression et PDF). */
+function lignesIndicateursPerformance(r){
+  const a = r.activite, pm = r.point_mort, st = r.stock, t = r.tresorerie;
+  const evo = (k) => r.evolution[k] === null ? '' : ` (${r.evolution[k] >= 0 ? '+' : ''}${rpNb(r.evolution[k])} %)`;
+  return [
+    ["Chiffre d'affaires", formatMontant(a.chiffre_affaires) + evo('chiffre_affaires')],
+    ['Marge brute', `${formatMontant(a.marge_brute)} — ${rpPct(a.taux_marge_brute)}` + evo('marge_brute')],
+    ['Charges', formatMontant(a.charges) + evo('charges')],
+    ['Bénéfice net (marge brute − charges)', `${formatMontant(a.benefice_net)} — ${rpPct(a.taux_marge_nette)}` + evo('benefice_net')],
+    ['Nombre de ventes / panier moyen', `${formatNombre(a.nombre_ventes)} / ${a.panier_moyen === null ? '—' : formatMontant(a.panier_moyen)}`],
+    ['Bouteilles vendues (+ offertes)', `${formatNombre(a.bouteilles_vendues)} (+ ${formatNombre(a.bouteilles_offertes)})`],
+    ['Point mort (CA nécessaire)', pm.ca_necessaire === null ? '—' : `${formatMontant(pm.ca_necessaire)} — atteint à ${rpPct(pm.progression_pct)}`],
+    ['Rotation du stock (annualisée)', st.rotation_annualisee === null ? '—' : `${rpNb(st.rotation_annualisee)} fois par an`],
+    ['Couverture du stock', st.couverture_jours === null ? '—' : `≈ ${rpNb(st.couverture_jours, 0)} jours de ventes`],
+    ['Valeur du stock', formatMontant(st.valeur_actuelle)],
+    ['Stock dormant (sans vente depuis 30 j)', `${formatMontant(st.valeur_dormante)} (${st.dormants.length} produit(s))`],
+    ['Trésorerie fin de période', `${formatMontant(t.solde_fin)} (variation ${formatMontant(t.variation)})`],
+    ["Valeur nette de l'entreprise", formatMontant(t.valeur_nette) + (t.progression_capital_pct === null ? '' : ` (${t.progression_capital_pct >= 0 ? '+' : ''}${rpNb(t.progression_capital_pct)} % vs capital de référence)`)],
+  ];
+}
+
+async function afficherRapportPerformance(q, contenu){
+  const r = await appelApi(`/rapports/performance?${q}`);
+  const a = r.activite, pm = r.point_mort, st = r.stock, t = r.tresorerie, ry = r.rythme;
+  const icones = { ok: '✓', attention: '!', alerte: '✕', info: 'i' };
+  const constats = r.constats.length
+    ? `<ul class="rp-constats">${r.constats.map(c => `<li class="${c.niveau}"><span>${icones[c.niveau] || 'i'}</span>${echapperHtml(c.texte)}</li>`).join('')}</ul>`
+    : '<div class="empty-state">Pas assez d\'activité sur la période pour tirer des conclusions.</div>';
+
+  const progression = pm.progression_pct === null ? 0 : Math.min(100, pm.progression_pct);
+  const pointMort = pm.ca_necessaire === null
+    ? '<div class="empty-state">Pas de marge réalisée : point mort non calculable.</div>'
+    : `<div class="rp-jauge"><div class="${pm.atteint ? 'ok' : 'encours'}" style="width:${progression}%"></div></div>
+       <div class="rp-ligne"><span>Chiffre réalisé</span><strong>${formatMontant(a.chiffre_affaires)}</strong></div>
+       <div class="rp-ligne"><span>Chiffre nécessaire pour couvrir ${formatMontant(pm.charges_a_couvrir)} de charges</span><strong>${formatMontant(pm.ca_necessaire)}</strong></div>
+       <div class="rp-ligne"><span>Soit, par jour</span><strong>${formatMontant(pm.ca_necessaire_par_jour)}</strong></div>
+       <div class="rp-ligne"><span>Taux de marge brute utilisé</span><strong>${rpPct(pm.taux_marge_brute)}</strong></div>`;
+
+  const serie = ry.serie || [];
+  const pas = Math.max(1, Math.ceil(serie.length / 8));
+  const graph = serie.length > 1
+    ? svgBarres(serie.map(j => ({ valeur: j.ca, titre: `${new Date(j.jour + 'T00:00:00').toLocaleDateString('fr-FR')} : ${formatMontant(j.ca)} (marge ${formatMontant(j.marge)})` })),
+        { hauteur: 170, etiquettes: serie.map((j, i) => ({ index: i, texte: i % pas === 0 ? new Date(j.jour + 'T00:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '' })).filter(e => e.texte) })
+    : '<div class="empty-state">Choisis une période de plusieurs jours pour voir l\'évolution quotidienne.</div>';
+
+  const maxSem = Math.max(...(ry.par_jour_semaine || []).map(j => j.ca_moyen), 1);
+  const joursCourts = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  const semaine = `<div class="fp-semaine rp-semaine">${joursCourts.map((lib, i) => {
+    const j = (ry.par_jour_semaine || []).find(x => x.jour_semaine === i + 1);
+    return `<div><div class="barre" style="height:${j ? Math.max(4, j.ca_moyen / maxSem * 90) : 2}px" title="${j ? formatMontant(j.ca_moyen) + ' en moyenne (' + j.jours + ' jour(s))' : 'aucune vente'}"></div><span>${lib}</span></div>`;
+  }).join('')}</div>`;
+
+  const tableProduits = (liste, colonnes) => liste.length
+    ? `<div class="table-scroll"><table class="data-table"><thead><tr><th>Produit</th>${colonnes.map(c => `<th>${c[0]}</th>`).join('')}</tr></thead><tbody>${liste.map(p => `<tr><td>${lienProduit(p.id, p.nom)}</td>${colonnes.map(c => `<td class="mono">${c[1](p)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
+    : '<div class="empty-state">Aucune donnée sur la période.</div>';
+
+  const dormants = st.dormants.length
+    ? `<div class="table-scroll"><table class="data-table"><thead><tr><th>Produit</th><th>Stock</th><th>Valeur</th><th>Dernière vente</th></tr></thead><tbody>${st.dormants.slice(0, 10).map(p => `<tr><td>${lienProduit(p.id, p.nom)}</td><td class="mono">${formatNombre(p.stock_bouteilles)} bout.</td><td class="mono">${formatMontant(p.valeur)}</td><td class="mono">${p.derniere_vente ? new Date(p.derniere_vente).toLocaleDateString('fr-FR') : 'jamais'}</td></tr>`).join('')}</tbody></table></div>`
+    : '<div class="empty-state">Aucun stock dormant : tous les produits en stock se sont vendus ces 30 derniers jours.</div>';
+
+  const libPeriode = r.periode.du === r.periode.au
+    ? new Date(r.periode.du + 'T00:00:00').toLocaleDateString('fr-FR')
+    : `du ${new Date(r.periode.du + 'T00:00:00').toLocaleDateString('fr-FR')} au ${new Date(r.periode.au + 'T00:00:00').toLocaleDateString('fr-FR')}`;
+
+  contenu.innerHTML = `
+    <div class="rp-entete">Période analysée : <strong>${libPeriode}</strong> (${r.periode.jours} jour(s)) — comparée au ${new Date(r.periode_precedente.du + 'T00:00:00').toLocaleDateString('fr-FR')} → ${new Date(r.periode_precedente.au + 'T00:00:00').toLocaleDateString('fr-FR')}</div>
+    <div class="kpi-grid rp-grille-kpi">
+      ${rpCarte("Chiffre d'affaires", formatMontant(a.chiffre_affaires), rpEvolution(r.evolution.chiffre_affaires))}
+      ${rpCarte('Marge brute', formatMontant(a.marge_brute), `${rpPct(a.taux_marge_brute)} du CA · ${rpEvolution(r.evolution.marge_brute)}`)}
+      ${rpCarte('Bénéfice net', formatMontant(a.benefice_net), `après ${formatMontant(a.charges)} de charges · ${rpEvolution(r.evolution.benefice_net)}`, a.benefice_net < 0 ? 'negatif' : '')}
+      ${rpCarte('Ventes', formatNombre(a.nombre_ventes), `panier moyen ${a.panier_moyen === null ? '—' : formatMontant(a.panier_moyen)} · ${rpEvolution(r.evolution.nombre_ventes)}`)}
+      ${rpCarte('Rotation du stock', st.rotation_annualisee === null ? '—' : rpNb(st.rotation_annualisee) + ' ×/an', st.duree_moyenne_ecoulement_jours === null ? '' : `un stock s'écoule en ≈ ${rpNb(st.duree_moyenne_ecoulement_jours, 0)} jours`)}
+      ${rpCarte('Couverture du stock', st.couverture_jours === null ? '—' : '≈ ' + rpNb(st.couverture_jours, 0) + ' j', `${formatMontant(st.valeur_actuelle)} en stock`, st.couverture_jours !== null && st.couverture_jours < 7 ? 'negatif' : '')}
+      ${rpCarte('Bouteilles vendues', formatNombre(a.bouteilles_vendues), `+ ${formatNombre(a.bouteilles_offertes)} offertes (${formatMontant(a.cout_bonus)})`)}
+      ${rpCarte('Trésorerie', formatMontant(t.solde_fin), `variation ${t.variation >= 0 ? '+' : ''}${formatMontant(t.variation)}`, t.solde_fin < 0 ? 'negatif' : '')}
+    </div>
+
+    <div class="panel"><h3>Ce qu'il faut retenir</h3>${constats}</div>
+
+    <div class="panel"><h3>Chiffre d'affaires jour par jour</h3>${graph}
+      ${ry.meilleure_journee ? `<div class="rp-note">Meilleure journée : ${new Date(ry.meilleure_journee.jour + 'T00:00:00').toLocaleDateString('fr-FR')} avec ${formatMontant(ry.meilleure_journee.ca)} · CA moyen par jour d'ouverture : ${a.ca_par_jour_actif === null ? '—' : formatMontant(a.ca_par_jour_actif)} (${a.jours_actifs} jour(s) avec ventes)</div>` : ''}
+    </div>
+
+    <div class="panel-grid rp-trois">
+      <div class="panel"><h3>Point mort</h3>${pointMort}</div>
+      <div class="panel"><h3>Jours les plus forts <span class="legend">CA moyen</span></h3>${semaine}
+        ${ry.meilleur_jour_semaine ? `<div class="rp-note" style="margin-top:8px;">Le ${echapperHtml(ry.meilleur_jour_semaine.libelle.toLowerCase())} est en moyenne le jour le plus fort (${formatMontant(ry.meilleur_jour_semaine.ca_moyen)}).</div>` : ''}</div>
+      <div class="panel"><h3>Trésorerie et valeur</h3>
+        <div class="rp-ligne"><span>Trésorerie début → fin</span><strong>${formatMontant(t.solde_debut)} → ${formatMontant(t.solde_fin)}</strong></div>
+        <div class="rp-ligne"><span>Stock (valeur comptable fin)</span><strong>${formatMontant(st.valeur_fin)}</strong></div>
+        <div class="rp-ligne"><span>Créances clients</span><strong>${formatMontant(t.creances_clients)}</strong></div>
+        <div class="rp-ligne"><span>Dettes fournisseurs</span><strong>${formatMontant(t.dettes_fournisseurs)}</strong></div>
+        <div class="rp-ligne total"><span>Valeur nette</span><strong>${formatMontant(t.valeur_nette)}</strong></div>
+        ${t.capital_reference !== null ? `<div class="rp-ligne"><span>vs capital de référence (${formatMontant(t.capital_reference)})</span><strong class="${t.progression_capital_pct >= 0 ? 'positif' : 'negatif'}">${t.progression_capital_pct >= 0 ? '+' : ''}${rpPct(t.progression_capital_pct)}</strong></div>` : '<div class="rp-note">Renseigne le capital de référence dans Paramètres pour suivre la progression.</div>'}
+      </div>
+    </div>
+
+    <div class="panel-grid">
+      <div class="panel"><h3>Produits qui rapportent le plus <span class="legend">${r.produits.produits_pour_80_pct_marge} produit(s) font 80 % de la marge</span></h3>
+        ${tableProduits(r.produits.meilleures_marges, [['Marge', p => formatMontant(p.marge)], ['Taux', p => rpPct(p.taux_marge)], ['Part', p => rpPct(p.part_marge)]])}</div>
+      <div class="panel"><h3>Marges les plus faibles <span class="legend">à surveiller</span></h3>
+        ${tableProduits(r.produits.plus_faibles_taux_marge, [['Taux', p => rpPct(p.taux_marge)], ['CA', p => formatMontant(p.ca)], ['Marge', p => formatMontant(p.marge)]])}</div>
+    </div>
+    <div class="panel-grid">
+      <div class="panel"><h3>Les plus vendus en volume</h3>
+        ${tableProduits(r.produits.plus_vendus_quantite, [['Bouteilles', p => formatNombre(p.bouteilles)], ['CA', p => formatMontant(p.ca)]])}</div>
+      <div class="panel"><h3>Stock dormant <span class="legend">${formatMontant(st.valeur_dormante)} immobilisés</span></h3>${dormants}
+        <div class="rp-note" style="margin-top:6px;">${st.produits_en_alerte} produit(s) sous le seuil minimum · ${st.produits_en_rupture} en rupture.</div></div>
+    </div>`;
 }
 
 async function afficherRapportVentes(q, contenu){
@@ -3668,7 +4155,7 @@ async function afficherRapportVentes(q, contenu){
     </div>
     <div class="panel-grid">
       <div class="panel"><h3>Répartition détail / gros</h3><div class="table-scroll"><table class="data-table"><tbody>${r.repartition_detail_gros.map(x => `<tr><td>${x.type_vente === 'gros' ? 'Gros' : 'Détail'}</td><td class="mono">${formatMontant(x.montant)}</td></tr>`).join('') || '<tr><td class="empty-state">Aucune donnée</td></tr>'}</tbody></table></div></div>
-      <div class="panel"><h3>Produits les plus vendus</h3><ul class="row-list">${r.produits_plus_vendus.map((p, i) => `<li><span class="rank">${i + 1}</span><span class="name">${echapperHtml(p.nom)}</span><span class="value">${formatMontant(p.montant_total)}</span></li>`).join('') || '<div class="empty-row">Aucune donnée</div>'}</ul></div>
+      <div class="panel"><h3>Produits les plus vendus</h3><ul class="row-list">${r.produits_plus_vendus.map((p, i) => `<li><span class="rank">${i + 1}</span><span class="name">${lienProduit(p.id, p.nom)}</span><span class="value">${formatMontant(p.montant_total)}</span></li>`).join('') || '<div class="empty-row">Aucune donnée</div>'}</ul></div>
     </div>`;
 }
 
@@ -3706,11 +4193,12 @@ async function afficherRapportCharges(q, contenu){
 async function imprimerRapportPeriode(){
   try {
     const q = construireQueryPeriode();
-    const [rVentes, rAchats, rCharges, params] = await Promise.all([
+    const [rVentes, rAchats, rCharges, params, rPerf] = await Promise.all([
       appelApi(`/rapports/ventes?${q}`),
       appelApi(`/rapports/achats?${q}`),
       appelApi(`/rapports/charges?${q}`),
       appelApi('/parametres'),
+      appelApi(`/rapports/performance?${q}`),
     ]);
 
     const du = rVentes.periode.du;
@@ -3723,7 +4211,7 @@ async function imprimerRapportPeriode(){
       : `Du ${new Date(du).toLocaleDateString('fr-FR')} au ${new Date(au).toLocaleDateString('fr-FR')}`;
 
     document.getElementById('zoneImpression').innerHTML = `
-      <h1>${nomEntreprise}</h1>
+      <h1>${echapperHtml(nomEntreprise)}</h1>
       <h2>Rapport d'activité — ${libellePeriode}</h2>
       <div class="impression-genere">Généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
 
@@ -3735,6 +4223,16 @@ async function imprimerRapportPeriode(){
         <tr><td>Total des achats</td><td>${formatMontant(rAchats.montant_total)}</td></tr>
         <tr><td>Total des charges</td><td>${formatMontant(rCharges.montant_total)}</td></tr>
         <tr class="impression-total"><td>Résultat net (compte de résultat)</td><td>${formatMontant(resultat.resultat_net)}</td></tr>
+      </table>
+
+      <h3>Indicateurs de performance</h3>
+      <table class="impression-table">
+        ${lignesIndicateursPerformance(rPerf).map(([l, v]) => `<tr><td>${l}</td><td>${v}</td></tr>`).join('')}
+      </table>
+
+      <h3>Ce qu'il faut retenir</h3>
+      <table class="impression-table">
+        ${rPerf.constats.map(c => `<tr><td colspan="2">${echapperHtml(c.texte)}</td></tr>`).join('') || '<tr><td colspan="2">Pas assez d\'activité pour tirer des conclusions.</td></tr>'}
       </table>
 
       <h3>Ventes — répartition détail / gros</h3>
@@ -3789,11 +4287,12 @@ async function telechargerRapportPDF(){
 
   try {
     const q = construireQueryPeriode();
-    const [rVentes, rAchats, rCharges, params] = await Promise.all([
+    const [rVentes, rAchats, rCharges, params, rPerf] = await Promise.all([
       appelApi(`/rapports/ventes?${q}`),
       appelApi(`/rapports/achats?${q}`),
       appelApi(`/rapports/charges?${q}`),
       appelApi('/parametres'),
+      appelApi(`/rapports/performance?${q}`),
     ]);
 
     const du = rVentes.periode.du;
@@ -3827,6 +4326,9 @@ async function telechargerRapportPDF(){
       ['Total des charges', formatMontant(rCharges.montant_total)],
       ['Résultat net (compte de résultat)', formatMontant(resultat.resultat_net)],
     ], y);
+
+    y = ajouterSectionPDF(doc, 'Indicateurs de performance', lignesIndicateursPerformance(rPerf), y);
+    y = ajouterSectionPDF(doc, "Ce qu'il faut retenir", rPerf.constats.map(c => [c.texte, '']), y);
 
     y = ajouterSectionPDF(doc, 'Ventes — répartition détail / gros',
       rVentes.repartition_detail_gros.map(x => [x.type_vente === 'gros' ? 'Gros (paquets)' : 'Détail (bouteilles)', formatMontant(x.montant)]),
@@ -3956,13 +4458,6 @@ async function chargerParametres(){
     // s'affichait quand même).
     const modifiable = utilisateurConnecte.role === 'administrateur';
     document.querySelectorAll('#formParametres input').forEach((el) => { el.disabled = !modifiable; });
-    const formPeriode = document.getElementById('formPeriodeLoyer');
-    if (formPeriode) {
-      formPeriode.style.display = modifiable ? '' : 'none';
-      const montant = document.getElementById('loyerPeriodeMontant');
-      if (montant && !montant.value) montant.value = p.loyer_quotidien ?? '';
-      recalculerResumePeriodeLoyer();
-    }
     chargerPeriodesLoyer();
   } catch (err) {
     afficherToast(err.message, 'error');
@@ -4001,42 +4496,95 @@ async function soumettreParametres(event){
   bouton.disabled = false;
 }
 
+// ============================================================
+// LOYER QUOTIDIEN — périodes, calendrier, arriérés
+// ============================================================
+const LIBELLES_STATUT_LOYER = {
+  paye: 'Payé', refuse: 'Non déduit', en_attente: 'À décider', reporte: 'Reporté (arriéré)',
+  exonere: 'Sous le seuil (rien dû)', non_applicable: 'Jour non concerné',
+};
+const LIBELLES_POLITIQUE_LOYER = {
+  ignorer: 'jour sous le seuil : rien n\'est dû',
+  reporter: 'jour sous le seuil : reporté en arriéré',
+  demander: 'jour sous le seuil : on demande quand même',
+};
+const LIBELLES_MODE_PAIEMENT_LOYER = { especes: 'Espèces', banque: 'Banque', mobile_money: 'Mobile Money', carte: 'Carte' };
+const JOURS_SEMAINE_COURTS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+let periodesLoyerCache = [];
+
+function dateFr(d){ return d ? new Date(String(d).slice(0, 10) + 'T00:00:00').toLocaleDateString('fr-FR') : '—'; }
+
+function montantPeriodeLoyer(p){
+  const principal = formatMontant(p.montant_loyer_journalier, devisePrincipaleActuelle);
+  return p.devise_saisie === 'secondaire'
+    ? `${formatNombre(p.loyer_quotidien)} ${echapperHtml(p.devise_secondaire || deviseSecondaireActuelle)}/jour (≈ ${principal}, taux ${formatNombre(p.taux_change)})`
+    : `${principal}/jour`;
+}
+
+function seuilPeriodeLoyer(p){
+  if (p.seuil_type === 'aucun') return 'toujours dû, quelles que soient les ventes';
+  if (p.seuil_type === 'montant') return `si les ventes du jour atteignent ${formatMontant(p.seuil_montant, devisePrincipaleActuelle)}`;
+  return 'si les ventes du jour couvrent le loyer';
+}
+
 async function chargerPeriodesLoyer(){
   const resume = document.getElementById('resumePeriodeLoyer');
   const liste = document.getElementById('listePeriodesLoyer');
   if (!resume || !liste) return;
-
+  if (!aGroupe('OPERATIONS')) {
+    resume.innerHTML = '<div class="empty-state" style="padding:8px;">Le suivi du loyer est réservé à l\'équipe opérationnelle.</div>';
+    liste.innerHTML = '';
+    return;
+  }
   try {
-    const periodes = await appelApi('/loyer-quotidien/periodes');
-    const aujourdHui = new Date().toISOString().slice(0, 10);
-    const active = periodes.find(p => p.date_debut <= aujourdHui && p.date_fin >= aujourdHui);
+    periodesLoyerCache = await appelApi('/loyer-quotidien/periodes');
+    const active = periodesLoyerCache.find(p => p.statut === 'en_cours');
 
-    if (!periodes.length) {
-      resume.innerHTML = '<div class="row"><span>Aucune période active</span><strong>Le popup est désactivé.</strong></div>';
-      liste.innerHTML = '<div class="empty-state" style="padding:12px;">Aucune période configurée. Crée une période pour activer le popup sur les dates voulues.</div>';
+    if (!periodesLoyerCache.length) {
+      resume.innerHTML = '<div class="loyer-vide">Aucune période configurée : le loyer quotidien est désactivé.</div>';
+      liste.innerHTML = '';
       return;
     }
 
     resume.innerHTML = active
-      ? `<div class="row"><span>Période actuelle</span><strong>${new Date(active.date_debut + 'T00:00:00').toLocaleDateString('fr-FR')} → ${new Date(active.date_fin + 'T00:00:00').toLocaleDateString('fr-FR')}</strong></div>
-         <div class="row"><span>Loyer quotidien</span><strong>${formatNombre(active.loyer_quotidien)} ${active.devise_secondaire}</strong></div>
-         <div class="row"><span>Jours</span><strong>${active.nombre_jours}</strong></div>
-         <div class="row total"><span>Total prévu</span><span>${formatNombre(active.montant_total_secondaire)} ${active.devise_secondaire} · ${formatMontant(active.montant_total)}</span></div>`
-      : '<div class="row"><span>Aucune période en cours</span><strong>Le popup reste inactif.</strong></div>';
+      ? `<div class="loyer-actif">
+          <div><span class="badge ok">En cours</span> <strong>${echapperHtml(active.libelle || 'Période de loyer')}</strong>
+            <div class="cell-sub">${montantPeriodeLoyer(active)} · ${echapperHtml(active.libelle_jours)} · ${seuilPeriodeLoyer(active)} · ${LIBELLES_POLITIQUE_LOYER[active.si_seuil_non_atteint]} · validation ${active.mode_validation}</div></div>
+          <div class="loyer-chiffres">
+            <div><span>Payé</span><strong>${formatMontant(active.etat.montant_paye)}</strong></div>
+            <div><span>À décider</span><strong>${active.etat.jours_en_attente} j</strong></div>
+            <div class="${active.etat.arriere_restant > 0 ? 'alerte' : ''}"><span>Arriéré</span><strong>${formatMontant(active.etat.arriere_restant)}</strong></div>
+          </div>
+        </div>`
+      : '<div class="loyer-vide">Aucune période en cours aujourd\'hui : aucune question de loyer ne sera posée.</div>';
 
-    liste.innerHTML = periodes.map(p => {
-      const deb = new Date(p.date_debut + 'T00:00:00').toLocaleDateString('fr-FR');
-      const fin = new Date(p.date_fin + 'T00:00:00').toLocaleDateString('fr-FR');
-      const statut = aujourdHui < p.date_debut ? 'À venir' : aujourdHui > p.date_fin ? 'Terminée' : 'En cours';
-      const couleur = statut === 'En cours' ? 'ok' : 'neutral';
-      return `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
-        <div>
-          <strong>${deb} → ${fin}</strong>
-          <div class="cell-sub">${p.nombre_jours} jour(s) · ${formatNombre(p.loyer_quotidien)} ${p.devise_secondaire}/jour · taux ${formatNombre(p.taux_change)}</div>
+    const estAdmin = aGroupe('ADMIN_SEUL'), estDirection = aGroupe('DIRECTION');
+    liste.innerHTML = periodesLoyerCache.map(p => {
+      const statut = { en_cours: ['ok', 'En cours'], a_venir: ['neutral', 'À venir'], terminee: ['neutral', 'Terminée'] }[p.statut];
+      const e = p.etat;
+      const utilisee = (e.jours_payes + e.jours_refuses) > 0 || e.arriere_regle > 0;
+      return `<div class="loyer-periode">
+        <div class="loyer-periode-tete">
+          <div>
+            <strong>${echapperHtml(p.libelle || 'Période de loyer')}</strong> <span class="badge ${statut[0]}">${statut[1]}</span>
+            ${p.mode_validation === 'automatique' ? '<span class="badge neutral">Automatique</span>' : ''}
+            <div class="cell-sub">${dateFr(p.date_debut)} → ${p.date_fin ? dateFr(p.date_fin) : 'sans date de fin'} · ${montantPeriodeLoyer(p)}</div>
+            <div class="cell-sub">${echapperHtml(p.libelle_jours)} · ${seuilPeriodeLoyer(p)} · ${LIBELLES_POLITIQUE_LOYER[p.si_seuil_non_atteint]} · paiement par défaut : ${LIBELLES_MODE_PAIEMENT_LOYER[p.mode_paiement_defaut] || p.mode_paiement_defaut}</div>
+          </div>
         </div>
-        <div style="text-align:right;white-space:nowrap;">
-          <span class="badge ${couleur}">${statut}</span>
-          <div class="cell-sub" style="margin-top:4px;">Total : ${formatNombre(p.montant_total_secondaire)} ${p.devise_secondaire}</div>
+        <div class="loyer-stats">
+          <div><span>Payé</span><strong>${formatMontant(e.montant_paye)}</strong><em>${e.jours_payes} jour(s)</em></div>
+          <div><span>À décider</span><strong>${formatMontant(e.montant_en_attente)}</strong><em>${e.jours_en_attente} jour(s)</em></div>
+          <div><span>Arriéré restant</span><strong>${formatMontant(e.arriere_restant)}</strong><em>${e.jours_reportes} jour(s) reporté(s)</em></div>
+          <div><span>Non déduit / exonéré</span><strong>${formatMontant(e.montant_refuse + e.montant_exonere)}</strong><em>${e.jours_refuses + e.jours_exoneres} jour(s)</em></div>
+          <div><span>Jours au-dessus du seuil</span><strong>${e.taux_jours_au_dessus_seuil === null ? '—' : formatNombre(e.taux_jours_au_dessus_seuil) + ' %'}</strong><em>${e.jours_applicables} jour(s) concerné(s)</em></div>
+        </div>
+        <div class="loyer-actions">
+          <button class="btn" onclick="ouvrirCalendrierLoyer('${p.id}')">Calendrier jour par jour</button>
+          ${estDirection && e.arriere_restant > 0 ? `<button class="btn" onclick="ouvrirModalArriereLoyer('${p.id}')">Régler l'arriéré</button>` : ''}
+          ${estAdmin ? `<button class="btn" onclick="ouvrirModalPeriodeLoyer('${p.id}')">Modifier</button>` : ''}
+          ${estAdmin && p.statut !== 'terminee' ? `<button class="btn" onclick="cloturerPeriodeLoyer('${p.id}')">Clôturer</button>` : ''}
+          ${estAdmin && !utilisee ? `<button class="btn" style="color:var(--danger);" onclick="supprimerPeriodeLoyer('${p.id}')">Supprimer</button>` : ''}
         </div>
       </div>`;
     }).join('');
@@ -4046,63 +4594,321 @@ async function chargerPeriodesLoyer(){
   }
 }
 
-function recalculerResumePeriodeLoyer(){
-  const debut = document.getElementById('loyerPeriodeDebut')?.value;
-  const fin = document.getElementById('loyerPeriodeFin')?.value;
-  const montant = Number(document.getElementById('loyerPeriodeMontant')?.value);
-  const nbEl = document.getElementById('loyerPeriodeNbJours');
-  const totalSecEl = document.getElementById('loyerPeriodeTotalSecondaire');
-  const totalPrinEl = document.getElementById('loyerPeriodeTotalPrincipal');
-  if (!nbEl || !totalSecEl || !totalPrinEl) return;
+function ouvrirModalPeriodeLoyer(id){
+  const p = id ? periodesLoyerCache.find(x => x.id === id) : null;
+  const utilisee = p ? ((p.etat.jours_payes + p.etat.jours_refuses) > 0 || p.etat.arriere_regle > 0) : false;
+  const verrou = utilisee ? 'disabled' : '';
+  const jours = p ? p.jours_semaine : [1, 2, 3, 4, 5, 6, 7];
+  const val = (c, def) => echapperHtml(p && p[c] !== null && p[c] !== undefined ? p[c] : (def ?? ''));
+  const choix = (nom, options, actuel) => options.map(([v, lib, aide]) => `
+    <label class="loyer-choix"><input type="radio" name="${nom}" value="${v}" ${actuel === v ? 'checked' : ''} onchange="majFormPeriodeLoyer()">
+      <span><strong>${lib}</strong>${aide ? `<em>${aide}</em>` : ''}</span></label>`).join('');
 
-  if (!debut || !fin || !Number.isFinite(montant) || montant < 0) {
-    nbEl.textContent = '—';
-    totalSecEl.textContent = '—';
-    totalPrinEl.textContent = '—';
-    return;
-  }
-
-  const d1 = new Date(debut + 'T00:00:00');
-  const d2 = new Date(fin + 'T00:00:00');
-  const nb = Math.round((d2 - d1) / 86400000) + 1;
-  if (nb <= 0) {
-    nbEl.textContent = 'Dates invalides';
-    totalSecEl.textContent = '—';
-    totalPrinEl.textContent = '—';
-    return;
-  }
-
-  const taux = Number(parametresCache.taux_change) || 0;
-  nbEl.textContent = String(nb);
-  totalSecEl.textContent = `${formatNombre(montant * nb)} ${parametresCache.devise_secondaire || deviseSecondaireActuelle || 'USD'}`;
-  totalPrinEl.textContent = taux > 0 ? formatMontant(Math.round(montant * nb * taux)) : 'Taux de change manquant';
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>${p ? 'Modifier la période de loyer' : 'Nouvelle période de loyer'}</h2>
+        <div class="modal-sub">${utilisee ? 'Des jours ont déjà été traités : le montant, la devise et la date de début sont figés. Pour changer de montant, clôture cette période et crée-en une nouvelle.' : 'Tous les réglages restent modifiables tant qu\'aucun jour n\'a été traité.'}</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+    </div>
+    <form id="formPeriodeLoyer" onsubmit="soumettrePeriodeLoyer(event, ${p ? `'${p.id}'` : 'null'})">
+      <div class="form-grid">
+        <div class="form-group full"><label>Nom (facultatif)</label><input type="text" name="libelle" maxlength="120" placeholder="Ex : Boutique Gombe — bail 2026" value="${val('libelle')}"></div>
+        <div class="form-group"><label>Date de début *</label><input type="date" name="date_debut" required value="${val('date_debut')}" ${verrou} onchange="majFormPeriodeLoyer()"></div>
+        <div class="form-group"><label>Date de fin</label><input type="date" name="date_fin" value="${val('date_fin')}" onchange="majFormPeriodeLoyer()">
+          <div class="hint">Laisse vide pour « jusqu'à nouvel ordre ».</div></div>
+        <div class="form-group"><label>Montant journalier *</label><input type="number" name="montant" min="0" step="0.01" required value="${val('loyer_quotidien', parametresCache.loyer_quotidien ?? '')}" ${verrou} oninput="majFormPeriodeLoyer()"></div>
+        <div class="form-group"><label>Devise du montant</label><select name="devise_saisie" ${verrou} onchange="majFormPeriodeLoyer()">
+          <option value="secondaire" ${!p || p.devise_saisie === 'secondaire' ? 'selected' : ''}>${echapperHtml(deviseSecondaireActuelle || 'USD')} (taux figé à la création)</option>
+          <option value="principale" ${p && p.devise_saisie === 'principale' ? 'selected' : ''}>${echapperHtml(devisePrincipaleActuelle || 'FC')}</option>
+        </select></div>
+        <div class="form-group full"><label>Jours concernés</label>
+          <div class="loyer-jours">${JOURS_SEMAINE_COURTS.map((lib, i) => `<label><input type="checkbox" name="jours_semaine" value="${i + 1}" ${jours.includes(i + 1) ? 'checked' : ''} onchange="majFormPeriodeLoyer()"><span>${lib}</span></label>`).join('')}</div>
+          <div class="hint">Ex. décoche le dimanche si la boutique est fermée : aucun loyer ne sera compté ce jour-là.</div></div>
+        <div class="form-group full"><label>Quand le loyer du jour est-il dû ?</label>
+          ${choix('seuil_type', [
+            ['loyer', 'Si les ventes du jour couvrent le loyer', 'comportement d\'origine'],
+            ['montant', 'Si les ventes atteignent un montant que je fixe', ''],
+            ['aucun', 'Tous les jours concernés, quelles que soient les ventes', ''],
+          ], p?.seuil_type || 'loyer')}
+          <div id="loyerSeuilMontantWrap" style="margin-top:6px;"><input type="number" name="seuil_montant" min="0" step="1" placeholder="Seuil de ventes en ${echapperHtml(devisePrincipaleActuelle || 'FC')}" value="${val('seuil_montant')}" oninput="majFormPeriodeLoyer()"></div></div>
+        <div class="form-group full" id="loyerPolitiqueWrap"><label>Et si les ventes n'atteignent pas le seuil ?</label>
+          ${choix('si_seuil_non_atteint', [
+            ['ignorer', 'Rien n\'est dû ce jour-là', 'le loyer de ce jour est perdu'],
+            ['reporter', 'Le reporter en arriéré', 'il s\'accumule et se règle plus tard, en une ou plusieurs fois'],
+            ['demander', 'Me demander quand même', 'la question est posée chaque jour concerné'],
+          ], p?.si_seuil_non_atteint || 'ignorer')}</div>
+        <div class="form-group full"><label>Validation</label>
+          ${choix('mode_validation', [
+            ['manuel', 'Me demander Oui / Non chaque jour', 'une fenêtre s\'ouvre à la connexion'],
+            ['automatique', 'Automatique', 'la charge est créée seule pour chaque journée terminée qui remplit les conditions'],
+          ], p?.mode_validation || 'manuel')}</div>
+        <div class="form-group"><label>Payé par défaut depuis</label><select name="mode_paiement_defaut">
+          ${Object.entries(LIBELLES_MODE_PAIEMENT_LOYER).map(([v, lib]) => `<option value="${v}" ${(p?.mode_paiement_defaut || 'especes') === v ? 'selected' : ''}>${lib}</option>`).join('')}
+        </select></div>
+        <div class="form-group"><label>Notes</label><input type="text" name="notes" maxlength="1000" value="${val('notes')}"></div>
+      </div>
+      <div class="form-summary" id="apercuPeriodeLoyer" style="margin-top:14px;"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" onclick="fermerModal()">Annuler</button>
+        <button type="submit" class="btn btn-accent">${p ? 'Enregistrer' : 'Créer la période'}</button>
+      </div>
+    </form>`);
+  majFormPeriodeLoyer();
 }
 
-async function soumettrePeriodeLoyer(event){
-  event.preventDefault();
-  const donnees = new FormData(event.target);
-  const payload = {
-    date_debut: donnees.get('date_debut'),
-    date_fin: donnees.get('date_fin'),
-    loyer_quotidien: Number(donnees.get('loyer_quotidien')),
+function lireFormPeriodeLoyer(form){
+  const d = new FormData(form);
+  return {
+    libelle: d.get('libelle') || null,
+    date_debut: d.get('date_debut'),
+    date_fin: d.get('date_fin') || null,
+    montant: d.get('montant') === null ? undefined : Number(d.get('montant')),
+    devise_saisie: d.get('devise_saisie') || undefined,
+    jours_semaine: d.getAll('jours_semaine').map(Number),
+    seuil_type: d.get('seuil_type'),
+    seuil_montant: d.get('seuil_montant') === '' ? null : Number(d.get('seuil_montant')),
+    si_seuil_non_atteint: d.get('si_seuil_non_atteint'),
+    mode_validation: d.get('mode_validation'),
+    mode_paiement_defaut: d.get('mode_paiement_defaut'),
+    notes: d.get('notes') || null,
   };
+}
 
-  const bouton = event.target.querySelector('button[type="submit"]');
+function majFormPeriodeLoyer(){
+  const form = document.getElementById('formPeriodeLoyer');
+  if (!form) return;
+  const v = lireFormPeriodeLoyer(form);
+  const montantInput = form.querySelector('[name=montant]');
+  const deviseInput = form.querySelector('[name=devise_saisie]');
+  const montant = Number(montantInput.value);
+  const devise = deviseInput.value;
+  document.getElementById('loyerSeuilMontantWrap').style.display = v.seuil_type === 'montant' ? '' : 'none';
+  document.getElementById('loyerPolitiqueWrap').style.display = v.seuil_type === 'aucun' ? 'none' : '';
+  const taux = Number(parametresCache.taux_change) || tauxChangeActuel || 0;
+  const journalier = devise === 'secondaire' ? (taux > 0 ? Math.round(montant * taux) : null) : montant;
+  let joursPeriode = null;
+  const debut = form.querySelector('[name=date_debut]').value;
+  if (debut && v.date_fin && v.date_fin >= debut) {
+    joursPeriode = 0;
+    for (let d = new Date(debut + 'T00:00:00Z'); d <= new Date(v.date_fin + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + 1)) {
+      const j = d.getUTCDay() === 0 ? 7 : d.getUTCDay();
+      if (v.jours_semaine.includes(j)) joursPeriode += 1;
+    }
+  }
+  document.getElementById('apercuPeriodeLoyer').innerHTML = `
+    <div class="row"><span>Loyer par jour concerné</span><strong>${journalier === null || !Number.isFinite(journalier) ? 'taux de change manquant' : formatMontant(journalier, devisePrincipaleActuelle)}</strong></div>
+    <div class="row"><span>Jours concernés par semaine</span><strong>${v.jours_semaine.length}</strong></div>
+    <div class="row"><span>Coût par mois (≈ 4,3 semaines)</span><strong>${journalier ? formatMontant(journalier * v.jours_semaine.length * 4.33, devisePrincipaleActuelle) : '—'}</strong></div>
+    ${joursPeriode !== null ? `<div class="row total"><span>Total maximum sur la période (${joursPeriode} jour(s))</span><span>${journalier ? formatMontant(journalier * joursPeriode, devisePrincipaleActuelle) : '—'}</span></div>` : ''}`;
+}
+
+async function soumettrePeriodeLoyer(event, id){
+  event.preventDefault();
+  const form = event.target;
+  const payload = lireFormPeriodeLoyer(form);
+  if (!payload.jours_semaine.length) { afficherToast('Choisis au moins un jour de la semaine.', 'error'); return; }
+  // Les champs figés (désactivés) ne sont pas envoyés.
+  ['date_debut', 'montant', 'devise_saisie'].forEach(c => { if (form.querySelector(`[name=${c}]`).disabled) delete payload[c]; });
+  const bouton = form.querySelector('button[type="submit"]');
   bouton.disabled = true;
   try {
-    const periode = await appelApiEcriture('/loyer-quotidien/periodes', 'POST', payload);
-    afficherToast(
-      `Période créée : ${periode.nombre_jours} jour(s), total ${formatNombre(periode.montant_total_secondaire)} ${periode.devise_secondaire} (${formatMontant(periode.montant_total)}).`,
-      'success'
-    );
-    event.target.reset();
-    document.getElementById('loyerPeriodeMontant').value = parametresCache.loyer_quotidien ?? '';
-    recalculerResumePeriodeLoyer();
+    if (id) await appelApiEcriture(`/loyer-quotidien/periodes/${id}`, 'PUT', payload);
+    else await appelApiEcriture('/loyer-quotidien/periodes', 'POST', payload);
+    afficherToast(id ? 'Période mise à jour.' : 'Période de loyer créée.', 'success');
+    fermerModal();
     chargerPeriodesLoyer();
   } catch (err) {
     afficherToast(err.message, 'error');
-  } finally {
     bouton.disabled = false;
+  }
+}
+
+async function cloturerPeriodeLoyer(id){
+  const date = prompt('Clôturer cette période à quelle date ? (AAAA-MM-JJ — le loyer ne sera plus compté après ce jour)', new Date().toISOString().slice(0, 10));
+  if (!date) return;
+  try {
+    await appelApiEcriture(`/loyer-quotidien/periodes/${id}`, 'PUT', { date_fin: date });
+    afficherToast('Période clôturée.', 'success');
+    chargerPeriodesLoyer();
+  } catch (err) { afficherToast(err.message, 'error'); }
+}
+
+async function supprimerPeriodeLoyer(id){
+  if (!confirm('Supprimer définitivement cette période (aucun jour n\'a encore été traité) ?')) return;
+  try {
+    await appelApiEcriture(`/loyer-quotidien/periodes/${id}`, 'DELETE');
+    afficherToast('Période supprimée.', 'success');
+    chargerPeriodesLoyer();
+  } catch (err) { afficherToast(err.message, 'error'); }
+}
+
+async function ouvrirCalendrierLoyer(id){
+  try {
+    const p = await appelApi(`/loyer-quotidien/periodes/${id}`);
+    const estDirection = aGroupe('DIRECTION');
+    const cellules = p.jours.map(j => {
+      const action = (j.statut === 'paye' || j.statut === 'refuse')
+        ? (estDirection ? `<button class="btn btn-mini" onclick="annulerDecisionLoyer('${j.date}', '${p.id}')">Annuler</button>` : '')
+        : (j.statut !== 'non_applicable' ? `<button class="btn btn-mini" onclick="decisionLoyerDepuisCalendrier('${j.date}', '${p.id}')">Décider</button>` : '');
+      return `<tr class="loyer-jour ${j.statut}">
+        <td class="mono">${dateFr(j.date)} <span class="cell-sub">${JOURS_SEMAINE_COURTS[j.jour_semaine - 1]}</span></td>
+        <td class="mono">${formatMontant(j.ventes, devisePrincipaleActuelle)}</td>
+        <td><span class="loyer-statut ${j.statut}">${LIBELLES_STATUT_LOYER[j.statut]}</span>${j.automatique ? ' <span class="badge neutral">auto</span>' : ''}</td>
+        <td class="mono">${j.statut === 'non_applicable' ? '—' : formatMontant(j.montant, devisePrincipaleActuelle)}${j.montant_arriere_inclus > 0 ? `<div class="cell-sub">dont arriéré ${formatMontant(j.montant_arriere_inclus, devisePrincipaleActuelle)}</div>` : ''}</td>
+        <td class="cell-sub">${j.mode_paiement ? LIBELLES_MODE_PAIEMENT_LOYER[j.mode_paiement] || j.mode_paiement : ''}</td>
+        <td>${action}</td></tr>`;
+    }).join('');
+    const reglements = (p.reglements_arrieres || []).map(r => `<tr><td class="mono">${dateFr(r.date_reglement)}</td><td class="mono">${formatMontant(r.montant, devisePrincipaleActuelle)}</td><td>${LIBELLES_MODE_PAIEMENT_LOYER[r.mode_paiement] || echapperHtml(r.mode_paiement)}</td><td class="cell-sub">${echapperHtml(r.notes || '')}</td><td class="cell-sub">${echapperHtml(r.cree_par_nom || '—')}</td></tr>`).join('');
+    ouvrirModal(`
+      <div class="modal-head">
+        <div><h2>${echapperHtml(p.libelle || 'Période de loyer')}</h2>
+          <div class="modal-sub">${dateFr(p.date_debut)} → ${p.date_fin ? dateFr(p.date_fin) : 'sans date de fin'} · ${montantPeriodeLoyer(p)} · ${seuilPeriodeLoyer(p)}</div></div>
+        <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button>
+      </div>
+      <div class="loyer-stats" style="margin-bottom:12px;">
+        <div><span>Payé</span><strong>${formatMontant(p.etat.montant_paye)}</strong></div>
+        <div><span>À décider</span><strong>${p.etat.jours_en_attente} j</strong></div>
+        <div><span>Arriéré restant</span><strong>${formatMontant(p.etat.arriere_restant)}</strong></div>
+        <div><span>Arriéré réglé</span><strong>${formatMontant(p.etat.arriere_regle)}</strong></div>
+      </div>
+      <div class="table-scroll" style="max-height:55vh;"><table class="data-table">
+        <thead><tr><th>Jour</th><th>Ventes</th><th>Statut</th><th>Loyer</th><th>Payé par</th><th></th></tr></thead>
+        <tbody>${cellules || '<tr><td colspan="6" class="empty-state">La période n\'a pas encore commencé.</td></tr>'}</tbody>
+      </table></div>
+      ${reglements ? `<h3 style="font-size:13px;margin:16px 0 6px;">Règlements d'arriérés</h3><div class="table-scroll"><table class="data-table"><thead><tr><th>Date</th><th>Montant</th><th>Mode</th><th>Notes</th><th>Par</th></tr></thead><tbody>${reglements}</tbody></table></div>` : ''}
+      <div class="modal-actions"><button class="btn" onclick="fermerModal()">Fermer</button></div>`);
+    document.getElementById('modalPanel').classList.add('modal-large');
+  } catch (err) { afficherToast(err.message, 'error'); }
+}
+
+async function annulerDecisionLoyer(date, periodeId){
+  if (!confirm(`Annuler la décision du ${dateFr(date)} ? La charge de loyer correspondante (et ses écritures) sera supprimée et le jour redeviendra « à décider ».`)) return;
+  try {
+    await appelApiEcriture(`/loyer-quotidien/${date}/decision`, 'DELETE');
+    afficherToast('Décision annulée.', 'success');
+    chargerPeriodesLoyer();
+    ouvrirCalendrierLoyer(periodeId);
+  } catch (err) { afficherToast(err.message, 'error'); }
+}
+
+async function decisionLoyerDepuisCalendrier(date, periodeId){
+  const p = periodesLoyerCache.find(x => x.id === periodeId);
+  const detail = await appelApi(`/loyer-quotidien/periodes/${periodeId}`).catch(() => null);
+  const jour = detail?.jours.find(j => j.date === date);
+  afficherQuestionLoyer({
+    date_jour: date, periode_id: periodeId, periode_libelle: p?.libelle, montant_ventes: jour?.ventes || 0,
+    seuil: p?.seuil_effectif || 0, sous_seuil: jour ? jour.ventes < (p?.seuil_effectif || 0) : false,
+    montant_loyer: p?.montant_loyer_journalier || 0, mode_paiement_defaut: p?.mode_paiement_defaut || 'especes',
+    arriere_disponible: detail?.etat.arriere_restant || 0,
+  }, () => { chargerPeriodesLoyer(); ouvrirCalendrierLoyer(periodeId); });
+}
+
+function ouvrirModalArriereLoyer(id){
+  const p = periodesLoyerCache.find(x => x.id === id);
+  if (!p) return;
+  ouvrirModal(`
+    <div class="modal-head"><div><h2>Régler l'arriéré de loyer</h2><div class="modal-sub">${echapperHtml(p.libelle || 'Période de loyer')} — arriéré restant : <strong>${formatMontant(p.etat.arriere_restant, devisePrincipaleActuelle)}</strong></div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button></div>
+    <form onsubmit="soumettreArriereLoyer(event, '${p.id}')">
+      <div class="form-grid">
+        <div class="form-group"><label>Montant réglé *</label><input type="number" name="montant" min="1" step="1" max="${p.etat.arriere_restant}" value="${p.etat.arriere_restant}" required></div>
+        <div class="form-group"><label>Payé depuis</label><select name="mode_paiement">${Object.entries(LIBELLES_MODE_PAIEMENT_LOYER).map(([v, lib]) => `<option value="${v}" ${p.mode_paiement_defaut === v ? 'selected' : ''}>${lib}</option>`).join('')}</select></div>
+        <div class="form-group"><label>Date</label><input type="date" name="date" value="${new Date().toISOString().slice(0, 10)}"></div>
+        <div class="form-group"><label>Notes</label><input type="text" name="notes" maxlength="200"></div>
+      </div>
+      <div class="hint" style="margin-top:8px;">Une charge « Loyer » est créée pour ce montant (compte 622), comme pour un loyer quotidien.</div>
+      <div class="modal-actions"><button type="button" class="btn" onclick="fermerModal()">Annuler</button><button type="submit" class="btn btn-accent">Enregistrer le règlement</button></div>
+    </form>`);
+}
+
+async function soumettreArriereLoyer(event, id){
+  event.preventDefault();
+  const d = new FormData(event.target);
+  const bouton = event.target.querySelector('button[type="submit"]');
+  bouton.disabled = true;
+  try {
+    await appelApiEcriture(`/loyer-quotidien/periodes/${id}/regler-arriere`, 'POST', {
+      montant: Number(d.get('montant')), mode_paiement: d.get('mode_paiement'), date: d.get('date'), notes: d.get('notes') || null,
+    });
+    afficherToast('Règlement d\'arriéré enregistré.', 'success');
+    fermerModal();
+    chargerPeriodesLoyer();
+  } catch (err) { afficherToast(err.message, 'error'); bouton.disabled = false; }
+}
+
+// ---------- Question quotidienne (à la connexion) ----------
+let loyerJoursEnAttenteFile = [];
+
+async function verifierLoyerQuotidien(){
+  if (!aGroupe('OPERATIONS')) return;
+  try {
+    // 1) Périodes automatiques : les journées terminées sont traitées seules.
+    const auto = await appelApiEcriture('/loyer-quotidien/traitement-automatique', 'POST', {});
+    if (auto.jours_traites > 0) afficherToast(`Loyer : ${auto.jours_traites} journée(s) comptabilisée(s) automatiquement.`, 'success');
+    // 2) Jours qui attendent une réponse.
+    loyerJoursEnAttenteFile = await appelApi('/loyer-quotidien/a-traiter');
+    afficherProchainLoyerEnAttente();
+  } catch (err) {
+    console.warn('Vérification du loyer quotidien indisponible :', err.message);
+  }
+}
+
+function afficherProchainLoyerEnAttente(){
+  if (loyerJoursEnAttenteFile.length === 0) return;
+  afficherQuestionLoyer(loyerJoursEnAttenteFile[0], () => {
+    loyerJoursEnAttenteFile.shift();
+    if (loyerJoursEnAttenteFile.length > 0) afficherProchainLoyerEnAttente();
+    else if (document.getElementById('view-charges')?.classList.contains('active') && typeof chargerCharges === 'function') chargerCharges();
+  });
+}
+
+let rappelApresDecisionLoyer = null;
+
+function afficherQuestionLoyer(jour, apres){
+  rappelApresDecisionLoyer = apres;
+  const date = String(jour.date_jour).slice(0, 10);
+  const restants = loyerJoursEnAttenteFile.length > 1 ? `<div class="cell-sub">${loyerJoursEnAttenteFile.length - 1} autre(s) jour(s) en attente après celui-ci.</div>` : '';
+  ouvrirModal(`
+    <div class="modal-head">
+      <div><h2>Loyer du ${new Date(date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</h2>
+        <div class="modal-sub">${echapperHtml(jour.periode_libelle || 'Loyer quotidien')}</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()" title="Plus tard">${svgIcon('close')}</button>
+    </div>
+    <div class="form-summary" style="margin-bottom:14px;">
+      <div class="row"><span>Ventes de la journée</span><strong>${formatMontant(jour.montant_ventes, devisePrincipaleActuelle)}</strong></div>
+      <div class="row"><span>Loyer du jour</span><strong>${formatMontant(jour.montant_loyer, devisePrincipaleActuelle)}</strong></div>
+      ${jour.sous_seuil ? `<div class="row"><span>Seuil de ventes</span><strong style="color:var(--danger)">non atteint (${formatMontant(jour.seuil, devisePrincipaleActuelle)})</strong></div>` : ''}
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>Payé depuis</label><select id="loyerModePaiement">${Object.entries(LIBELLES_MODE_PAIEMENT_LOYER).map(([v, lib]) => `<option value="${v}" ${jour.mode_paiement_defaut === v ? 'selected' : ''}>${lib}</option>`).join('')}</select></div>
+      ${jour.arriere_disponible > 0 ? `<div class="form-group"><label>Arriéré à solder en même temps</label><input type="number" id="loyerArriereInclus" min="0" max="${jour.arriere_disponible}" step="1" value="0">
+        <div class="hint">Arriéré restant : ${formatMontant(jour.arriere_disponible, devisePrincipaleActuelle)}</div></div>` : ''}
+    </div>
+    ${restants}
+    <div class="modal-actions">
+      <button type="button" class="btn" onclick="fermerModal()">Plus tard</button>
+      <button type="button" class="btn" id="loyerBtnNon" onclick="repondreLoyerQuotidien('${date}', 'non')">Ne pas déduire</button>
+      <button type="button" class="btn btn-accent" id="loyerBtnOui" onclick="repondreLoyerQuotidien('${date}', 'oui')">Déduire le loyer</button>
+    </div>`);
+}
+
+async function repondreLoyerQuotidien(dateJour, decision){
+  document.getElementById('loyerBtnOui').disabled = true;
+  document.getElementById('loyerBtnNon').disabled = true;
+  const arriere = Number(document.getElementById('loyerArriereInclus')?.value || 0);
+  try {
+    await appelApiEcriture(`/loyer-quotidien/${dateJour}/decision`, 'POST', {
+      decision,
+      mode_paiement: document.getElementById('loyerModePaiement')?.value,
+      inclure_arriere: decision === 'oui' && arriere > 0 ? arriere : undefined,
+    });
+    afficherToast(decision === 'oui' ? 'Charge de loyer enregistrée.' : 'Décision enregistrée : aucun loyer déduit ce jour-là.', 'success');
+    fermerModal();
+    if (typeof rappelApresDecisionLoyer === 'function') rappelApresDecisionLoyer();
+  } catch (err) {
+    afficherToast(err.message, 'error');
+    document.getElementById('loyerBtnOui').disabled = false;
+    document.getElementById('loyerBtnNon').disabled = false;
   }
 }
 
@@ -4512,7 +5318,7 @@ async function chargerHistoriqueInventaires(){
               return `
               <tr>
                 <td class="mono">${new Date(i.created_at).toLocaleString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })}</td>
-                <td><strong>${echapperHtml(i.produit_nom)}</strong></td>
+                <td><strong>${lienProduit(i.produit_id, i.produit_nom)}</strong></td>
                 <td class="mono">${formatNombre(i.stock_theorique)}</td>
                 <td class="mono">${formatNombre(i.stock_physique)}</td>
                 <td class="mono" style="font-weight:700;color:${ecart === 0 ? 'inherit' : (ecart < 0 ? 'var(--danger)' : 'var(--fresh)')}">${ecart > 0 ? '+' : ''}${formatNombre(ecart)}</td>
@@ -4648,15 +5454,15 @@ async function afficherAnalyseSynthese(contenu){
 
     <div class="grid-2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;">
       ${listeProduits('Produits à forte rotation', a.forte_rotation,
-        p => `<tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${formatNombre(p.quantite_vendue)} bout.</td><td class="mono">${p.taux_rotation_annualise}× / an</td></tr>`,
+        p => `<tr><td><strong>${lienProduit(p.id || p.produit_id, p.nom)}</strong></td><td class="mono">${formatNombre(p.quantite_vendue)} bout.</td><td class="mono">${p.taux_rotation_annualise}× / an</td></tr>`,
         'Aucun produit ne dépasse encore le seuil de forte rotation sur la période.')}
 
       ${listeProduits('Produits à faible rotation', a.faible_rotation,
-        p => `<tr><td><strong>${echapperHtml(p.nom)}</strong></td><td>${LIBELLES_ROTATION[p.niveau_rotation]}</td><td class="mono">${formatMontant(p.valeur_stock)} immobilisés</td></tr>`,
+        p => `<tr><td><strong>${lienProduit(p.id || p.produit_id, p.nom)}</strong></td><td>${LIBELLES_ROTATION[p.niveau_rotation]}</td><td class="mono">${formatMontant(p.valeur_stock)} immobilisés</td></tr>`,
         'Aucun produit en faible rotation — le stock tourne correctement.')}
 
       ${listeProduits('Proches de la rupture', a.proches_rupture,
-        p => `<tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)} bout.</td><td class="mono" style="color:var(--danger)">~${p.jours_stock_restants} j restants</td></tr>`,
+        p => `<tr><td><strong>${lienProduit(p.id || p.produit_id, p.nom)}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)} bout.</td><td class="mono" style="color:var(--danger)">~${p.jours_stock_restants} j restants</td></tr>`,
         "Aucun produit sous les 14 jours d'autonomie estimée.")}
     </div>`;
 }
@@ -4726,19 +5532,19 @@ async function afficherAnalyseRythme(contenu, jours){
       <div class="panel"><h3>Produits qui partent vite</h3>
         ${a.produits_rapides.length === 0 ? `<div class="empty-state">${a.note || 'Pas encore assez de ventes par produit pour classer.'}</div>` : `
         <div class="table-scroll"><table class="data-table"><tbody>
-          ${a.produits_rapides.map(p => `<tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${p.vitesse_bouteilles_par_jour} bout./jour</td><td class="cell-sub">${formatNombre(p.quantite_vendue)} vendues</td></tr>`).join('')}
+          ${a.produits_rapides.map(p => `<tr><td><strong>${lienProduit(p.id || p.produit_id, p.nom)}</strong></td><td class="mono">${p.vitesse_bouteilles_par_jour} bout./jour</td><td class="cell-sub">${formatNombre(p.quantite_vendue)} vendues</td></tr>`).join('')}
         </tbody></table></div>`}
       </div>
       <div class="panel"><h3>Produits qui partent lentement</h3>
         ${a.produits_lents.length === 0 ? `<div class="empty-state">${a.note || 'Pas encore assez de ventes par produit pour classer.'}</div>` : `
         <div class="table-scroll"><table class="data-table"><tbody>
-          ${a.produits_lents.map(p => `<tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${p.vitesse_bouteilles_par_jour} bout./jour</td><td class="cell-sub">${formatNombre(p.quantite_vendue)} vendues</td></tr>`).join('')}
+          ${a.produits_lents.map(p => `<tr><td><strong>${lienProduit(p.id || p.produit_id, p.nom)}</strong></td><td class="mono">${p.vitesse_bouteilles_par_jour} bout./jour</td><td class="cell-sub">${formatNombre(p.quantite_vendue)} vendues</td></tr>`).join('')}
         </tbody></table></div>`}
       </div>
       <div class="panel"><h3>Produits qui stagnent</h3>
         ${a.produits_stagnants.length === 0 ? '<div class="empty-state">Aucun produit sans aucune vente sur la période.</div>' : `
         <div class="table-scroll"><table class="data-table"><tbody>
-          ${a.produits_stagnants.map(p => `<tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)} bout.</td><td class="mono">${formatMontant(p.valeur_stock)}</td></tr>`).join('')}
+          ${a.produits_stagnants.map(p => `<tr><td><strong>${lienProduit(p.id || p.produit_id, p.nom)}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)} bout.</td><td class="mono">${formatMontant(p.valeur_stock)}</td></tr>`).join('')}
         </tbody></table></div>`}
       </div>
     </div>`;
@@ -4782,7 +5588,7 @@ async function afficherAnalyseRotation(contenu, jours){
         <div class="table-scroll"><table class="data-table">
           <thead><tr><th>Produit</th><th>Stock</th><th>Valeur</th><th>Part</th><th>Rotation</th></tr></thead>
           <tbody>${a.plus_gros_capital_immobilise.map(p => `
-            <tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)}</td>
+            <tr><td><strong>${lienProduit(p.id || p.produit_id, p.nom)}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)}</td>
                 <td class="mono">${formatMontant(p.valeur_stock)}</td><td class="mono">${p.part_pct === null ? '—' : p.part_pct + ' %'}</td>
                 <td class="cell-sub">${LIBELLES_ROTATION[p.niveau_rotation]}</td></tr>`).join('')}
           </tbody></table></div>
@@ -4794,7 +5600,7 @@ async function afficherAnalyseRotation(contenu, jours){
           : `<div class="table-scroll"><table class="data-table">
               <thead><tr><th>Produit</th><th>Achats</th><th>Fréquence</th></tr></thead>
               <tbody>${a.reapprovisionnements_frequents.map(p => `
-                <tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${p.nombre_achats}</td>
+                <tr><td><strong>${lienProduit(p.id || p.produit_id, p.nom)}</strong></td><td class="mono">${p.nombre_achats}</td>
                     <td class="mono">tous les ${p.frequence_achats_jours} j</td></tr>`).join('')}
               </tbody></table></div>`}
       </div>
@@ -4822,7 +5628,7 @@ async function afficherAnalyseProduits(contenu, jours){
         <tbody>
           ${a.produits.map(p => `
             <tr>
-              <td><strong>${echapperHtml(p.nom)}</strong>${p.fiable ? '' : ` <span class="badge" title="${echapperHtml(p.message)}">peu de données</span>`}</td>
+              <td><strong>${lienProduit(p.id || p.produit_id, p.nom)}</strong>${p.fiable ? '' : ` <span class="badge" title="${echapperHtml(p.message)}">peu de données</span>`}</td>
               <td class="mono">${formatNombre(p.quantite_vendue)} bout.<br><span class="cell-sub">${p.nombre_ventes} vente(s)</span></td>
               <td class="mono">${formatMontant(p.chiffre_affaires)}</td>
               <td class="mono" style="color:${p.benefice >= 0 ? 'var(--fresh)' : 'var(--danger)'}">${formatMontant(p.benefice)}</td>
@@ -4873,13 +5679,13 @@ async function afficherAnalysePrevisions(contenu, jours){
         <tbody>
           ${a.estimation_stock_necessaire.map(p => {
             if (p.fiable === false && p.vitesse_bouteilles_par_jour === undefined) {
-              return `<tr><td><strong>${echapperHtml(p.nom)}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)}</td>
+              return `<tr><td><strong>${lienProduit(p.id || p.produit_id, p.nom)}</strong></td><td class="mono">${formatNombre(p.stock_bouteilles)}</td>
                       <td colspan="4" class="cell-sub">${echapperHtml(p.message)}</td></tr>`;
             }
             const urgent = p.jours_stock_restants !== null && p.jours_stock_restants <= 14;
             return `
               <tr>
-                <td><strong>${echapperHtml(p.nom)}</strong>${p.fiable ? '' : ' <span class="badge" title="' + echapperHtml(p.message || '') + '">peu de données</span>'}</td>
+                <td><strong>${lienProduit(p.id || p.produit_id, p.nom)}</strong>${p.fiable ? '' : ' <span class="badge" title="' + echapperHtml(p.message || '') + '">peu de données</span>'}</td>
                 <td class="mono">${formatNombre(p.stock_bouteilles)} bout.</td>
                 <td class="mono">${p.vitesse_bouteilles_par_jour} /j</td>
                 <td class="mono" style="${urgent ? 'color:var(--danger);font-weight:700' : ''}">
