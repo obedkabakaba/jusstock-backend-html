@@ -8,7 +8,7 @@
 //   ventes et comptabilité doivent toujours venir du serveur.
 // Changer VERSION à chaque modification de ce fichier.
 // ============================================================
-const VERSION = 'jusstock-v1';
+const VERSION = 'jusstock-v2';
 const FICHIERS_DE_BASE = [
   './',
   './index.html',
