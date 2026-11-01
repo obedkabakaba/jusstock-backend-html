@@ -3,12 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
-<meta name="theme-color" content="#0F2A2E">
+<meta name="theme-color" content="#0F2A2E" id="metaThemeColor">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="JusStock">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%0A%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23F5821F%22/%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23D66C10%22/%3E%0A%3C/linearGradient%3E%3C/defs%3E%0A%3Crect%20width%3D%2224%22%20height%3D%2224%22%20rx%3D%226%22%20fill%3D%22url%28%23g%29%22/%3E%0A%3Cpath%20d%3D%22M9.3%203.2h5.4l.7%203.6a3.9%203.9%200%200%201-1%203.3L13.3%2011v6.4a.9.9%200%200%201-.9.9h-.8a.9.9%200%200%201-.9-.9V11L9.6%2010.1a3.9%203.9%200%200%201-1-3.3l.7-3.6Z%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%221.3%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%0A%3Cpath%20d%3D%22M9.7%207.4h4.6%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%221.1%22%20stroke-linecap%3D%22round%22/%3E%0A%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="application-name" content="JusStock">
+<meta name="description" content="JusStock — stock, ventes, achats, comptabilité et rapports.">
+<script>
+  // Thème appliqué AVANT l'affichage (évite un flash blanc en mode sombre).
+  // Choix enregistré : 'clair' | 'sombre' ; sinon, on suit le réglage du téléphone.
+  (function(){
+    var choix = null;
+    try { choix = localStorage.getItem('jusstock_theme'); } catch (e) {}
+    var sombre = choix ? choix === 'sombre' : (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', sombre ? 'dark' : 'light');
+  })();
+</script>
 <title>JusStock — Tableau de bord</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,7 +59,44 @@
     --font-mono:'IBM Plex Mono',monospace;
     --radius:10px;
     --shadow:0 1px 2px rgba(15,42,46,0.06), 0 4px 16px rgba(15,42,46,0.05);
+    --trait:#0F2A2E;      /* couleur des courbes et repères (lisible sur le fond) */
+    --grille:#EEF1EC;     /* lignes de grille des graphiques */
   }
+
+  /* ---------- THÈME SOMBRE ---------- */
+  html[data-theme="dark"]{
+    color-scheme:dark;
+    --ink:#0A1B1E; --ink-light:#133034; --ink-lighter:#1C3E43;
+    --paper:#0E191B; --surface:#162427; --border:#273B3E;
+    --text:#E3ECEA; --text-muted:#93A8A4;
+    --accent:#F68B2C; --accent-dark:#E37819; --accent-soft:#3A2816;
+    --fresh:#86BE52; --fresh-soft:#1D2F17;
+    --danger:#E8695E; --danger-soft:#3A1F1C;
+    --trait:#E3ECEA; --grille:#22363A;
+    --shadow:0 1px 2px rgba(0,0,0,.35), 0 4px 16px rgba(0,0,0,.25);
+  }
+  html[data-theme="dark"] .kpi-icon.tone-ink{background:#1E3337;color:#CFE2DE;}
+  html[data-theme="dark"] .unit-chip svg{stroke:#CFE2DE;}
+  html[data-theme="dark"] .badge.info, html[data-theme="dark"] .consultant-banner{background:#15304A;color:#9CC7F0;}
+  html[data-theme="dark"] .banner, html[data-theme="dark"] .login-error{color:#F4B3AA;}
+  html[data-theme="dark"] .loyer-statut.paye{color:#A9D57D;}
+  html[data-theme="dark"] .loyer-statut.refuse{background:#25363A;color:#B0C4C9;}
+  html[data-theme="dark"] .fp-onglets button.actif{color:var(--text);}
+  html[data-theme="dark"] .tab-btn.active, html[data-theme="dark"] .loyer-jours input:checked + span{background:var(--accent);border-color:var(--accent);}
+  html[data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.62);}
+  html[data-theme="dark"] .fp-jauge span{background:var(--text);}
+  html[data-theme="dark"] .sidebar{border-right:1px solid var(--border);}
+  html[data-theme="dark"] img{opacity:.95;}
+
+  /* Boutons thème / installation */
+  .btn-icone{padding:8px 10px;}
+  .btn-icone svg{width:16px;height:16px;}
+  .btn-installer{display:none;}
+  body.installable .btn-installer{display:inline-flex;}
+  .bandeau-maj{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:300;background:var(--ink);color:#fff;
+    padding:10px 12px 10px 16px;border-radius:10px;display:flex;gap:12px;align-items:center;font-size:13px;box-shadow:0 10px 30px rgba(0,0,0,.3);}
+  .ios-etapes{margin:0;padding-left:20px;line-height:1.9;font-size:13.5px;}
+  .ios-etapes svg{width:16px;height:16px;vertical-align:-3px;stroke:var(--accent);}
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;overflow-x:hidden;max-width:100%;}
   body{
@@ -664,6 +716,11 @@
           <span class="u-role" id="utilisateurRoleTopbar"></span>
         </div>
         <span class="subtitle" id="lastUpdated"></span>
+        <button class="btn btn-icone btn-installer" onclick="installerApplication()" title="Installer JusStock sur cet appareil">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          <span class="btn-label">Installer</span>
+        </button>
+        <button class="btn btn-icone" id="btnTheme" onclick="basculerTheme()" title="Thème clair / sombre"></button>
         <button class="btn" id="refreshBtn">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 4v5h-5"/></svg>
           <span class="btn-label">Actualiser</span>
@@ -1487,7 +1544,7 @@ function construireGraphiqueVentes(evolution){
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        y: { ticks: { callback: v => formatNombre(v) }, grid: { color: '#EEF1EC' } },
+        y: { ticks: { callback: v => formatNombre(v) }, grid: { color: couleurCss('--grille') } },
         x: { grid: { display: false } },
       },
     },
@@ -1845,9 +1902,9 @@ function svgCourbe(points, options = {}){
   const min = Math.min(...vals), max = Math.max(...vals), ecart = max - min || 1;
   const xy = points.map((p, i) => [m + (i / (points.length - 1)) * (largeur - 2 * m), m + (1 - ((Number(p.valeur) || 0) - min) / ecart) * (hauteur - 2 * m - 12)]);
   const chemin = xy.map((c, i) => `${i ? 'L' : 'M'}${c[0].toFixed(1)},${c[1].toFixed(1)}`).join(' ');
-  const pts = xy.map((c, i) => `<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="3.5" fill="var(--surface)" stroke="${options.couleur || 'var(--ink)'}" stroke-width="2"><title>${echapperHtml(points[i].titre || '')}</title></circle>`).join('');
+  const pts = xy.map((c, i) => `<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="3.5" fill="var(--surface)" stroke="${options.couleur || 'var(--trait)'}" stroke-width="2"><title>${echapperHtml(points[i].titre || '')}</title></circle>`).join('');
   return `<svg viewBox="0 0 ${largeur} ${hauteur}" class="fp-svg" preserveAspectRatio="none" role="img">
-    <path d="${chemin}" fill="none" stroke="${options.couleur || 'var(--ink)'}" stroke-width="2.2"/>${pts}
+    <path d="${chemin}" fill="none" stroke="${options.couleur || 'var(--trait)'}" stroke-width="2.2"/>${pts}
     <text x="${m}" y="${hauteur - 2}" class="fp-axe">${echapperHtml(options.gauche || '')}</text>
     <text x="${largeur - m}" y="${hauteur - 2}" text-anchor="end" class="fp-axe">${echapperHtml(options.droite || '')}</text>
   </svg>`;
@@ -5076,7 +5133,11 @@ function afficherAppApresConnexion(){
     return;
   }
   chargerParametresDevise();
-  afficherVue('dashboard');
+  // Raccourcis de l'icône (?vue=ventes, ?vue=stock…) : ouvre directement le bon menu.
+  const vueDemandee = new URLSearchParams(location.search).get('vue');
+  const vueVisible = vueDemandee && NAV_ITEMS.some(n => n.id === vueDemandee)
+    && document.querySelector(`.nav-item[data-view="${vueDemandee}"]`)?.style.display !== 'none';
+  afficherVue(vueVisible ? vueDemandee : 'dashboard');
   verifierLoyerQuotidien();
 }
 
@@ -6077,6 +6138,131 @@ async function chargerJournalAudit(){
 // INITIALISATION
 // ============================================================
 document.getElementById('refreshBtn').addEventListener('click', rafraichirVueActive);
+
+// ============================================================
+// THÈME CLAIR / SOMBRE
+// ============================================================
+function couleurCss(variable){
+  return getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
+}
+
+function themeActuel(){
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? 'sombre' : 'clair';
+}
+
+function appliquerTheme(theme, enregistrer){
+  document.documentElement.setAttribute('data-theme', theme === 'sombre' ? 'dark' : 'light');
+  if (enregistrer) { try { localStorage.setItem('jusstock_theme', theme); } catch (e) {} }
+  const meta = document.getElementById('metaThemeColor');
+  if (meta) meta.setAttribute('content', theme === 'sombre' ? '#0A1B1E' : '#0F2A2E');
+  const bouton = document.getElementById('btnTheme');
+  if (bouton) {
+    bouton.innerHTML = theme === 'sombre'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>';
+    bouton.title = theme === 'sombre' ? 'Passer au thème clair' : 'Passer au thème sombre';
+  }
+  if (window.Chart) {
+    Chart.defaults.color = couleurCss('--text-muted');
+    Chart.defaults.borderColor = couleurCss('--grille');
+  }
+}
+
+function basculerTheme(){
+  appliquerTheme(themeActuel() === 'sombre' ? 'clair' : 'sombre', true);
+  // Les graphiques du tableau de bord sont redessinés avec les nouvelles couleurs.
+  if (utilisateurConnecte && document.getElementById('view-dashboard')?.classList.contains('active')) rafraichirVueActive();
+}
+
+appliquerTheme(themeActuel(), false);
+// Sans choix enregistré, on suit le réglage du téléphone en direct.
+if (window.matchMedia) {
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', (e) => {
+    let choix = null;
+    try { choix = localStorage.getItem('jusstock_theme'); } catch (err) {}
+    if (!choix) appliquerTheme(e.matches ? 'sombre' : 'clair', false);
+  });
+}
+
+// ============================================================
+// APPLICATION INSTALLABLE (PWA)
+// ============================================================
+// Android / Chrome / Edge : le navigateur propose l'installation, on la
+// déclenche depuis le bouton « Installer ». iPhone / iPad (Safari) : pas
+// d'installation automatique, on affiche la marche à suivre.
+let invitationInstallation = null;
+const estInstallee = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+const estIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  invitationInstallation = e;
+  document.body.classList.add('installable');
+});
+window.addEventListener('appinstalled', () => {
+  invitationInstallation = null;
+  document.body.classList.remove('installable');
+  afficherToast('JusStock est installé : retrouve-le sur ton écran d\'accueil.', 'success');
+});
+if (!estInstallee() && estIOS()) document.body.classList.add('installable');
+
+async function installerApplication(){
+  if (invitationInstallation) {
+    invitationInstallation.prompt();
+    const choix = await invitationInstallation.userChoice.catch(() => null);
+    if (choix?.outcome === 'accepted') document.body.classList.remove('installable');
+    invitationInstallation = null;
+    return;
+  }
+  const partager = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m8 7 4-4 4 4"/><path d="M20 14v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-5"/></svg>';
+  ouvrirModal(`
+    <div class="modal-head"><div><h2>Installer JusStock</h2><div class="modal-sub">${estIOS() ? 'Sur iPhone / iPad, avec Safari' : 'Depuis le menu de ton navigateur'}</div></div>
+      <button class="modal-close-btn" onclick="fermerModal()">${svgIcon('close')}</button></div>
+    ${estIOS() ? `<ol class="ios-etapes">
+        <li>Ouvre cette page dans <strong>Safari</strong>.</li>
+        <li>Touche le bouton <strong>Partager</strong> ${partager} en bas de l'écran.</li>
+        <li>Choisis <strong>« Sur l'écran d'accueil »</strong>, puis <strong>Ajouter</strong>.</li>
+        <li>L'icône JusStock apparaît sur ton écran d'accueil : elle s'ouvre en plein écran, comme une application.</li>
+      </ol>` : `<ol class="ios-etapes">
+        <li>Ouvre le menu du navigateur (<strong>⋮</strong> en haut à droite sur Chrome).</li>
+        <li>Choisis <strong>« Installer l'application »</strong> ou <strong>« Ajouter à l'écran d'accueil »</strong>.</li>
+        <li>Valide : l'icône JusStock apparaît sur ton écran d'accueil.</li>
+      </ol>`}
+    <div class="modal-actions"><button class="btn btn-accent" onclick="fermerModal()">Compris</button></div>`);
+}
+
+// Service worker : démarrage rapide, interface disponible hors ligne et
+// mises à jour signalées (on recharge seulement quand l'utilisateur le veut).
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      const proposerMiseAJour = (worker) => {
+        if (document.getElementById('bandeauMaj')) return;
+        const bandeau = document.createElement('div');
+        bandeau.id = 'bandeauMaj';
+        bandeau.className = 'bandeau-maj';
+        bandeau.innerHTML = '<span>Une nouvelle version de JusStock est disponible.</span><button class="btn btn-accent">Mettre à jour</button>';
+        bandeau.querySelector('button').onclick = () => worker.postMessage('ACTIVER_MAINTENANT');
+        document.body.appendChild(bandeau);
+      };
+      if (reg.waiting && navigator.serviceWorker.controller) proposerMiseAJour(reg.waiting);
+      reg.addEventListener('updatefound', () => {
+        const nouveau = reg.installing;
+        nouveau?.addEventListener('statechange', () => {
+          if (nouveau.state === 'installed' && navigator.serviceWorker.controller) proposerMiseAJour(nouveau);
+        });
+      });
+      // Vérifie les mises à jour quand l'application revient au premier plan.
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+    }).catch((err) => console.warn('Service worker non enregistré :', err.message));
+    let rechargee = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (rechargee) return;
+      rechargee = true;
+      location.reload();
+    });
+  });
+}
 
 // Le point d'entrée n'est plus le dashboard directement : on vérifie d'abord
 // l'authentification (écran de connexion ou de création du premier compte).
